@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #17cf17 0%, #15803d 100%); padding: 30px; color: white; text-align: center; }
+        .content { padding: 40px 30px; color: #333; }
+        .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Profile Approved!</h1>
+        </div>
+        <div class="content">
+            <h2>Hi {{ user.first_name }},</h2>
+            <p>Great news! Your profile has been verified and approved by our admin team.</p>
+            <p><strong>You now have full access to E-RECYCLO!</strong></p>
+            <p>Best regards,<br>E-RECYCLO Team</p>
+        </div>
+        <div class="footer">
+            <p>© {{ year }} E-RECYCLO. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

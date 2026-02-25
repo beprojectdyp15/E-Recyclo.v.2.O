@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}{% if step == 'pickup' %}Verify Pickup OTP{% else %}Verify Delivery OTP{% endif %} - eRecyclo{% endblock %}
+{% block page_title %}{% if step == 'pickup' %}Verify Pickup OTP{% else %}Verify Delivery OTP{% endif %}{% endblock %}
+{% block page_subtitle %}
+{% if is_return %}
+    {% if step == 'pickup' %}Enter the vendor's OTP to confirm pickup{% else %}Enter the client's OTP to confirm return{% endif %}
+{% else %}
+    {% if step == 'pickup' %}Enter the {{ otp_holder|default:"client" }}'s OTP to confirm pickup{% else %}Enter the {{ otp_holder|default:"vendor" }}'s OTP to confirm delivery{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block page_content %}
+<div class="max-w-lg mx-auto space-y-6">
+
+    <!-- Return/Transfer Badge -->
+    {% if is_return %}
+    <div class="bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded-xl px-4 py-3 flex items-center gap-2">
+        <span class="material-symbols-outlined text-orange-600">undo</span>
+        <span class="text-sm font-bold text-orange-700 dark:text-orange-400">RETURN PICKUP</span>
+        <span class="text-xs text-orange-600 dark:text-orange-500">— Vendor → Client</span>
+    </div>
+    {% endif %}
+
+    <!-- Progress Steps -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+        <div class="flex items-center gap-3">
+            <!-- Step 1 -->
+            <div class="flex items-center gap-2 flex-1">
+                <div class="size-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
+                    {% if step == 'delivery' %}bg-green-500 text-white{% elif step == 'pickup' %}bg-primary text-white{% else %}bg-slate-200 dark:bg-slate-700 text-slate-500{% endif %}">
+                    {% if step == 'delivery' %}<span class="material-symbols-outlined text-sm">check</span>{% else %}1{% endif %}
+                </div>
+                <div>
+                    <p class="text-xs font-bold {% if step == 'pickup' %}text-primary{% elif step == 'delivery' %}text-green-600 dark:text-green-400{% else %}text-slate-400{% endif %}">Step 1</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        {% if is_return %}Pickup from Vendor{% else %}Pickup from {{ otp_holder|default:"Client"|title }}{% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="flex-1 h-0.5 {% if step == 'delivery' %}bg-green-400{% else %}bg-slate-200 dark:bg-slate-700{% endif %}"></div>
+            <!-- Step 2 -->
+            <div class="flex items-center gap-2 flex-1 justify-end">
+                <div class="text-right">
+                    <p class="text-xs font-bold {% if step == 'delivery' %}text-primary{% else %}text-slate-400{% endif %}">Step 2</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        {% if is_return %}Return to Client{% else %}Deliver to {{ otp_holder|default:"Vendor"|title }}{% endif %}
+                    </p>
+                </div>
+                <div class="size-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
+                    {% if step == 'delivery' %}bg-primary text-white{% else %}bg-slate-200 dark:bg-slate-700 text-slate-500{% endif %}">2</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Summary -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex gap-4">
+        {% if post.photo %}
+        <img src="{{ post.photo.url }}" alt="{{ post.title }}" class="w-20 h-20 object-cover rounded-xl flex-shrink-0 border border-slate-200 dark:border-slate-700">
+        {% else %}
+        <div class="w-20 h-20 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-slate-400 text-2xl">devices</span>
+        </div>
+        {% endif %}
+        <div class="flex-1">
+            <p class="font-bold text-slate-900 dark:text-white mb-1">{{ post.title }}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">{{ post.get_ai_category_display }}</p>
+            {% if is_return %}
+                {% if step == 'pickup' %}
+                <p class="text-sm"><span class="text-slate-400">Pickup from Vendor:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ post.vendor.get_full_name }}</span></p>
+                {% else %}
+                <p class="text-sm"><span class="text-slate-400">Deliver to Client:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ post.user.get_full_name }}</span></p>
+                <p class="text-xs text-slate-400 mt-1">{{ post.address|truncatewords:10 }}</p>
+                {% endif %}
+            {% else %}
+                {% if step == 'pickup' %}
+                <p class="text-sm"><span class="text-slate-400">Client:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ post.user.get_full_name }}</span></p>
+                <p class="text-xs text-slate-400 mt-1">{{ post.address|truncatewords:10 }}</p>
+                {% else %}
+                <p class="text-sm"><span class="text-slate-400">Vendor:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ post.vendor.get_full_name }}</span></p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="rounded-2xl p-4 flex gap-3
+        {% if step == 'pickup' %}bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800
+        {% else %}bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800{% endif %}">
+        <span class="material-symbols-outlined flex-shrink-0 {% if step == 'pickup' %}text-blue-500{% else %}text-amber-500{% endif %}">info</span>
+        <div>
+            <p class="text-sm font-semibold {% if step == 'pickup' %}text-blue-800 dark:text-blue-300{% else %}text-amber-800 dark:text-amber-300{% endif %} mb-1">
+                {% if step == 'pickup' %}How to get the Pickup OTP{% else %}How to get the Delivery OTP{% endif %}
+            </p>
+            <p class="text-xs {% if step == 'pickup' %}text-blue-700 dark:text-blue-400{% else %}text-amber-700 dark:text-amber-400{% endif %}">
+                {% if is_return %}
+                    {% if step == 'pickup' %}
+                    Ask the <strong>vendor</strong> ({{ post.vendor.get_full_name }}) to check their items page — they will see the Pickup OTP for this return. Enter it below.
+                    {% else %}
+                    Ask the <strong>client</strong> ({{ post.user.get_full_name }}) to check their upload page — they will see the Return Delivery OTP. Enter it below.
+                    {% endif %}
+                {% else %}
+                    {% if step == 'pickup' %}
+                    Ask the <strong>{{ otp_holder|default:"client" }}</strong> to open their E-RECYCLO page — they will see a 6-digit Pickup OTP. Enter it below.
+                    {% else %}
+                    Ask the <strong>{{ otp_holder|default:"vendor" }}</strong> to open their E-RECYCLO page — they will see the 6-digit Delivery OTP for this item. Enter it below.
+                    {% endif %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- OTP Input Form -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
+            {% if is_return %}
+                {% if step == 'pickup' %}Enter Vendor's Pickup OTP{% else %}Enter Client's Delivery OTP{% endif %}
+            {% else %}
+                {% if step == 'pickup' %}Enter {{ otp_holder|default:"Client"|title }}'s Pickup OTP{% else %}Enter {{ otp_holder|default:"Vendor"|title }}'s Delivery OTP{% endif %}
+            {% endif %}
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">
+            {% if step == 'pickup' %}Confirms you're at the correct pickup location.
+            {% else %}Confirms you're handing over to the correct person.{% endif %}
+        </p>
+
+        {% if error %}
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-5 flex gap-3 items-start">
+            <span class="material-symbols-outlined text-red-500 flex-shrink-0">error</span>
+            <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <form method="POST" id="otpForm">
+            {% csrf_token %}
+            <div class="flex justify-center gap-2 mb-6" id="otp-boxes">
+                {% for i in "123456" %}
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                    class="otp-box w-12 h-14 text-center text-2xl font-bold rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:border-primary focus:outline-none transition-all"
+                    autocomplete="off">
+                {% endfor %}
+            </div>
+            <input type="hidden" name="otp" id="otp-hidden">
+            <button type="submit" class="w-full py-3 px-6 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-colors
+                {% if is_return %}bg-orange-500 hover:bg-orange-600{% elif step == 'pickup' %}bg-primary hover:bg-forest{% else %}bg-amber-500 hover:bg-amber-600{% endif %}">
+                <span class="material-symbols-outlined">verified</span>
+                {% if step == 'pickup' %}Verify & Start Transit{% else %}Verify & Confirm Delivery{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <a href="{% url 'collector:my_pickups' %}" class="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+        <span class="material-symbols-outlined text-base">arrow_back</span>Back to My Pickups
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const boxes  = document.querySelectorAll('.otp-box');
+const hidden = document.getElementById('otp-hidden');
+
+function sync() { hidden.value = [...boxes].map(b => b.value).join(''); }
+
+boxes.forEach((box, i) => {
+    box.addEventListener('input', e => {
+        e.target.value = e.target.value.replace(/\D/,'');
+        if (e.target.value && i < 5) boxes[i+1].focus();
+        sync();
+        if ([...boxes].every(b=>b.value)) document.getElementById('otpForm').submit();
+    });
+    box.addEventListener('keydown', e => {
+        if (e.key==='Backspace' && !e.target.value && i>0) boxes[i-1].focus();
+    });
+    box.addEventListener('paste', e => {
+        e.preventDefault();
+        const d = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
+        d.split('').forEach((c,j) => { if(boxes[j]) boxes[j].value=c; });
+        sync();
+        const next = [...boxes].findIndex(b=>!b.value);
+        (next>=0 ? boxes[next] : boxes[5]).focus();
+    });
+});
+boxes[0].focus();
+</script>
+{% endblock %}

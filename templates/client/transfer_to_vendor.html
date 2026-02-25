@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Transfer to Another Vendor - E-RECYCLO{% endblock %}
+{% block page_title %}Transfer to Another Vendor{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+    <!-- Item Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex gap-4">
+        {% if post.photo %}
+        <img src="{{ post.photo.url }}" alt="{{ post.title }}" class="w-24 h-24 object-cover rounded-xl flex-shrink-0">
+        {% endif %}
+        <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-lg">{{ post.title }}</h3>
+            <p class="text-sm text-slate-500">{{ post.get_ai_category_display }}</p>
+            <p class="text-xs text-slate-400 mt-1">
+                Current vendor: <span class="font-medium">{{ post.vendor.get_full_name }}</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Nearby Vendors Info -->
+    {% if nearby_vendors_count > 0 %}
+    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-4">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-green-600 text-2xl">storefront</span>
+            <div>
+                <p class="font-bold text-green-800 dark:text-green-300">{{ nearby_vendors_count }} Other Vendor{{ nearby_vendors_count|pluralize }} Available</p>
+                <p class="text-sm text-green-700 dark:text-green-400">Within 5km of your location</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl p-4">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-red-600 text-2xl">warning</span>
+            <div>
+                <p class="font-bold text-red-800 dark:text-red-300">No Other Vendors Available</p>
+                <p class="text-sm text-red-700 dark:text-red-400">No other vendors within 5km. Please request a return instead.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Info -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-5">
+        <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-blue-600">info</span>
+            <div class="text-sm">
+                <p class="font-bold text-blue-800 dark:text-blue-300 mb-2">How Vendor Transfer Works</p>
+                <ul class="space-y-1 text-blue-600 dark:text-blue-400">
+                    <li>• Your item will be visible to {{ nearby_vendors_count }} nearby vendor{{ nearby_vendors_count|pluralize }}</li>
+                    <li>• The first vendor to accept will receive your item</li>
+                    <li>• A collector will be assigned to transfer the item</li>
+                    <li>• New vendor will evaluate fresh (previous history cleared)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+        <form method="POST" class="flex gap-3">
+            {% csrf_token %}
+            {% if nearby_vendors_count > 0 %}
+            <button type="submit"
+                    class="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold transition-colors">
+                <span class="material-symbols-outlined">swap_horiz</span>
+                Request Transfer to New Vendor
+            </button>
+            {% else %}
+            <button type="button" disabled
+                    class="flex-1 flex items-center justify-center gap-2 bg-slate-300 text-slate-500 py-3.5 rounded-xl font-bold cursor-not-allowed">
+                <span class="material-symbols-outlined">block</span>
+                No Vendors Available
+            </button>
+            {% endif %}
+            <a href="{% url 'client:upload_detail' post.pk %}"
+               class="px-6 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50 font-semibold transition-colors flex items-center">
+                Cancel
+            </a>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

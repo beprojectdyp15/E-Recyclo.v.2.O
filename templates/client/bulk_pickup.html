@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Bulk Pickup{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Bulk Pickup Status</h2>
+        
+        <div class="mb-8">
+            <div class="flex justify-between text-sm text-gray-600 mb-2">
+                <span>Progress (5 items needed)</span>
+                <span>{{ bulk_pickup.item_count }}/5</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+                <div class="bg-nature-500 h-3 rounded-full" style="width: {{ bulk_pickup.get_progress_percentage }}%"></div>
+            </div>
+        </div>
+        
+        {% if bulk_pickup.ready_for_pickup %}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <p class="text-green-800 font-medium">✓ Ready for Pickup!</p>
+                <p class="text-sm text-green-600 mt-1">A collector will be assigned soon.</p>
+            </div>
+        {% else %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <p class="text-yellow-800 font-medium">{{ 5|add:"-"|add:bulk_pickup.item_count }} more items needed</p>
+                <p class="text-sm text-yellow-600 mt-1">Upload more low-value items to schedule bulk pickup.</p>
+            </div>
+        {% endif %}
+        
+        <a href="{% url 'client:my_uploads' %}" class="block text-center bg-nature-500 text-white px-6 py-3 rounded-lg hover:bg-nature-600">
+            View My Uploads
+        </a>
+    </div>
+</div>
+{% endblock %}

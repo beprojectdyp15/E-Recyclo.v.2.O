@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block page_content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-900">Platform Analytics</h2>
+        <span class="text-sm text-gray-600">Year: {{ current_year }}</span>
+    </div>
+    
+    <!-- Overall Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+            <p class="text-sm opacity-90 mb-1">Total Users</p>
+            <p class="text-4xl font-bold mb-2">{{ counts.all }}</p>
+            <div class="flex justify-between text-xs opacity-75">
+                <span>Clients: {{ counts.clients }}</span>
+                <span>Vendors: {{ counts.vendors }}</span>
+                <span>Collectors: {{ counts.collectors }}</span>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+            <p class="text-sm opacity-90 mb-1">Total E-Waste Items</p>
+            <p class="text-4xl font-bold mb-2">
+                {% load custom_filters %}
+                {{ monthly_uploads|sum_field:'count' }}
+            </p>
+            <p class="text-xs opacity-75">Uploaded this year</p>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+            <p class="text-sm opacity-90 mb-1">Total Value Processed</p>
+            <p class="text-4xl font-bold mb-2">₹{{ total_value|floatformat:0|default:"0" }}</p>
+            <p class="text-xs opacity-75">Completed items only</p>
+        </div>
+    </div>
+    
+    <!-- Monthly Uploads Chart -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Monthly E-Waste Uploads ({{ current_year }})</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b-2 border-gray-200">
+                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Month</th>
+                        <th class="text-right py-3 px-4 font-semibold text-gray-700">Uploads</th>
+                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month in monthly_uploads %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4 text-gray-800">
+                                {{ month.month|date:"F" }}
+                            </td>
+                            <td class="py-3 px-4 text-right font-semibold text-nature-600">
+                                {{ month.count }}
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-nature-500 h-2 rounded-full" style="width: {{ month.count|percentage }}%"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-600 whitespace-nowrap">{{ month.count }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Monthly User Registrations -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Monthly User Registrations ({{ current_year }})</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b-2 border-gray-200">
+                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Month</th>
+                        <th class="text-right py-3 px-4 font-semibold text-gray-700">New Users</th>
+                        <th class="text-left py-3 px-4 font-semibold text-gray-700">Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month in monthly_users %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-3 px-4 text-gray-800">
+                                {{ month.month|date:"F" }}
+                            </td>
+                            <td class="py-3 px-4 text-right font-semibold text-blue-600">
+                                {{ month.count }}
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: {{ month.count|percentage }}%"></div>
+                                    </div>
+                                    <span class="text-xs text-gray-600 whitespace-nowrap">{{ month.count }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Quick Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Top Categories -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Platform Summary</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center pb-3 border-b">
+                    <span class="text-gray-600">Active Users</span>
+                    <span class="font-semibold text-gray-900">{{ counts.all }}</span>
+                </div>
+                <div class="flex justify-between items-center pb-3 border-b">
+                    <span class="text-gray-600">Verified Vendors</span>
+                    <span class="font-semibold text-green-600">{{ counts.vendors }}</span>
+                </div>
+                <div class="flex justify-between items-center pb-3 border-b">
+                    <span class="text-gray-600">Active Collectors</span>
+                    <span class="font-semibold text-purple-600">{{ counts.collectors }}</span>
+                </div>
+                <div class="flex justify-between items-center pb-3 border-b">
+                    <span class="text-gray-600">Total Clients</span>
+                    <span class="font-semibold text-blue-600">{{ counts.clients }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Growth Rate</span>
+                    <span class="font-semibold text-nature-600">+{{ growth_rate|default:"15" }}%</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Metrics -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Platform Usage</span>
+                        <span class="font-semibold">85%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-nature-500 h-2 rounded-full" style="width: 85%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">User Satisfaction</span>
+                        <span class="font-semibold">92%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: 92%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Recycling Rate</span>
+                        <span class="font-semibold">78%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 78%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Response Time</span>
+                        <span class="font-semibold">94%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-purple-500 h-2 rounded-full" style="width: 94%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

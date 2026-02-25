@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block page_content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-900">User Management</h2>
+    </div>
+    
+    <!-- Filter Tabs -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="border-b">
+            <nav class="flex space-x-4 px-6">
+                <a href="?" class="py-4 px-2 border-b-2 {% if not role %}border-nature-500 text-nature-600{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+                    All Users ({{ counts.all }})
+                </a>
+                <a href="?role=client" class="py-4 px-2 border-b-2 {% if role == 'client' %}border-nature-500 text-nature-600{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+                    Clients ({{ counts.clients }})
+                </a>
+                <a href="?role=vendor" class="py-4 px-2 border-b-2 {% if role == 'vendor' %}border-nature-500 text-nature-600{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+                    Vendors ({{ counts.vendors }})
+                </a>
+                <a href="?role=collector" class="py-4 px-2 border-b-2 {% if role == 'collector' %}border-nature-500 text-nature-600{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+                    Collectors ({{ counts.collectors }})
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Users Table -->
+        <div class="p-6">
+            {% if users %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">User</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Phone</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Joined</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-nature-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                                {{ user.first_name.0 }}{{ user.last_name.0 }}
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">{{ user.get_full_name }}</p>
+                                                <p class="text-xs text-gray-500">{{ user.username }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">{{ user.email }}</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">{{ user.phone_number }}</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-3 py-1 text-xs font-medium rounded-full
+                                            {% if user.is_client %}bg-blue-100 text-blue-800
+                                            {% elif user.is_vendor %}bg-green-100 text-green-800
+                                            {% elif user.is_collector %}bg-purple-100 text-purple-800
+                                            {% endif %}">
+                                            {{ user.get_role }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="space-y-1">
+                                            {% if user.is_active %}
+                                                <span class="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Active</span>
+                                            {% else %}
+                                                <span class="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">Inactive</span>
+                                            {% endif %}
+                                            
+                                            {% if user.is_vendor or user.is_collector %}
+                                                {% with profile=user.profile_completion %}
+                                                    <br>
+                                                    {% if profile.approval_status == 'approved' %}
+                                                        <span class="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Approved</span>
+                                                    {% elif profile.approval_status == 'pending' %}
+                                                        <span class="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">Pending</span>
+                                                    {% elif profile.approval_status == 'rejected' %}
+                                                        <span class="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">Rejected</span>
+                                                    {% else %}
+                                                        <span class="inline-block px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">Incomplete</span>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">
+                                        {{ user.date_joined|date:"M d, Y" }}
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="flex space-x-2">
+                                            {% if user.is_vendor or user.is_collector %}
+                                                {% with profile=user.profile_completion %}
+                                                    {% if profile.approval_status == 'pending' %}
+                                                        <a href="{% url 'admin_custom:pending_approvals' %}" 
+                                                           class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                                            Review
+                                                        </a>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
+                                            <a href="/admin/accounts/account/{{ user.id }}/change/" target="_blank"
+                                               class="text-nature-600 hover:text-nature-800 text-sm font-medium">
+                                                Edit
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <p class="text-gray-600">No users found</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

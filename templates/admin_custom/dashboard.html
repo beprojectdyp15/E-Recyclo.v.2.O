@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block page_content %}
+<div class="space-y-6">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Users</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_users }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-yellow-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Pending Approvals</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ pending_approvals }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Uploads</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_uploads }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Pending Withdrawals</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ pending_withdrawals }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <a href="{% url 'admin_custom:pending_approvals' %}" 
+               class="flex flex-col items-center p-4 border-2 border-yellow-500 rounded-lg hover:bg-yellow-50 transition-colors">
+                <svg class="w-8 h-8 text-yellow-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-medium text-gray-900">Approve Profiles</span>
+                {% if pending_approvals > 0 %}
+                    <span class="mt-1 px-2 py-1 bg-yellow-500 text-white text-xs rounded-full">{{ pending_approvals }}</span>
+                {% endif %}
+            </a>
+            
+            <a href="{% url 'admin_custom:users' %}" 
+               class="flex flex-col items-center p-4 border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition-colors">
+                <svg class="w-8 h-8 text-blue-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span class="text-sm font-medium text-gray-900">Manage Users</span>
+            </a>
+            
+            <a href="{% url 'admin_custom:analytics' %}" 
+               class="flex flex-col items-center p-4 border-2 border-green-500 rounded-lg hover:bg-green-50 transition-colors">
+                <svg class="w-8 h-8 text-green-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span class="text-sm font-medium text-gray-900">View Analytics</span>
+            </a>
+            
+            <a href="/admin/" 
+               class="flex flex-col items-center p-4 border-2 border-purple-500 rounded-lg hover:bg-purple-50 transition-colors">
+                <svg class="w-8 h-8 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span class="text-sm font-medium text-gray-900">Django Admin</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Recent Uploads -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b">
+            <h2 class="text-lg font-semibold text-gray-900">Recent E-Waste Uploads</h2>
+        </div>
+        <div class="p-6">
+            {% if recent_uploads %}
+                <div class="space-y-3">
+                    {% for upload in recent_uploads %}
+                        <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                            <div class="flex items-center space-x-4">
+                                <img src="{{ upload.photo.url }}" alt="{{ upload.title }}" class="w-16 h-16 object-cover rounded-lg">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">{{ upload.title }}</h3>
+                                    <p class="text-sm text-gray-600">By: {{ upload.user.get_full_name }}</p>
+                                    <p class="text-xs text-gray-500">{{ upload.created_at|date:"M d, Y H:i" }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-block px-3 py-1 text-xs font-medium rounded-full {{ upload.get_status_badge_class }}">
+                                    {{ upload.get_status_display }}
+                                </span>
+                                <p class="text-sm font-semibold text-nature-600 mt-1">₹{{ upload.ai_estimated_value }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-gray-500 py-8">No recent uploads</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recent Users -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b">
+            <h2 class="text-lg font-semibold text-gray-900">Recent User Registrations</h2>
+        </div>
+        <div class="p-6">
+            {% if recent_users %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Joined</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in recent_users %}
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="py-3 px-4">{{ user.get_full_name }}</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">{{ user.email }}</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full
+                                            {% if user.is_client %}bg-blue-100 text-blue-800
+                                            {% elif user.is_vendor %}bg-green-100 text-green-800
+                                            {% elif user.is_collector %}bg-purple-100 text-purple-800
+                                            {% endif %}">
+                                            {{ user.get_role }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">{{ user.date_joined|date:"M d, Y" }}</td>
+                                    <td class="py-3 px-4">
+                                        {% if user.is_active %}
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Active</span>
+                                        {% else %}
+                                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-gray-500 py-8">No recent users</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

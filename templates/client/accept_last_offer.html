@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Accept Last Offer - E-RECYCLO{% endblock %}
+{% block page_title %}Accept Previous Offer{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+    <!-- Item Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex gap-4">
+        {% if post.photo %}
+        <img src="{{ post.photo.url }}" alt="{{ post.title }}" class="w-24 h-24 object-cover rounded-xl flex-shrink-0">
+        {% endif %}
+        <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-lg">{{ post.title }}</h3>
+            <p class="text-sm text-slate-500">{{ post.get_ai_category_display }}</p>
+            <div class="flex gap-2 mt-2">
+                <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">Re-evaluation Declined</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Last Offer Details -->
+    <div class="bg-green-50 dark:bg-green-900/20 border-2 border-green-400 rounded-2xl p-6">
+        <h3 class="text-lg font-bold text-green-800 dark:text-green-300 mb-4">Last Offer from Vendor</h3>
+        
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-white dark:bg-slate-800 rounded-xl p-4 text-center border border-green-200">
+                <p class="text-xs text-slate-500 mb-1">Cash Value</p>
+                <p class="text-3xl font-bold text-green-600">₹{{ last_offer.vendor_final_value|default:"0" }}</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-xl p-4 text-center border border-green-200">
+                <p class="text-xs text-slate-500 mb-1">Eco-Points</p>
+                <p class="text-3xl font-bold text-amber-600">{{ last_offer.eco_points_awarded|default:0 }}</p>
+            </div>
+        </div>
+        
+        {% if last_offer.vendor_remarks %}
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 mb-4">
+            <p class="text-xs font-bold text-slate-500 mb-1">Vendor Assessment</p>
+            <p class="text-sm text-slate-700 dark:text-slate-300">{{ last_offer.vendor_remarks }}</p>
+        </div>
+        {% endif %}
+        
+        <p class="text-sm text-green-700 dark:text-green-400 mb-4">
+            The vendor has declined to provide a new offer. You can accept this previous offer to complete the transaction.
+        </p>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit"
+                    class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold transition-colors">
+                <span class="material-symbols-outlined">check_circle</span>
+                Accept ₹{{ last_offer.vendor_final_value|default:"0" }} & Complete
+            </button>
+        </form>
+    </div>
+
+    <!-- Other Options -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+        <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Other Options:</p>
+        
+        <a href="{% url 'client:request_return' post.pk %}"
+           class="flex items-center gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl hover:bg-orange-100 transition-colors">
+            <span class="material-symbols-outlined text-orange-600">undo</span>
+            <div>
+                <p class="font-semibold text-orange-800 dark:text-orange-300">Request Item Return</p>
+                <p class="text-xs text-orange-600">Get your item back from the vendor</p>
+            </div>
+        </a>
+        
+        <a href="{% url 'client:transfer_to_vendor' post.pk %}"
+           class="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:bg-blue-100 transition-colors">
+            <span class="material-symbols-outlined text-blue-600">swap_horiz</span>
+            <div>
+                <p class="font-semibold text-blue-800 dark:text-blue-300">Transfer to Another Vendor</p>
+                <p class="text-xs text-blue-600">Send to a different vendor within 5km</p>
+            </div>
+        </a>
+    </div>
+
+    <a href="{% url 'client:upload_detail' post.pk %}" class="block text-center text-sm text-slate-400 hover:text-slate-600">
+        ← Back to Item Details
+    </a>
+
+</div>
+{% endblock %}

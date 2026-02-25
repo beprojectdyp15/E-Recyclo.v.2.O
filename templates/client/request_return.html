@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Request Return - eRecyclo{% endblock %}
+{% block page_title %}Request Item Return{% endblock %}
+{% block page_subtitle %}Get your item picked up from the vendor and returned to you{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+    <!-- Item Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex gap-4">
+        {% if post.photo %}
+        <img src="{{ post.photo.url }}" alt="{{ post.title }}" class="w-20 h-20 object-cover rounded-xl flex-shrink-0">
+        {% endif %}
+        <div>
+            <h3 class="font-bold text-slate-900 dark:text-white">{{ post.title }}</h3>
+            <p class="text-sm text-slate-500">{{ post.get_ai_category_display }}</p>
+            <p class="text-xs text-slate-400 mt-1">
+                Currently with: <span class="font-medium text-slate-700 dark:text-slate-300">{{ post.vendor.get_full_name }}</span>
+            </p>
+        </div>
+    </div>
+
+    {% if post.vendor_declined_reevaluation %}
+    <!-- Vendor declined context -->
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 flex gap-3">
+        <span class="material-symbols-outlined text-red-500 flex-shrink-0">info</span>
+        <div class="text-sm">
+            <p class="font-bold text-red-800 dark:text-red-300 mb-1">Vendor declined re-evaluation</p>
+            {% if post.vendor_remarks %}<p class="text-red-700 dark:text-red-400">Reason: {{ post.vendor_remarks }}</p>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- How it works -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
+            <h3 class="font-bold text-slate-900 dark:text-white">How the return works</h3>
+        </div>
+        <div class="p-5">
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="size-7 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span class="text-primary text-xs font-bold">1</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white">Collector assigned to vendor</p>
+                        <p class="text-xs text-slate-400">A collector will be assigned to pick up your item from the vendor's location</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="size-7 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span class="text-primary text-xs font-bold">2</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white">Vendor verifies via OTP</p>
+                        <p class="text-xs text-slate-400">Vendor enters a pickup OTP shown to the collector at their location</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="size-7 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span class="text-primary text-xs font-bold">3</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white">Item delivered back to you</p>
+                        <p class="text-xs text-slate-400">Collector brings it to your address. You verify with a delivery OTP.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+            Your item will be picked up from <strong>{{ post.vendor.get_full_name }}</strong> and returned to your original address.
+        </p>
+        <form method="POST" class="flex gap-3">
+            {% csrf_token %}
+            <button type="submit"
+                    class="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-forest text-white py-3.5 rounded-xl font-bold transition-colors">
+                <span class="material-symbols-outlined">undo</span>
+                Confirm Return Request
+            </button>
+            <a href="{% url 'client:upload_detail' post.pk %}"
+               class="px-6 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-sm transition-colors flex items-center">
+                Cancel
+            </a>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

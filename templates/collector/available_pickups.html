@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Available Pickups - eRecyclo{% endblock %}
+{% block page_title %}Available Pickups{% endblock %}
+{% block page_subtitle %}E-waste pickups within 5km of your location{% endblock %}
+
+{% block page_content %}
+<div class="space-y-4">
+
+<!-- Info Banner -->
+<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">info</span>
+        <div class="text-sm text-blue-800 dark:text-blue-300">
+            <p class="font-medium">How it works:</p>
+            <ul class="mt-1 space-y-1 text-blue-700 dark:text-blue-400">
+                <li>• Pickups shown are within <strong>5km</strong> of your location</li>
+                <li>• Your vehicle type: <strong>{{ vehicle_type|default:"bike" }}</strong></li>
+                <li>• Multiple collectors can see the same pickup - <strong>first to accept gets it</strong></li>
+                <li>• <span class="text-green-600 font-medium">🟢 Regular</span> = Client → Vendor | <span class="text-orange-600 font-medium">🔶 Return</span> = Vendor → Client</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% if pickups %}
+<p class="text-sm text-slate-500 mb-4">{{ total_count }} pickup{{ total_count|pluralize }} available in your area</p>
+
+<div class="space-y-4">
+{% for req in pickups %}
+<div class="bg-white dark:bg-slate-800 rounded-2xl border {% if req.pickup_type == 'return' %}border-orange-300 dark:border-orange-700{% elif req.pickup_type == 'vendor_transfer' %}border-purple-300 dark:border-purple-700{% else %}border-slate-200 dark:border-slate-700{% endif %} overflow-hidden hover:shadow-lg transition-shadow {% if not req.can_handle %}opacity-60{% endif %}" >
+    
+    <!-- Pickup Type Banner -->
+    {% if req.pickup_type == 'return' %}
+    <div class="bg-orange-100 dark:bg-orange-900/30 px-5 py-2 flex items-center gap-2">
+        <span class="material-symbols-outlined text-orange-600 text-base">undo</span>
+        <span class="text-xs font-bold text-orange-700 dark:text-orange-400">RETURN PICKUP</span>
+        <span class="text-xs text-orange-600 dark:text-orange-500">— Pick from Vendor, Deliver to Client</span>
+    </div>
+    {% elif req.pickup_type == 'vendor_transfer' %}
+    <div class="bg-purple-100 dark:bg-purple-900/30 px-5 py-2 flex items-center gap-2">
+        <span class="material-symbols-outlined text-purple-600 text-base">swap_horiz</span>
+        <span class="text-xs font-bold text-purple-700 dark:text-purple-400">VENDOR TRANSFER</span>
+        <span class="text-xs text-purple-600 dark:text-purple-500">— Pick from Old Vendor, Deliver to New Vendor</span>
+    </div>
+    {% else %}
+    <div class="bg-green-100 dark:bg-green-900/30 px-5 py-2 flex items-center gap-2">
+        <span class="material-symbols-outlined text-green-600 text-base">local_shipping</span>
+        <span class="text-xs font-bold text-green-700 dark:text-green-400">REGULAR PICKUP</span>
+        <span class="text-xs text-green-600 dark:text-green-500">— Pick from Client, Deliver to Vendor</span>
+    </div>
+    {% endif %}
+    
+    <div class="p-5 flex gap-5">
+        {% if req.item.photo %}
+        <img src="{{ req.item.photo.url }}" alt="{{ req.item.title }}" class="w-36 h-36 object-cover rounded-xl flex-shrink-0 border border-slate-100 dark:border-slate-700">
+        {% else %}
+        <div class="w-36 h-36 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-slate-400 text-4xl">devices</span>
+        </div>
+        {% endif %}
+        
+        <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white text-base">{{ req.item.title }}</h3>
+                    <div class="flex flex-wrap gap-1.5 mt-1.5">
+                        <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">{{ req.item.get_ai_category_display }}</span>
+                        {% if req.item.item_size %}
+                        <span class="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-700 dark:text-purple-400">{{ req.item.get_item_size_display }}</span>
+                        {% endif %}
+                        {% if req.item.estimated_weight %}
+                        <span class="text-xs px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-700 dark:text-amber-400">{{ req.item.get_estimated_weight_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full font-medium">
+                        <span class="material-symbols-outlined" style="font-size:12px">near_me</span>
+                        {{ req.distance }} km
+                    </span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-y-1.5 mb-3 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-green-500" style="font-size:14px">trip_origin</span>
+                    <span class="text-slate-600 dark:text-slate-400"><strong>From:</strong> {{ req.from_location|default:req.item.address|truncatechars:50 }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-red-500" style="font-size:14px">location_on</span>
+                    <span class="text-slate-600 dark:text-slate-400"><strong>To:</strong> {{ req.to_location|default:"Vendor"|truncatechars:50 }}</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
+                <div>
+                    <p class="text-xs text-slate-500">Estimated Earning</p>
+                    <p class="text-xl font-bold text-green-600">₹39+</p>
+                    <p class="text-xs text-slate-400">(Base + distance + handling)</p>
+                </div>
+                
+                {% if req.can_handle %}
+                <a href="{% url 'collector:accept_pickup' req.item.pk %}" 
+                   class="{% if req.pickup_type == 'return' %}bg-orange-500 hover:bg-orange-600{% elif req.pickup_type == 'vendor_transfer' %}bg-purple-500 hover:bg-purple-600{% else %}bg-primary hover:bg-forest{% endif %} text-white px-6 py-3 rounded-xl font-bold text-sm transition-colors">
+                    Accept {% if req.pickup_type == 'return' %}Return{% elif req.pickup_type == 'vendor_transfer' %}Transfer{% endif %} Pickup
+                </a>
+                {% else %}
+                <div class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-4 py-3 rounded-xl text-xs text-center">
+                    <span class="material-symbols-outlined mr-1" style="font-size:14px;vertical-align:middle">local_shipping</span>
+                    {{ req.reason }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+{% else %}
+<div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-12 text-center">
+    <div class="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-slate-400 text-3xl">local_shipping</span>
+    </div>
+    <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No Available Pickups</h3>
+    <p class="text-slate-500 dark:text-slate-400 text-sm">There are no pickups within 5km of your location right now.<br>Check back later or wait for new vendor assignments.</p>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

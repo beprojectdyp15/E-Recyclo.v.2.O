@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Collection Centers{% endblock %}
+
+{% block page_content %}
+<div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Collection Centers</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in centers %}
+            {% if item.center %}
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="font-bold text-lg mb-2">{{ item.center.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-4">{{ item.center.address }}</p>
+                    <div class="space-y-2 text-sm">
+                        <p><strong>Distance:</strong> {{ item.distance }} km</p>
+                        <p><strong>Phone:</strong> {{ item.center.phone }}</p>
+                        <p><strong>Hours:</strong> {{ item.center.opening_time }} - {{ item.center.closing_time }}</p>
+                    </div>
+                    <div class="mt-4">
+                        {% if item.center.is_open_now %}
+                            <span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Open Now</span>
+                        {% else %}
+                            <span class="inline-block px-3 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Closed</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <div class="col-span-3 text-center py-12">
+                <p class="text-gray-500">No collection centers found</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

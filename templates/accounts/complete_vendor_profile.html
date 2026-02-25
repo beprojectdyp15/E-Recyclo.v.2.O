@@ -1,0 +1,651 @@
+{% extends 'base.html' %}
+
+{% block title %}Complete Vendor Profile - eRecyclo{% endblock %}
+{% block page_title %}Complete Your Profile{% endblock %}
+{% block page_subtitle %}Fill in all sections to submit for admin approval{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- REJECTION ALERT (if profile was rejected) -->
+    {% if profile_completion.approval_status == 'rejected' and profile_completion.rejection_reason %}
+    <div class="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 rounded-2xl p-5 shadow-lg">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <div class="size-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-2xl">cancel</span>
+                </div>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-bold text-red-900 dark:text-red-200 mb-1">Profile Rejected</h3>
+                <p class="text-sm text-red-800 dark:text-red-300 mb-3">
+                    Your profile was rejected by admin on {{ profile_completion.rejected_at|date:"F d, Y" }}. Please review the reason below and resubmit after making corrections.
+                </p>
+                <div class="bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Rejection Reason:</p>
+                    <p class="text-sm text-slate-900 dark:text-white whitespace-pre-wrap">{{ profile_completion.rejection_reason }}</p>
+                </div>
+                <div class="mt-4 flex items-center gap-2 text-xs">
+                    <span class="material-symbols-outlined text-amber-600 text-sm">info</span>
+                    <p class="text-amber-800 dark:text-amber-300 font-medium">
+                        You can update your information and documents below, then click "Submit for Review" to resubmit.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Profile Completion Header Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Vendor Profile Setup</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Complete all required fields to get approved</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Circular progress ring -->
+                <div class="relative size-16 flex-shrink-0">
+                    <svg class="size-16 -rotate-90" viewBox="0 0 56 56">
+                        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" class="text-slate-200 dark:text-slate-700" stroke-width="4"/>
+                        <circle cx="28" cy="28" r="24" fill="none"
+                            stroke="{% if completion_percentage == 100 %}#17cf17{% elif completion_percentage >= 50 %}#f59e0b{% else %}#ef4444{% endif %}"
+                            stroke-width="4"
+                            stroke-linecap="round"
+                            stroke-dasharray="{{ 150.796 }}"
+                            stroke-dashoffset="{{ 150.796|add:'-' }}{% widthratio completion_percentage 100 150 %}"
+                            style="stroke-dashoffset: calc(150.796px - (150.796px * {{ completion_percentage }} / 100))"/>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-sm font-bold {% if completion_percentage == 100 %}text-primary{% elif completion_percentage >= 50 %}text-amber-500{% else %}text-red-500{% endif %}">{{ completion_percentage }}%</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        {% if completion_percentage == 100 %}Ready to Submit!{% else %}{{ missing_fields|length }} field(s) remaining{% endif %}
+                    </p>
+                    {% if user.profile_completion.approval_status == 'approved' %}
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold text-primary mt-1"><span class="material-symbols-outlined" style="font-size:14px">verified</span> Approved</span>
+                    {% elif user.profile_completion.approval_status == 'pending' %}
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold text-amber-500 mt-1"><span class="material-symbols-outlined" style="font-size:14px">schedule</span> Under Review</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Step progress bar -->
+        <div class="mt-4 w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-700 {% if completion_percentage == 100 %}bg-primary{% elif completion_percentage >= 50 %}bg-amber-400{% else %}bg-red-400{% endif %}"
+                style="width: {{ completion_percentage }}%"></div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="vendorProfileForm" class="space-y-5" novalidate>
+        {% csrf_token %}
+
+        <!-- SECTION 1: Business Information -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-lg">business</span>
+                </div>
+                <h3 class="font-bold text-slate-900 dark:text-white">Business Information</h3>
+            </div>
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Contact Person <span class="text-red-500">*</span></label>
+                    {{ form.contact_person }}
+                    {% if form.contact_person.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.contact_person.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        Alternate Phone
+                        <span class="text-xs text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    {{ form.alternate_phone }}
+                    {% if form.alternate_phone.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.alternate_phone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Business Name <span class="text-red-500">*</span></label>
+                    {{ form.company_name }}
+                    {% if form.company_name.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.company_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Business Address <span class="text-red-500">*</span></label>
+                    {{ form.business_address }}
+                    {% if form.business_address.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.business_address.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                
+            </div>
+        </div>
+
+        <!-- SECTION 2: Business Location -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <div class="size-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-blue-500 text-lg">location_on</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-slate-900 dark:text-white">Business Location <span class="text-red-500">*</span></h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Toggle to fetch your current GPS coordinates</p>
+                </div>
+                <button type="button" id="locationToggle" onclick="toggleLocationFetch()"
+                    class="relative w-12 h-6 bg-gray-300 dark:bg-slate-600 rounded-full transition-colors">
+                    <span id="toggleDot" class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"></span>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                {{ form.latitude }}
+                {{ form.longitude }}
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Latitude</label>
+                        <input id="lat_display" readonly
+                            class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
+                            placeholder="00.000000"/>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Longitude</label>
+                        <input id="lng_display" readonly
+                            class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
+                            placeholder="00.000000"/>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <span class="material-symbols-outlined" style="font-size:14px">info</span>
+                    Toggle the switch above to auto-detect your business location
+                </p>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Profile Photo -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <div class="size-8 bg-violet-500/10 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-violet-500 text-lg">photo_camera</span>
+                </div>
+                <h3 class="font-bold text-slate-900 dark:text-white">Profile / Company Photo</h3>
+            </div>
+            <div class="p-6">
+                <div id="photoDropZone" class="upload-zone border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all {% if form.instance.profile_photo %}border-primary bg-primary/5{% endif %}">
+                    <input type="file" name="{{ form.profile_photo.html_name }}" id="id_profile_photo" accept="image/jpeg,image/png,image/jpg" class="hidden" onchange="previewPhoto(this)">
+                    <div id="photoPreviewArea">
+                        {% if form.instance.profile_photo %}
+                        <img src="{{ form.instance.profile_photo.url }}" alt="Current photo" class="size-20 rounded-xl object-cover mx-auto mb-3 border-2 border-primary">
+                        <p class="text-sm font-semibold text-primary mb-1">Photo uploaded ✓</p>
+                        <p class="text-xs text-slate-500">Click to change</p>
+                        {% else %}
+                        <span class="material-symbols-outlined text-4xl text-slate-400 mb-3 block">add_photo_alternate</span>
+                        <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Click to upload photo</p>
+                        <p class="text-xs text-slate-500">JPG, PNG up to 5MB</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <script>
+                    document.getElementById('photoDropZone').addEventListener('click', () => document.getElementById('id_profile_photo').click());
+                    function previewPhoto(input) {
+                        if (input.files && input.files[0]) {
+                            const reader = new FileReader();
+                            reader.onload = e => {
+                                document.getElementById('photoPreviewArea').innerHTML = `
+                                    <img src="${e.target.result}" class="size-20 rounded-xl object-cover mx-auto mb-3 border-2 border-primary">
+                                    <p class="text-sm font-semibold text-primary mb-1">Photo selected ✓</p>
+                                    <p class="text-xs text-slate-500">${input.files[0].name}</p>`;
+                                document.getElementById('photoDropZone').classList.add('border-primary', 'bg-primary/5');
+                            };
+                            reader.readAsDataURL(input.files[0]);
+                        }
+                    }
+                </script>
+            </div>
+        </div>
+
+        <!-- SECTION 5: Document ID Numbers -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <div class="size-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-purple-500 text-lg">pin</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white">Document Numbers</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Enter the ID numbers from your uploaded documents</p>
+                </div>
+            </div>
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">GSTIN Number <span class="text-red-500">*</span></label>
+                    {{ form.gstin_number }}
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">15-digit GSTIN (e.g., 27AABCU9603R1ZM)</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Business License Number <span class="text-red-500">*</span></label>
+                    {{ form.license_number }}
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">As shown on your business license</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Aadhaar Number <span class="text-red-500">*</span></label>
+                    {{ form.aadhaar_number }}
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">12-digit Aadhaar (will be masked)</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">PAN Number <span class="text-red-500">*</span></label>
+                    {{ form.pan_number }}
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">10-character PAN (e.g., ABCDE1234F)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: Documents -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <div class="size-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-amber-500 text-lg">folder_open</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white">Required Documents</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">PDF, JPG, PNG — max 5MB each</p>
+                </div>
+            </div>
+
+            
+            <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+                <!-- Business License -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Business License <span class="text-red-500">*</span>
+                        {% if form.instance.business_license %}
+                            <span class="ml-2 inline-flex items-center gap-0.5 text-xs font-semibold text-primary"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>Uploaded</span>
+                        {% endif %}
+                    </label>
+                    <label class="block upload-zone {% if form.instance.business_license %}uploaded{% endif %} border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all" id="biz_license_zone">
+                        {{ form.business_license }}
+                        <div id="biz_license_label">
+                            {% if form.instance.business_license %}
+                            <span class="material-symbols-outlined text-primary text-2xl block mb-1">task</span>
+                            <p class="text-xs font-semibold text-primary">Uploaded — click to replace</p>
+                            {% else %}
+                            <span class="material-symbols-outlined text-slate-400 text-2xl block mb-1">upload_file</span>
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Click to upload</p>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% if form.business_license.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.business_license.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- GST Certificate -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        GST Certificate <span class="text-red-500">*</span>
+                        {% if form.instance.gst_certificate %}
+                            <span class="ml-2 inline-flex items-center gap-0.5 text-xs font-semibold text-primary"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>Uploaded</span>
+                        {% endif %}
+                    </label>
+                    <label class="block upload-zone {% if form.instance.gst_certificate %}uploaded{% endif %} border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all" id="gst_zone">
+                        {{ form.gst_certificate }}
+                        <div id="gst_label">
+                            {% if form.instance.gst_certificate %}
+                            <span class="material-symbols-outlined text-primary text-2xl block mb-1">task</span>
+                            <p class="text-xs font-semibold text-primary">Uploaded — click to replace</p>
+                            {% else %}
+                            <span class="material-symbols-outlined text-slate-400 text-2xl block mb-1">upload_file</span>
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Click to upload</p>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% if form.gst_certificate.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.gst_certificate.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- E-Waste Authorization -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        E-Waste Authorization <span class="text-red-500">*</span>
+                        {% if form.instance.ewaste_authorization %}
+                            <span class="ml-2 inline-flex items-center gap-0.5 text-xs font-semibold text-primary"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>Uploaded</span>
+                        {% endif %}
+                    </label>
+                    <label class="block upload-zone {% if form.instance.ewaste_authorization %}uploaded{% endif %} border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all" id="ewaste_zone">
+                        {{ form.ewaste_authorization }}
+                        <div id="ewaste_label">
+                            {% if form.instance.ewaste_authorization %}
+                            <span class="material-symbols-outlined text-primary text-2xl block mb-1">task</span>
+                            <p class="text-xs font-semibold text-primary">Uploaded — click to replace</p>
+                            {% else %}
+                            <span class="material-symbols-outlined text-slate-400 text-2xl block mb-1">upload_file</span>
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Click to upload</p>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% if form.ewaste_authorization.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.ewaste_authorization.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- ID Proof -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        ID Proof (Aadhaar/PAN) <span class="text-red-500">*</span>
+                        {% if form.instance.id_proof %}
+                            <span class="ml-2 inline-flex items-center gap-0.5 text-xs font-semibold text-primary"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>Uploaded</span>
+                        {% endif %}
+                    </label>
+                    <label class="block upload-zone {% if form.instance.id_proof %}uploaded{% endif %} border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-4 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all" id="id_proof_zone">
+                        {{ form.id_proof }}
+                        <div id="id_proof_label">
+                            {% if form.instance.id_proof %}
+                            <span class="material-symbols-outlined text-primary text-2xl block mb-1">task</span>
+                            <p class="text-xs font-semibold text-primary">Uploaded — click to replace</p>
+                            {% else %}
+                            <span class="material-symbols-outlined text-slate-400 text-2xl block mb-1">upload_file</span>
+                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Click to upload</p>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% if form.id_proof.errors %}
+                        <p class="mt-1 text-xs text-red-500 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">error</span>{{ form.id_proof.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Missing Fields Alert -->
+        {% if missing_fields %}
+        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex gap-3">
+            <span class="material-symbols-outlined text-amber-500 flex-shrink-0">warning</span>
+            <div>
+                <p class="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">Required fields missing:</p>
+                <ul class="text-xs text-amber-700 dark:text-amber-400 space-y-0.5">
+                    {% for field in missing_fields %}
+                    <li class="flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:12px">arrow_right</span>{{ field|title }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Submit Button -->
+        <div class="flex flex-col sm:flex-row gap-3">
+            {% if user.profile_completion.approval_status == 'approved' %}
+            <div class="flex-1 flex items-center justify-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 py-3 rounded-xl font-semibold text-sm border border-green-300 dark:border-green-700">
+                <span class="material-symbols-outlined text-lg">verified</span>
+                Profile Approved — No changes needed
+            </div>
+            {% elif user.profile_completion.approval_status == 'pending' %}
+            <div class="flex-1 flex items-center justify-center gap-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 py-3 rounded-xl font-semibold text-sm border border-amber-300 dark:border-amber-700">
+                <span class="material-symbols-outlined text-lg">schedule</span>
+                Profile submitted — Awaiting admin approval
+            </div>
+            {% else %}
+            <button type="submit" class="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-forest text-white py-3 rounded-xl font-semibold text-sm transition-colors shadow-sm shadow-primary/20">
+                <span class="material-symbols-outlined text-lg">
+                    {% if profile_completion.approval_status == 'rejected' %}refresh{% else %}save{% endif %}
+                </span>
+                {% if profile_completion.approval_status == 'rejected' %}
+                    Resubmit for Review
+                {% elif completion_percentage == 100 %}
+                    Submit for Approval
+                {% else %}
+                    Save Progress
+                {% endif %}
+            </button>
+            {% endif %}
+            <a href="{% url 'vendor:dashboard' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-sm transition-colors">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                Back to Dashboard
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    input[type="file"] { display: none; }
+    .upload-zone.uploaded { border-color: #17cf17; background-color: rgb(23 207 23 / 0.05); }
+    textarea, input[type="text"], input[type="tel"], input[type="date"], select {
+        width: 100%;
+        padding: 0.625rem 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        color: #0f172a;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .dark textarea, .dark input[type="text"], .dark input[type="tel"], .dark input[type="date"], .dark select {
+        background: #1e293b;
+        border-color: #334155;
+        color: #f1f5f9;
+    }
+    textarea:focus, input[type="text"]:focus, input[type="tel"]:focus, input[type="date"]:focus, select:focus {
+        border-color: #17cf17;
+        box-shadow: 0 0 0 3px rgb(23 207 23 / 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// File upload UI feedback
+function setupFileUpload(inputId, zoneId, labelId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            const validExts = ['pdf', 'jpg', 'jpeg', 'png'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!validExts.includes(ext)) {
+                showToast('Invalid file format. Use PDF, JPG, or PNG only.', 'error');
+                this.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File too large. Maximum size is 5MB.', 'error');
+                this.value = '';
+                return;
+            }
+            const zone = document.getElementById(zoneId);
+            const label = document.getElementById(labelId);
+            if (zone) { zone.classList.add('uploaded'); zone.classList.add('border-primary'); }
+            if (label) {
+                label.innerHTML = `<span class="material-symbols-outlined text-primary text-2xl block mb-1">task</span>
+                    <p class="text-xs font-semibold text-primary">${file.name}</p>
+                    <p class="text-[10px] text-slate-500">${(file.size/1024).toFixed(0)} KB</p>`;
+            }
+        }
+    });
+}
+
+// Setup all doc upload zones with CORRECT IDs
+const docUploads = [
+    { name: 'business_license', zone: 'biz_license_zone', label: 'biz_license_label' },
+    { name: 'gst_certificate', zone: 'gst_zone', label: 'gst_label' },
+    { name: 'ewaste_authorization', zone: 'ewaste_zone', label: 'ewaste_label' },
+    { name: 'id_proof', zone: 'id_proof_zone', label: 'id_proof_label' }
+];
+
+docUploads.forEach(doc => {
+    setupFileUpload(`id_${doc.name}`, doc.zone, doc.label);
+});
+
+// Location fetch with toggle button
+
+let locationEnabled = false;
+
+function toggleLocationFetch() {
+    const btn = document.getElementById('locationToggle');
+    const dot = document.getElementById('toggleDot');
+    
+    locationEnabled = !locationEnabled;
+    
+    if (locationEnabled) {
+        // ON STATE - Green
+        btn.style.backgroundColor = '#17cf17';
+        dot.style.transform = 'translateX(24px)';
+        fetchLocation();
+    } else {
+        // OFF STATE - Gray
+        btn.style.backgroundColor = document.documentElement.classList.contains('dark') ? '#475569' : '#d1d5db';
+        dot.style.transform = 'translateX(0px)';
+        
+        // Clear values
+        document.getElementById('lat_display').value = '';
+        document.getElementById('lng_display').value = '';
+        document.getElementById('id_latitude').value = '';
+        document.getElementById('id_longitude').value = '';
+    }
+}
+
+function fetchLocation() {
+    if (!navigator.geolocation) {
+        alert('Geolocation not supported by your browser');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+
+            // ✅ Find latitude & longitude inputs dynamically
+            const latInput = document.querySelector('input[name="latitude"]');
+            const lngInput = document.querySelector('input[name="longitude"]');
+
+            if (latInput) latInput.value = lat;
+            if (lngInput) lngInput.value = lng;
+
+            // Update visible display fields
+            const latDisplay = document.getElementById('lat_display');
+            const lngDisplay = document.getElementById('lng_display');
+
+            if (latDisplay) latDisplay.value = lat;
+            if (lngDisplay) lngDisplay.value = lng;
+        },
+        function(error) {
+            alert('Could not detect location. Please allow location access.');
+            toggleLocationFetch();
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
+
+
+// Rest of your existing JavaScript (photo upload, etc.)
+document.getElementById('photoDropZone').addEventListener('click', () => document.getElementById('id_profile_photo').click());
+
+// Photo upload preview
+document.getElementById('id_profile_photo').addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+        
+        // Validate file
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (!validTypes.includes(file.type)) {
+            alert('Invalid file type. Please upload JPG or PNG only.');
+            this.value = '';
+            return;
+        }
+        
+        if (file.size > maxSize) {
+            alert('File too large. Maximum size is 5MB.');
+            this.value = '';
+            return;
+        }
+        
+        // Show preview
+        const label = document.querySelector('label[for="id_profile_photo"]');
+        if (label) {
+            label.classList.add('uploaded');
+            const icon = label.querySelector('.material-symbols-outlined');
+            const text = label.querySelector('p');
+            if (icon) icon.textContent = 'task';
+            if (text) text.textContent = 'Photo selected — click to replace';
+        }
+    }
+});
+
+// Document upload handlers with inline validation
+['business_license', 'gst_certificate', 'ewaste_authorization', 'id_proof'].forEach(docType => {
+    const input = document.getElementById(`id_${docType}`);
+    if (input) {
+        input.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                const maxSize = 5 * 1024 * 1024;
+                
+                if (!validTypes.includes(file.type)) {
+                    alert('Invalid file type. Please upload PDF, JPG, or PNG only.');
+                    this.value = '';
+                    return;
+                }
+                
+                if (file.size > maxSize) {
+                    alert('File too large. Maximum size is 5MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                const zone = document.getElementById(`${docType}_zone`);
+                const label = document.getElementById(`${docType}_label`);
+                if (zone) zone.classList.add('uploaded');
+                if (label) {
+                    label.innerHTML = `<span class="material-symbols-outlined text-primary text-2xl block mb-1">task</span>
+                                      <p class="text-xs font-semibold text-primary">Uploaded — click to replace</p>`;
+                }
+            }
+        });
+    }
+});
+
+function showToast(msg, type) {
+    const colors = {
+        success: 'bg-white border-green-200 text-green-700',
+        error: 'bg-white border-red-200 text-red-700',
+        warning: 'bg-white border-amber-200 text-amber-700',
+    };
+    const icons = { success: 'check_circle', error: 'error', warning: 'warning' };
+    let container = document.querySelector('.fixed.top-4.right-4');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'fixed top-4 right-4 flex flex-col gap-2 z-50 pointer-events-none';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `pointer-events-auto toast-item flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium min-w-[280px] max-w-sm ${colors[type] || colors.success}`;
+    toast.innerHTML = `<span class="material-symbols-outlined text-xl">${icons[type]}</span><span class="flex-1">${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; setTimeout(() => toast.remove(), 400); }, 4000);
+}
+
+// Pre-fill lat/lng display if already set
+document.addEventListener('DOMContentLoaded', function() {
+    const lat = document.getElementById('id_latitude')?.value;
+    const lng = document.getElementById('id_longitude')?.value;
+    if (lat && lng && lat !== '0' && lng !== '0') {
+        const statusText = document.getElementById('locStatusText');
+        if (statusText) statusText.textContent = 'Location already set';
+    }
+});
+</script>
+{% endblock %}

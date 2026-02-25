@@ -1,0 +1,259 @@
+/* ============================================
+   CUSTOM FORMS STYLING - ENTIRE ERECYCLO SYSTEM
+   Apply this to static/css/custom-forms.css
+   ============================================ */
+
+
+/* ============================================
+   SELECT DROPDOWN STYLING
+   ============================================ */
+
+select {
+    /* Remove default appearance */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    /* Custom styling */
+    width: 100%;
+    padding: 0.875rem 3rem 0.875rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    /* Custom dropdown arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    background-size: 1.25rem;
+}
+
+
+/* Hover state */
+
+select:hover {
+    border-color: #cbd5e1;
+    background-color: #fff;
+}
+
+
+/* Focus state */
+
+select:focus {
+    border-color: #17cf17;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
+}
+
+
+/* Dark mode */
+
+.dark select {
+    color: #f1f5f9;
+    background-color: #1e293b;
+    border-color: #334155;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+}
+
+.dark select:hover {
+    border-color: #475569;
+    background-color: #0f172a;
+}
+
+.dark select:focus {
+    border-color: #17cf17;
+    background-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
+}
+
+
+/* Disabled state */
+
+select:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.dark select:disabled {
+    background-color: #0f172a;
+    color: #475569;
+}
+
+
+/* ============================================
+   DROPDOWN OPTIONS STYLING
+   ============================================ */
+
+select option {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background-color: #fff;
+    color: #0f172a;
+}
+
+
+/* Selected/Hover option - PRIMARY GREEN */
+
+select option:hover,
+select option:focus,
+select option:checked,
+select option:active {
+    background-color: #e8f9e8 !important;
+    background: #e8f9e8 linear-gradient(0deg, #e8f9e8 0%, #e8f9e8 100%);
+    color: #17cf17 !important;
+    font-weight: 600;
+}
+
+
+/* Dark mode options */
+
+.dark select option {
+    background-color: #1e293b;
+    color: #f1f5f9;
+}
+
+.dark select option:hover,
+.dark select option:focus,
+.dark select option:checked,
+.dark select option:active {
+    background-color: rgba(23, 207, 23, 0.15) !important;
+    background: rgba(23, 207, 23, 0.15) linear-gradient(0deg, rgba(23, 207, 23, 0.15) 0%, rgba(23, 207, 23, 0.15) 100%);
+    color: #17cf17 !important;
+    font-weight: 600;
+}
+
+
+/* Firefox-specific styling */
+
+@-moz-document url-prefix() {
+    select option:checked {
+        background: #e8f9e8 !important;
+        color: #17cf17 !important;
+        font-weight: 600;
+    }
+}
+
+
+/* ============================================
+   INPUT & TEXTAREA STYLING
+   ============================================ */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+input:hover,
+textarea:hover {
+    border-color: #cbd5e1;
+    background-color: #fff;
+}
+
+input:focus,
+textarea:focus {
+    border-color: #17cf17;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
+}
+
+
+/* Dark mode */
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark input[type="date"],
+.dark textarea {
+    color: #f1f5f9;
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark input:hover,
+.dark textarea:hover {
+    border-color: #475569;
+    background-color: #0f172a;
+}
+
+.dark input:focus,
+.dark textarea:focus {
+    border-color: #17cf17;
+    background-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
+}
+
+
+/* Disabled state */
+
+input:disabled,
+textarea:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.dark input:disabled,
+.dark textarea:disabled {
+    background-color: #0f172a;
+    color: #475569;
+}
+
+
+/* ============================================
+   REMOVE NUMBER INPUT SPINNERS
+   ============================================ */
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+
+/* ============================================
+   PLACEHOLDER STYLING
+   ============================================ */
+
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark select::placeholder {
+    color: #64748b;
+}

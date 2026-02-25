@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Decline Re-evaluation - eRecyclo{% endblock %}
+{% block page_title %}Decline Re-evaluation{% endblock %}
+{% block page_subtitle %}Record why you cannot offer a higher evaluation{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto space-y-5">
+
+    <!-- Item Summary -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex gap-4">
+        {% if item.photo %}
+        <img src="{{ item.photo.url }}" alt="{{ item.title }}" class="w-20 h-20 object-cover rounded-xl flex-shrink-0 border border-slate-100">
+        {% endif %}
+        <div>
+            <h3 class="font-bold text-slate-900 dark:text-white">{{ item.title }}</h3>
+            <p class="text-sm text-slate-500">{{ item.get_ai_category_display }} · Client: {{ item.user.get_full_name }}</p>
+            {% if item.rejection_count %}
+            <p class="text-xs text-orange-600 mt-1">Client has rejected {{ item.rejection_count }} offer{{ item.rejection_count|pluralize }} so far</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Last Offer Info -->
+    {% if last_offer %}
+    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-4">
+        <p class="text-xs font-bold text-green-600 mb-2">Your Last Offer (will be preserved for client to accept):</p>
+        <div class="flex items-center gap-4">
+            <span class="text-2xl font-bold text-green-700 dark:text-green-400">₹{{ last_offer.vendor_final_value|default:"0" }}</span>
+            <span class="text-amber-600 font-semibold">+{{ last_offer.eco_points_awarded|default:0 }} eco-points</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Warning -->
+    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex gap-3">
+        <span class="material-symbols-outlined text-amber-500 flex-shrink-0">warning</span>
+        <div class="text-sm text-amber-800 dark:text-amber-300">
+            <p class="font-bold mb-1">After you decline, the client can:</p>
+            <ul class="space-y-0.5 text-amber-700 dark:text-amber-400">
+                <li>• <strong>Accept your last offer</strong> of ₹{{ last_offer.vendor_final_value|default:"0" }}</li>
+                <li>• <strong>Request item return</strong> (new collector assigned)</li>
+                <li>• <strong>Transfer to another vendor</strong> within 5km</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Decline Form -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+            <h3 class="font-bold text-slate-900 dark:text-white">Reason for Declining</h3>
+        </div>
+        <form method="POST" class="p-6 space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Explain why you cannot offer a higher amount <span class="text-red-500">*</span>
+                </label>
+                <textarea name="decline_reason" rows="5" required
+                          placeholder="e.g. The item has severe damage that limits its recycling value. The components we can recover are worth a maximum of ₹XXX after processing costs..."
+                          class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"></textarea>
+                <p class="text-xs text-slate-400 mt-1">This reason will be shown to the client to help them understand their options.</p>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit"
+                        class="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition-colors">
+                    <span class="material-symbols-outlined">block</span>
+                    Confirm Decline
+                </button>
+                <a href="{% url 'vendor:accepted_items' %}?tab=reevaluation"
+                   class="px-6 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-sm transition-colors flex items-center">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <p class="text-center text-xs text-slate-400">
+        Changed your mind? You can still
+        <a href="{% url 'vendor:evaluate_item' item.pk %}" class="text-primary hover:underline font-medium">submit a new evaluation instead</a>.
+    </p>
+
+</div>
+{% endblock %}

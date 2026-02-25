@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Item Details{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto space-y-5">
+
+    <!-- Main Item Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="md:flex">
+            <div class="md:w-1/2">
+                <img src="{{ post.photo.url }}" alt="{{ post.title }}" class="w-full h-full object-cover min-h-64">
+            </div>
+            <div class="md:w-1/2 p-6 space-y-4">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{{ post.title }}</h2>
+                    <span class="inline-flex items-center px-3 py-1 text-xs font-bold rounded-full flex-shrink-0 bg-primary/10 text-primary border border-primary/20">
+                        {% if transaction_status == 'completed' %}Completed
+                        {% elif transaction_status == 'transferred' %}Transferred
+                        {% elif transaction_status == 'returned' %}Returned
+                        {% elif transaction_status == 'declined' %}Declined
+                        {% else %}Active{% endif %}
+                    </span>
+                </div>
+
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Client</span>
+                        <span class="font-medium text-slate-900 dark:text-white">{{ post.user.get_full_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Category</span>
+                        <span class="font-medium text-slate-900 dark:text-white">{{ post.get_ai_category_display }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">AI Estimated Value</span>
+                        <span class="font-bold text-primary">₹{{ post.ai_estimated_value }}</span>
+                    </div>
+                    {% if accepted_offer %}
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Your Final Offer</span>
+                        <span class="font-bold text-primary">₹{{ accepted_offer.vendor_final_value }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Client Address</span>
+                        <span class="text-sm text-slate-600 text-right max-w-48">{{ post.address }}</span>
+                    </div>
+                </div>
+
+                <a href="{% url 'vendor:accepted_items' %}" class="block text-center border border-slate-200 dark:border-slate-700 text-slate-600 px-6 py-2 rounded-xl hover:bg-slate-50 text-sm font-medium transition-colors">
+                    ← Back to Accepted Items
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Banner -->
+    {% if was_previous_vendor %}
+    <div class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-3">
+        <span class="material-symbols-outlined text-slate-600 text-2xl">info</span>
+        <div>
+            <h3 class="font-bold text-slate-900 dark:text-white">Transferred Item - Read Only</h3>
+            <p class="text-sm text-slate-600">This item was transferred to another vendor. Below is the complete transaction history.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Delivery OTP (only for current vendor) -->
+    {% if is_current_vendor and post.delivery_otp and post.status == 'in_transit' %}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border-2 border-primary overflow-hidden">
+        <div class="p-5 flex items-start justify-between gap-4">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-primary">key</span>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Your Delivery OTP</h3>
+                </div>
+                <p class="text-sm text-slate-600">The collector is on their way to you. Share this OTP when they arrive.</p>
+            </div>
+            <div class="text-center flex-shrink-0">
+                <div class="text-4xl font-black tracking-widest text-primary font-mono bg-primary/5 border-2 border-primary rounded-xl px-4 py-3">{{ post.delivery_otp }}</div>
+                <p class="text-xs text-slate-500 mt-1">Delivery OTP</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Return Pickup OTP (only for current vendor) -->
+    {% if is_current_vendor and post.return_pickup_otp and post.status == 'return_pickup_scheduled' %}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border-2 border-primary overflow-hidden">
+        <div class="p-5 flex items-start justify-between gap-4">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-primary">key</span>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Return Pickup OTP</h3>
+                </div>
+                <p class="text-sm text-slate-600">Collector will pick up this item for return to client. Share this OTP.</p>
+            </div>
+            <div class="text-center flex-shrink-0">
+                <div class="text-4xl font-black tracking-widest text-primary font-mono bg-primary/5 border-2 border-primary rounded-xl px-4 py-3">{{ post.return_pickup_otp }}</div>
+                <p class="text-xs text-slate-500 mt-1">Pickup OTP</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════════════════════════
+         COMPLETE TRANSACTION HISTORY - ALL VENDORS
+         Shows history separated by each vendor (read-only)
+         ══════════════════════════════════════════════════════════════════════════ -->
+    {% if vendor_history %}
+    <div class="space-y-4">
+        <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">history</span>
+            Complete Transaction History
+        </h3>
+        
+        {% for vh in vendor_history %}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border {% if vh.is_this_vendor %}border-2 border-primary{% else %}border-slate-200 dark:border-slate-700{% endif %} overflow-hidden">
+            
+            <!-- Vendor Header -->
+            <div class="px-5 py-3 {% if vh.is_this_vendor %}bg-primary/5{% else %}bg-slate-50 dark:bg-slate-900{% endif %} border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-full {% if vh.is_this_vendor %}bg-primary{% else %}bg-slate-400{% endif %} text-white flex items-center justify-center">
+                        <span class="text-sm font-bold">V{{ vh.order }}</span>
+                    </div>
+                    <div>
+                        <p class="font-bold text-slate-900 dark:text-white">
+                            {{ vh.vendor.get_full_name }}
+                            {% if vh.is_this_vendor %}<span class="text-xs text-primary ml-1">(You)</span>{% endif %}
+                        </p>
+                        <p class="text-xs text-slate-500">{{ vh.vendor.email }}</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 text-xs font-bold rounded-full 
+                    {% if vh.is_current %}bg-primary text-white
+                    {% elif vh.final_status == 'completed' %}bg-primary/10 text-primary border border-primary/20
+                    {% else %}bg-slate-200 text-slate-700{% endif %}">
+                    {% if vh.is_current %}Current Vendor
+                    {% elif vh.final_status == 'transferred' %}Transferred
+                    {% elif vh.final_status == 'completed' %}Completed
+                    {% elif vh.final_status == 'returned' %}Returned
+                    {% else %}{{ vh.final_status|title }}{% endif %}
+                </span>
+            </div>
+            
+            <!-- Stats Row -->
+            <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-700 grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ vh.total_offers }}</p>
+                    <p class="text-xs text-slate-500">Total Offers</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ vh.rejected_offers }}</p>
+                    <p class="text-xs text-slate-500">Rejected</p>
+                </div>
+                <div>
+                    {% if vh.accepted_offer %}
+                    <p class="text-2xl font-bold text-primary">₹{{ vh.accepted_offer.vendor_final_value }}</p>
+                    <p class="text-xs text-slate-500">Final Value</p>
+                    {% else %}
+                    <p class="text-2xl font-bold text-slate-400">—</p>
+                    <p class="text-xs text-slate-500">No Final</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Client Info (shown for all vendors) -->
+            <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4">
+                <div class="size-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-500">person</span>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500">Client</p>
+                    <p class="font-semibold text-slate-900 dark:text-white">{{ post.user.get_full_name }}</p>
+                    <p class="text-xs text-slate-500">{{ post.user.email }}</p>
+                </div>
+            </div>
+            
+            <!-- Offer Timeline -->
+            <div class="px-5 py-4">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
+                    {% if vh.is_this_vendor %}Your Offer Timeline{% else %}Vendor's Offer Timeline (Read Only){% endif %}
+                </p>
+                <div class="space-y-3">
+                    {% for eval in vh.evaluations %}
+                    <div class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                        <div class="flex-shrink-0 size-8 rounded-full flex items-center justify-center {% if vh.is_this_vendor %}bg-primary{% else %}bg-slate-400{% endif %} text-white text-xs font-bold">
+                            #{{ forloop.counter }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2 mb-1">
+                                <span class="font-bold text-slate-900 dark:text-white">₹{{ eval.vendor_final_value|default:"0" }}</span>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold
+                                    {% if eval.rejected_by_client %}bg-slate-200 text-slate-700{% else %}bg-primary/10 text-primary{% endif %}">
+                                    {% if eval.rejected_by_client %}Rejected{% else %}{% if vh.final_status == 'completed' %}Accepted{% else %}Pending{% endif %}{% endif %}
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">{{ eval.evaluated_at|date:"M d, Y H:i" }}</p>
+                            
+                            {% if eval.evaluation_type %}
+                            <p class="text-xs text-slate-600 mt-2"><strong>Type:</strong> {{ eval.evaluation_type|title }}</p>
+                            {% endif %}
+                            
+                            {% if eval.condition_notes %}
+                            <div class="mt-2 p-2 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-600">
+                                <p class="text-xs text-slate-500 mb-1">Condition Notes</p>
+                                <p class="text-xs text-slate-700 dark:text-slate-300">{{ eval.condition_notes }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if eval.vendor_remarks %}
+                            <div class="mt-2 p-2 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-600">
+                                <p class="text-xs text-slate-500 mb-1">Remarks</p>
+                                <p class="text-xs text-slate-700 dark:text-slate-300">{{ eval.vendor_remarks }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if eval.price_breakdown %}
+                            <div class="mt-2 p-2 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-600">
+                                <p class="text-xs text-slate-500 mb-1">Price Breakdown</p>
+                                <p class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line">{{ eval.price_breakdown }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if eval.rejection_reason %}
+                            <div class="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-600">
+                                <p class="text-xs text-slate-500 mb-1">Client's Rejection Reason</p>
+                                <p class="text-xs text-slate-700 dark:text-slate-300">{{ eval.rejection_reason }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-slate-400 italic">No offers made yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

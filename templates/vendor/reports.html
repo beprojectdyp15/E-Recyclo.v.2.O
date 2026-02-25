@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block page_content %}
+<div class="space-y-6">
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-sm text-gray-500 mb-2">Total Accepted</h3>
+            <p class="text-3xl font-bold text-green-600">{{ total_accepted }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-sm text-gray-500 mb-2">Total Rejected</h3>
+            <p class="text-3xl font-bold text-red-600">{{ total_rejected }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-sm text-gray-500 mb-2">Total Revenue</h3>
+            <p class="text-3xl font-bold text-nature-600">₹{{ total_revenue }}</p>
+        </div>
+    </div>
+    
+    <!-- Monthly Stats -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">Monthly Statistics ({{ current_year }})</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-2">Month</th>
+                        <th class="text-right py-2">Items</th>
+                        <th class="text-right py-2">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in monthly_stats %}
+                        <tr class="border-b">
+                            <td class="py-2">{{ stat.month|date:"F" }}</td>
+                            <td class="text-right">{{ stat.count }}</td>
+                            <td class="text-right">₹{{ stat.value }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

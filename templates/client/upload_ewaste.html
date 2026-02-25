@@ -1,0 +1,654 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload E-Waste - eRecyclo{% endblock %}
+{% block page_title %}Upload E-Waste{% endblock %}
+{% block page_subtitle %}Let our AI identify your e-waste automatically{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto">
+
+<form method="POST" enctype="multipart/form-data" id="uploadForm">
+{% csrf_token %}
+
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 space-y-6">
+
+        <!-- ========================================
+             IMAGE UPLOAD WITH AI SCANNING
+             ======================================== -->
+        <div class="border-2 border-dashed border-primary rounded-2xl p-12 text-center relative" id="uploadArea">
+            
+            <!-- UPLOAD PROMPT -->
+            <div id="uploadPrompt">
+                <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-primary text-4xl">photo_camera</span>
+                </div>
+                <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Upload E-Waste Photo</h3>
+                <p class="text-slate-500 dark:text-slate-400 mb-6">
+                    Our AI will automatically identify the category
+                </p>
+                <button type="button" onclick="document.getElementById('id_photo').click()"
+                    class="inline-block bg-primary text-white px-8 py-3 rounded-xl font-semibold cursor-pointer hover:bg-forest shadow-lg shadow-primary/20 transition-colors">
+                    Select Image
+                </button>
+                <input type="file" name="photo" id="id_photo" accept="image/*" style="display: none;">
+            </div>
+
+            <!-- AI SCANNING ANIMATION -->
+            <div id="scanningAnimation" class="hidden">
+                <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                    <span class="material-symbols-outlined text-primary text-5xl animate-pulse">smart_toy</span>
+                    <div class="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">AI Scanning...</h3>
+                <p class="text-slate-500 dark:text-slate-400 mb-4">Analyzing e-waste category</p>
+                <div class="w-64 mx-auto bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div id="scanProgress" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="scanStatus" class="text-xs text-slate-500 dark:text-slate-400 mt-2">Initializing...</p>
+            </div>
+
+            <!-- AI DETECTION RESULT -->
+            <div id="detectionResult" class="hidden">
+                <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-primary text-5xl" id="categoryIcon">check_circle</span>
+                </div>
+                <div class="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-3">
+                    <span class="material-symbols-outlined text-primary text-sm">smart_toy</span>
+                    <span class="text-xs font-bold text-primary">AI DETECTED</span>
+                    <span class="text-xs font-bold text-primary" id="confidencePercent">0%</span>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2" id="categoryName">Category</h3>
+                <p class="text-slate-500 dark:text-slate-400 mb-4" id="categoryDesc">Description</p>
+                
+                <!-- ACTION BUTTONS - ALWAYS VISIBLE -->
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <button type="button" onclick="retryUpload()"
+                        class="px-6 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <span class="material-symbols-outlined text-base align-middle">refresh</span>
+                        Change Photo
+                    </button>
+                    <button type="button" onclick="toggleManualSelect()"
+                        class="px-6 py-2 border border-primary text-primary rounded-lg text-sm font-semibold hover:bg-primary/5 transition-colors">
+                        <span class="material-symbols-outlined text-base align-middle">edit</span>
+                        Change Category
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILE PREVIEW -->
+            <div id="filePreviewCard" class="hidden mt-6">
+                <img id="imagePreview" class="max-w-full h-auto rounded-lg border border-slate-200 dark:border-slate-700 mx-auto" style="max-height: 300px"/>
+            </div>
+
+        </div>
+        <!-- END UPLOAD AREA -->
+
+        <!-- ========================================
+             MANUAL CATEGORY SELECTION (OUTSIDE BORDER)
+             ======================================== -->
+        <div id="manualCategorySection" class="hidden">
+            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">category</span>
+                Select Different Category
+            </label>
+            <select id="manualCategory" class="styled-select w-full">
+                <option value="">Choose a category...</option>
+                {% for cat in categories %}
+                <option value="{{ cat.value }}" data-icon="{{ cat.icon }}" data-label="{{ cat.label }}" data-desc="{{ cat.description }}">
+                    {{ cat.label }} - {{ cat.description }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="button" onclick="applyManualCategory()"
+                class="mt-3 w-full bg-primary hover:bg-forest text-white py-3 rounded-xl font-semibold transition-colors">
+                Apply Category
+            </button>
+        </div>
+
+        <!-- HIDDEN AI FIELDS -->
+        <input type="hidden" name="ai_category" id="aiCategory">
+        <input type="hidden" name="ai_confidence" id="aiConfidence">
+
+        
+
+
+        {{ form.latitude }}
+        {{ form.longitude }}
+
+        <!-- ========================================
+             PRODUCT NAME
+             ======================================== -->
+        <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Product Name <span class="text-red-500">*</span>
+            </label>
+            {{ form.title }}
+        </div>
+
+        <!-- ========================================
+             DESCRIPTION
+             ======================================== -->
+        <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Description</label>
+            {{ form.description }}
+        </div>
+
+        <!-- ========================================
+             PICKUP ADDRESS
+             ======================================== -->
+        <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Pickup Address <span class="text-red-500">*</span>
+            </label>
+            {{ form.address }}
+        </div>
+
+        <!-- ========================================
+             LOCATION TOGGLE
+             ======================================== -->
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Location <span class="text-red-500">*</span>
+                </label>
+                <button type="button" id="locationToggle" onclick="toggleLocationFetch()"
+                    class="relative w-12 h-6 bg-gray-300 dark:bg-slate-600 rounded-full transition-colors">
+                    <span id="toggleDot" class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"></span>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Latitude</label>
+                    <input id="lat_display" readonly
+                        class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
+                        placeholder="00.000000"/>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Longitude</label>
+                    <input id="lng_display" readonly
+                        class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
+                        placeholder="00.000000"/>
+                </div>
+            </div>
+        </div>
+
+
+        <div>
+            <label class="text-sm font-medium text-gray-700">Quantity *</label>
+            {{ form.quantity }}
+        </div>
+
+        <!-- WEIGHT AND SIZE - For Collector Vehicle Matching -->
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-sm font-medium text-gray-700">Estimated Weight</label>
+                {{ form.estimated_weight }}
+                <p class="text-xs text-gray-400 mt-1">Helps assign the right collector vehicle</p>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700">Item Size</label>
+                {{ form.item_size }}
+                <p class="text-xs text-gray-400 mt-1">How big is the item?</p>
+            </div>
+        </div>
+
+        <!-- AI CONDITION -->
+        <div>
+            <label class="text-sm font-medium ">AI Detected Condition</label>
+            <input value="Condition - Excellent/Good/Fair/Poor/Bad" readonly
+            class="w-full bg-gray-100 border border-dashed border-nature-500 rounded-xl px-4 py-3 text-nature-200 font-medium text-xs"/>
+        </div>
+
+
+        <!-- ========================================
+             SUBMIT BUTTON
+             ======================================== -->
+        <div class="pt-4">
+            <button type="submit" id="submitBtn" disabled
+                class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 py-4 rounded-xl font-semibold cursor-not-allowed transition-all">
+                Submit Request
+            </button>
+        </div>
+
+    </div>
+
+</form>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   CUSTOM FORM STYLING
+   ============================================ */
+input[type="file"] { 
+    display: none; 
+}
+
+textarea, 
+input[type="text"], 
+input[type="tel"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    color: #0f172a;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.dark textarea, 
+.dark input[type="text"], 
+.dark input[type="tel"] {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+textarea:focus, 
+input[type="text"]:focus, 
+input[type="tel"]:focus {
+    border-color: #17cf17;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
+    background: #fff;
+}
+
+.dark textarea:focus, 
+.dark input[type="text"]:focus, 
+.dark input[type="tel"]:focus {
+    border-color: #17cf17;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
+    background: #0f172a;
+}
+
+/* ============================================
+   STYLED SELECT DROPDOWN
+   ============================================ */
+.styled-select,
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding: 0.875rem 3rem 0.875rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.875rem center;
+    background-size: 1.25rem;
+}
+
+.styled-select:hover,
+select:hover {
+    border-color: #cbd5e1;
+    background-color: #fff;
+}
+
+.styled-select:focus,
+select:focus {
+    outline: none;
+    border-color: #17cf17;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
+}
+
+/* Dark mode select */
+.dark .styled-select,
+.dark select {
+    color: #f1f5f9;
+    background-color: #1e293b;
+    border-color: #334155;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+}
+
+.dark .styled-select:hover,
+.dark select:hover {
+    border-color: #475569;
+    background-color: #0f172a;
+}
+
+.dark .styled-select:focus,
+.dark select:focus {
+    border-color: #17cf17;
+    background-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
+}
+
+/* Select options styling */
+.styled-select option,
+select option {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background-color: #fff;
+    color: #0f172a;
+}
+
+.styled-select option:hover,
+.styled-select option:checked,
+select option:hover,
+select option:checked {
+    background-color: #e8f9e8 !important;
+    background: #e8f9e8 linear-gradient(0deg, #e8f9e8 0%, #e8f9e8 100%);
+    color: #17cf17 !important;
+    font-weight: 600;
+}
+
+.dark .styled-select option,
+.dark select option {
+    background-color: #1e293b;
+    color: #f1f5f9;
+}
+
+.dark .styled-select option:hover,
+.dark .styled-select option:checked,
+.dark select option:hover,
+.dark select option:checked {
+    background-color: rgba(23, 207, 23, 0.15) !important;
+    background: rgba(23, 207, 23, 0.15) linear-gradient(0deg, rgba(23, 207, 23, 0.15) 0%, rgba(23, 207, 23, 0.15) 100%);
+    color: #17cf17 !important;
+    font-weight: 600;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let locationEnabled = false;
+let aiDetectedCategory = null;
+
+// ============================================
+// PHOTO UPLOAD AND AI DETECTION
+// ============================================
+document.getElementById('id_photo').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        this.value = '';
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        this.value = '';
+        return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('imagePreview').src = e.target.result;
+        document.getElementById('filePreviewCard').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+
+    // Show scanning animation
+    document.getElementById('uploadPrompt').classList.add('hidden');
+    document.getElementById('scanningAnimation').classList.remove('hidden');
+
+    // Simulate scanning progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 5;
+        document.getElementById('scanProgress').style.width = progress + '%';
+        
+        if (progress < 30) document.getElementById('scanStatus').textContent = 'Loading image...';
+        else if (progress < 60) document.getElementById('scanStatus').textContent = 'Running AI model...';
+        else if (progress < 90) document.getElementById('scanStatus').textContent = 'Analyzing category...';
+        
+        if (progress >= 95) clearInterval(progressInterval);
+    }, 100);
+
+    // Call AI prediction API
+    try {
+        const formData = new FormData();
+        formData.append('photo', file);
+
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        // Complete progress
+        clearInterval(progressInterval);
+        document.getElementById('scanProgress').style.width = '100%';
+        document.getElementById('scanStatus').textContent = 'Complete!';
+
+        setTimeout(() => {
+            if (result.success) {
+                showDetectionResult(result);
+            } else {
+                alert('AI detection failed: ' + (result.error || 'Unknown error'));
+                showManualSelect();
+            }
+        }, 500);
+
+    } catch (error) {
+        clearInterval(progressInterval);
+        console.error('Prediction error:', error);
+        alert('AI detection failed. Please select category manually.');
+        showManualSelect();
+    }
+});
+
+// ============================================
+// SHOW DETECTION RESULT
+// ============================================
+function showDetectionResult(result) {
+    document.getElementById('scanningAnimation').classList.add('hidden');
+    document.getElementById('detectionResult').classList.remove('hidden');
+
+    // Populate results
+    document.getElementById('categoryIcon').textContent = result.icon || 'check_circle';
+    document.getElementById('categoryName').textContent = result.display_name;
+    document.getElementById('categoryDesc').textContent = result.description;
+    document.getElementById('confidencePercent').textContent = Math.round(result.confidence) + '%';
+
+    // Store AI category
+    aiDetectedCategory = result.category;
+    document.getElementById('aiCategory').value = result.category;
+    document.getElementById('aiConfidence').value = result.confidence;
+
+    // Enable submit button
+    enableSubmitButton();
+}
+
+// ============================================
+// RETRY UPLOAD (CHANGE PHOTO)
+// ============================================
+function retryUpload() {
+    document.getElementById('id_photo').value = '';
+    document.getElementById('detectionResult').classList.add('hidden');
+    document.getElementById('manualCategorySection').classList.add('hidden');
+    document.getElementById('uploadPrompt').classList.remove('hidden');
+    document.getElementById('filePreviewCard').classList.add('hidden');
+    document.getElementById('aiCategory').value = '';
+    document.getElementById('aiConfidence').value = '';
+    disableSubmitButton();
+}
+
+// ============================================
+// TOGGLE MANUAL CATEGORY SELECTION
+// ============================================
+function toggleManualSelect() {
+    const section = document.getElementById('manualCategorySection');
+    if (section.classList.contains('hidden')) {
+        section.classList.remove('hidden');
+        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        section.classList.add('hidden');
+    }
+}
+
+// ============================================
+// APPLY MANUAL CATEGORY
+// ============================================
+function applyManualCategory() {
+    const select = document.getElementById('manualCategory');
+    if (!select.value) {
+        alert('Please select a category');
+        return;
+    }
+    
+    const selectedOption = select.options[select.selectedIndex];
+    const categoryValue = select.value;
+    const categoryLabel = selectedOption.getAttribute('data-label') || selectedOption.text.split(' - ')[0];
+    const categoryDesc = selectedOption.getAttribute('data-desc') || selectedOption.text.split(' - ')[1] || '';
+    const categoryIcon = selectedOption.getAttribute('data-icon') || 'check_circle';
+    
+    // Update AI category fields
+    document.getElementById('aiCategory').value = categoryValue;
+    document.getElementById('aiConfidence').value = 100;
+    
+    // Update detection result display
+    document.getElementById('categoryName').textContent = categoryLabel;
+    document.getElementById('categoryDesc').textContent = categoryDesc;
+    document.getElementById('categoryIcon').textContent = categoryIcon;
+    document.getElementById('confidencePercent').textContent = '100% (Manual)';
+    
+    // Update icon color to show manual selection
+    const iconElement = document.getElementById('categoryIcon');
+    iconElement.classList.remove('text-primary');
+    iconElement.classList.add('text-green-500');
+    
+    // Show detection result if hidden
+    if (document.getElementById('detectionResult').classList.contains('hidden')) {
+        document.getElementById('scanningAnimation').classList.add('hidden');
+        document.getElementById('uploadPrompt').classList.add('hidden');
+        document.getElementById('detectionResult').classList.remove('hidden');
+    }
+    
+    // Hide manual section
+    document.getElementById('manualCategorySection').classList.add('hidden');
+    
+    // Enable submit
+    enableSubmitButton();
+}
+
+// ============================================
+// SHOW MANUAL SELECT (FALLBACK)
+// ============================================
+function showManualSelect() {
+    document.getElementById('scanningAnimation').classList.add('hidden');
+    document.getElementById('uploadPrompt').classList.add('hidden');
+    document.getElementById('manualCategorySection').classList.remove('hidden');
+    
+    document.getElementById('manualCategory').addEventListener('change', function() {
+        if (this.value) {
+            applyManualCategory();
+        }
+    });
+}
+
+// ============================================
+// ENABLE/DISABLE SUBMIT BUTTON
+// ============================================
+function enableSubmitButton() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = false;
+    btn.classList.remove('bg-slate-300', 'dark:bg-slate-700', 'text-slate-500', 'dark:text-slate-400', 'cursor-not-allowed');
+    btn.classList.add('bg-primary', 'hover:bg-forest', 'text-white', 'cursor-pointer');
+}
+
+function disableSubmitButton() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.classList.add('bg-slate-300', 'dark:bg-slate-700', 'text-slate-500', 'dark:text-slate-400', 'cursor-not-allowed');
+    btn.classList.remove('bg-primary', 'hover:bg-forest', 'text-white', 'cursor-pointer');
+}
+
+// ============================================
+// LOCATION TOGGLE
+// ============================================
+function toggleLocationFetch() {
+    const btn = document.getElementById('locationToggle');
+    const dot = document.getElementById('toggleDot');
+    locationEnabled = !locationEnabled;
+    
+    if (locationEnabled) {
+        btn.style.backgroundColor = '#17cf17';
+        dot.style.transform = 'translateX(24px)';
+        fetchLocation();
+    } else {
+        btn.style.backgroundColor = document.documentElement.classList.contains('dark') ? '#475569' : '#d1d5db';
+        dot.style.transform = 'translateX(0px)';
+        document.getElementById('lat_display').value = '';
+        document.getElementById('lng_display').value = '';
+        const latInput = document.querySelector('input[name="latitude"]');
+        const lngInput = document.querySelector('input[name="longitude"]');
+        if (latInput) latInput.value = '';
+        if (lngInput) lngInput.value = '';
+    }
+}
+
+function fetchLocation() {
+    if (!navigator.geolocation) {
+        alert('Geolocation not supported by your browser');
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+            
+            const latInput = document.querySelector('input[name="latitude"]');
+            const lngInput = document.querySelector('input[name="longitude"]');
+            
+            if (latInput) latInput.value = lat;
+            if (lngInput) lngInput.value = lng;
+            
+            document.getElementById('lat_display').value = lat;
+            document.getElementById('lng_display').value = lng;
+        },
+        function(error) {
+            alert('Could not detect location. Please allow location access and try again.');
+            toggleLocationFetch();
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
+</script>
+{% endblock %}

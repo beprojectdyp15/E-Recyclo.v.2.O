@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% block title %}Evaluate Item - eRecyclo{% endblock %}
+{% block page_title %}Physical Inspection & Evaluation{% endblock %}
+{% block page_subtitle %}Inspect the item and submit your offer to the client{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Item Info -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Item Being Evaluated</h3>
+            {% if item.offer_count > 0 %}
+            <span class="text-xs font-bold px-3 py-1 bg-orange-100 text-orange-700 rounded-full">Re-evaluation #{{ item.offer_count|add:"1" }}</span>
+            {% endif %}
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                {% if item.photo %}<img src="{{ item.photo.url }}" alt="{{ item.title }}" class="w-full h-56 object-cover rounded-xl border border-slate-200 dark:border-slate-700">{% endif %}
+                <div class="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
+                    <p class="text-xs font-bold text-blue-700 dark:text-blue-400 mb-1">AI Initial Estimate</p>
+                    <p class="text-2xl font-bold text-blue-600">₹{{ item.ai_estimated_value }}</p>
+                </div>
+            </div>
+            <div class="space-y-3 text-sm">
+                <h4 class="text-xl font-bold text-slate-900 dark:text-white">{{ item.title }}</h4>
+                {% if item.description %}<p class="text-slate-500 dark:text-slate-400">{{ item.description }}</p>{% endif %}
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-700"><p class="text-xs text-slate-400 mb-0.5">Category</p><p class="font-semibold text-slate-900 dark:text-white text-xs">{{ item.get_ai_category_display }}</p></div>
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-700"><p class="text-xs text-slate-400 mb-0.5">Condition (AI)</p><p class="font-semibold text-slate-900 dark:text-white text-xs">{{ item.get_ai_condition_display }}</p></div>
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-700"><p class="text-xs text-slate-400 mb-0.5">Client</p><p class="font-semibold text-slate-900 dark:text-white text-xs">{{ item.user.get_full_name }}</p></div>
+                    <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-2 border border-slate-200 dark:border-slate-700"><p class="text-xs text-slate-400 mb-0.5">Quantity</p><p class="font-semibold text-slate-900 dark:text-white text-xs">{{ item.quantity }}</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PREVIOUS OFFER HISTORY ── shown only on re-evaluations -->
+    {% if history %}
+    <div class="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-2xl overflow-hidden">
+        <div class="px-5 py-3 border-b border-orange-200 dark:border-orange-800 flex items-center gap-2">
+            <span class="material-symbols-outlined text-orange-500 text-base">history</span>
+            <h4 class="font-bold text-orange-800 dark:text-orange-300 text-sm">Previous Offers ({{ history|length }}) — Your new offer must be ≥ last offer</h4>
+        </div>
+        <div class="divide-y divide-orange-100 dark:divide-orange-900/40">
+            {% for h in history %}
+            <div class="px-5 py-3 flex items-center justify-between gap-4">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="text-sm font-bold text-slate-900 dark:text-white">
+                            Offer #{{ forloop.revcounter }} — <span class="text-green-700 dark:text-green-400">₹{{ h.vendor_final_value|default:"0" }}</span>
+                        </span>
+                        <span class="text-xs text-slate-400">{{ h.evaluated_at|date:"M d, Y H:i" }}</span>
+                        {% if h.rejected_by_client %}
+                        <span class="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-bold">Client Rejected</span>
+                        {% else %}
+                        <span class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-bold">Accepted</span>
+                        {% endif %}
+                    </div>
+                    {% if h.rejection_reason %}<p class="text-xs text-red-600 dark:text-red-400 mt-0.5">Client reason: {{ h.rejection_reason }}</p>{% endif %}
+                    {% if h.vendor_remarks %}<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">Your notes: {{ h.vendor_remarks|truncatechars:80 }}</p>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if previous_offer and previous_offer.vendor_final_value %}
+        <div class="px-5 py-3 bg-orange-100 dark:bg-orange-900/20">
+            <p class="text-sm font-bold text-orange-800 dark:text-orange-300">
+                ⚠️ Your new offer must be <strong>≥ ₹{{ previous_offer.vendor_final_value }}</strong>
+                {% if item.rejection_count %} — client has rejected {{ item.rejection_count }} time{{ item.rejection_count|pluralize }}{% endif %}
+            </p>
+        </div>
+        {% endif %}
+        <div class="px-5 py-3 bg-slate-50 dark:bg-slate-900/30 border-t border-orange-200 dark:border-orange-800 flex gap-3">
+            <a href="{% url 'vendor:decline_reevaluation' item.pk %}"
+               class="inline-flex items-center gap-1.5 px-4 py-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-xs font-bold transition-colors">
+                <span class="material-symbols-outlined" style="font-size:14px">block</span>
+                Decline to Re-evaluate
+            </a>
+            <p class="text-xs text-slate-400 self-center">Declining lets the client choose: get product back or transfer to another vendor</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- STEP 1: Evaluation Type -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <span class="size-7 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Evaluation Type <span class="text-red-500">*</span></h3>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="evaluation_type" value="repair" class="peer sr-only" required>
+                    <div class="border-2 border-slate-200 dark:border-slate-700 peer-checked:border-green-500 peer-checked:bg-green-50 dark:peer-checked:bg-green-900/20 rounded-xl p-5 transition-all text-center">
+                        <div class="size-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-green-600 text-2xl">build</span></div>
+                        <p class="font-bold text-slate-900 dark:text-white text-sm mb-1">Repairable</p>
+                        <p class="text-xs text-slate-500">Can be fixed and reused</p>
+                    </div>
+                </label>
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="evaluation_type" value="recycle" class="peer sr-only">
+                    <div class="border-2 border-slate-200 dark:border-slate-700 peer-checked:border-primary peer-checked:bg-primary/5 rounded-xl p-5 transition-all text-center">
+                        <div class="size-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-primary text-2xl">recycling</span></div>
+                        <p class="font-bold text-slate-900 dark:text-white text-sm mb-1">Recyclable</p>
+                        <p class="text-xs text-slate-500">Materials to be extracted</p>
+                    </div>
+                </label>
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="evaluation_type" value="ecopoints" class="peer sr-only">
+                    <div class="border-2 border-slate-200 dark:border-slate-700 peer-checked:border-amber-500 peer-checked:bg-amber-50 dark:peer-checked:bg-amber-900/20 rounded-xl p-5 transition-all text-center">
+                        <div class="size-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-amber-600 text-2xl">eco</span></div>
+                        <p class="font-bold text-slate-900 dark:text-white text-sm mb-1">Eco-Points Only</p>
+                        <p class="text-xs text-slate-500">No monetary value</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- STEP 2: Condition Notes -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <span class="size-7 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Physical Condition Assessment <span class="text-red-500">*</span></h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Condition After Physical Inspection</label>
+                    <textarea name="condition_notes" rows="4" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Describe what you observed physically..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Overall Assessment & Recommendations <span class="text-red-500">*</span></label>
+                    <textarea name="vendor_remarks" rows="4" required class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Your recommendations to the client..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: Price -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <span class="size-7 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Price Calculation</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Price Breakdown (shown to client in PDF)</label>
+                    <textarea name="price_breakdown" rows="4" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none font-mono" placeholder="• Copper wiring: ₹200&#10;• Circuit board: ₹150&#10;• Processing deduction: -₹80&#10;• Final offer: ₹270"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Final Offer Amount (₹) <span class="text-red-500">*</span>
+                            {% if previous_offer and previous_offer.vendor_final_value %}
+                            <span class="text-xs text-orange-600 font-normal ml-1">Min: ₹{{ previous_offer.vendor_final_value }}</span>
+                            {% endif %}
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">₹</span>
+                            <input type="number" name="vendor_final_value" min="{{ previous_offer.vendor_final_value|default:'0' }}" step="0.01" value="{{ previous_offer.vendor_final_value|default:'0' }}" required
+                                   class="w-full pl-8 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Eco-Points to Award</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-green-500 text-xl">eco</span>
+                            <input type="number" name="eco_points" min="0" step="1" value="0" class="w-full pl-11 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-4 flex items-start gap-3">
+            <span class="material-symbols-outlined text-amber-500 flex-shrink-0">info</span>
+            <p class="text-sm text-amber-700 dark:text-amber-400">
+                The item will be marked <strong>"Offer Under Review"</strong> until the client accepts or rejects.
+                The client will see your condition notes, price breakdown, and this offer in full.
+            </p>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit" class="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-forest text-white py-3.5 rounded-xl font-bold text-sm transition-colors">
+                <span class="material-symbols-outlined">send</span>Submit Offer to Client
+            </button>
+            <a href="{% url 'vendor:accepted_items' %}" class="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-sm transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>Back
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const typeInputs = document.querySelectorAll('input[name="evaluation_type"]');
+const valueInput = document.querySelector('input[name="vendor_final_value"]');
+const ecoInput   = document.querySelector('input[name="eco_points"]');
+typeInputs.forEach(input => {
+    input.addEventListener('change', function() {
+        if (this.value === 'ecopoints') {
+            valueInput.value = '0'; valueInput.disabled = true; ecoInput.value = ecoInput.value || '10';
+        } else { valueInput.disabled = false; }
+    });
+});
+</script>
+{% endblock %}

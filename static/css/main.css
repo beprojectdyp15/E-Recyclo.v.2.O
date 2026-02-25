@@ -1,0 +1,440 @@
+/* E-RECYCLO Custom Styles */
+
+
+/* Smooth scrolling */
+
+html {
+    scroll-behavior: smooth;
+}
+
+
+/* Custom scrollbar */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #17cf17;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #15803d;
+}
+
+
+/* Loading spinner */
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #17cf17;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* Card hover effects */
+
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+
+/* Button ripple effect */
+
+.btn-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ripple::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-ripple:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+
+/* File upload styles */
+
+.file-upload-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.file-upload-input {
+    position: absolute;
+    left: -9999px;
+}
+
+.file-upload-label {
+    cursor: pointer;
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #17cf17;
+    color: white;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.file-upload-label:hover {
+    background: #15803d;
+    transform: translateY(-2px);
+}
+
+
+/* Toast notifications */
+
+.toast {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+
+/* Progress bar animation */
+
+.progress-bar {
+    transition: width 0.5s ease;
+}
+
+
+/* Badge styles */
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+
+/* Table styles */
+
+.table-hover tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+
+/* Empty state */
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6b7280;
+}
+
+.empty-state svg {
+    margin: 0 auto 1rem;
+    width: 64px;
+    height: 64px;
+    opacity: 0.5;
+}
+
+.bg-nature-500 {
+    background-color: #17cf17 !important;
+}
+
+.bg-nature-600 {
+    background-color: #13b913 !important;
+}
+
+.bg-nature-100 {
+    background-color: rgba(23, 207, 23, 0.12) !important;
+}
+
+.text-nature-500 {
+    color: #17cf17 !important;
+}
+
+.border-nature-500 {
+    border-color: #17cf17 !important;
+}
+
+
+/* Make all placeholders smaller */
+
+input::placeholder,
+textarea::placeholder {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    /* optional: slightly softer look */
+}
+
+
+/* ============================================
+   CUSTOM DROPDOWN STYLING - ENTIRE SYSTEM
+   ============================================ */
+
+
+/* Base select styling */
+
+select {
+    /* Remove default appearance */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    /* Custom styling */
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #0f172a;
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    /* Custom dropdown arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+}
+
+
+/* Hover state */
+
+select:hover {
+    border-color: #17cf17;
+    box-shadow: 0 1px 2px 0 rgba(23, 207, 23, 0.1);
+}
+
+
+/* Focus state */
+
+select:focus {
+    outline: none;
+    border-color: #17cf17;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
+}
+
+
+/* Dark mode */
+
+.dark select {
+    color: #f1f5f9;
+    background-color: #1e293b;
+    border-color: #334155;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+}
+
+.dark select:hover {
+    border-color: #17cf17;
+    background-color: #0f172a;
+}
+
+.dark select:focus {
+    border-color: #17cf17;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
+}
+
+
+/* Disabled state */
+
+select:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.dark select:disabled {
+    background-color: #0f172a;
+    color: #475569;
+}
+
+
+/* ============================================
+   DROPDOWN OPTIONS STYLING
+   ============================================ */
+
+
+/* Style the dropdown options */
+
+select option {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #0f172a;
+    background-color: #ffffff;
+}
+
+
+/* Hover/Selected option */
+
+select option:hover,
+select option:focus,
+select option:checked {
+    background-color: #e8f9e8 !important;
+    /* Light green background */
+    color: #17cf17 !important;
+    /* Primary green text */
+    font-weight: 600;
+}
+
+
+/* Dark mode options */
+
+.dark select option {
+    color: #f1f5f9;
+    background-color: #1e293b;
+}
+
+.dark select option:hover,
+.dark select option:focus,
+.dark select option:checked {
+    background-color: rgba(23, 207, 23, 0.15) !important;
+    color: #17cf17 !important;
+}
+
+
+/* Firefox-specific option styling */
+
+@-moz-document url-prefix() {
+    select option:checked {
+        background: #e8f9e8 linear-gradient(0deg, #e8f9e8 0%, #e8f9e8 100%);
+        color: #17cf17;
+        font-weight: 600;
+    }
+}
+
+
+/* ============================================
+   INPUT & TEXTAREA CONSISTENCY
+   ============================================ */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #0f172a;
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+input:hover,
+textarea:hover {
+    border-color: #cbd5e1;
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: #17cf17;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
+}
+
+
+/* Dark mode inputs */
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark input[type="date"],
+.dark textarea {
+    color: #f1f5f9;
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark input:hover,
+.dark textarea:hover {
+    border-color: #475569;
+}
+
+.dark input:focus,
+.dark textarea:focus {
+    border-color: #17cf17;
+    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
+}
+
+
+/* ============================================
+   REMOVE NUMBER INPUT SPINNERS
+   ============================================ */
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

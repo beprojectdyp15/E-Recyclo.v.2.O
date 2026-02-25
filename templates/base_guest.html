@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}eRecyclo{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { "primary": "#17cf17", "background-light": "#f6f8f6", "background-dark": "#112111", "forest": "#228b22" }, fontFamily: { "display": ["Manrope", "sans-serif"] } } }
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        textarea, input[type="text"], input[type="email"], input[type="tel"], input[type="password"], select {
+            width: 100%; padding: 0.625rem 1rem; background: #f8fafc;
+            border: 1px solid #e2e8f0; border-radius: 0.75rem; font-size: 0.875rem;
+            color: #0f172a; outline: none; transition: all 0.2s; font-family: 'Manrope', sans-serif;
+        }
+        .dark textarea, .dark input, .dark select { background: #1e293b; border-color: #334155; color: #f1f5f9; }
+        textarea:focus, input:focus, select:focus { border-color: #17cf17; box-shadow: 0 0 0 3px rgb(23 207 23 / 0.1); }
+        @keyframes slideIn { from { opacity:0; transform:translateX(100%); } to { opacity:1; transform:translateX(0); } }
+        .toast-item { animation: slideIn 0.3s ease; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+
+    <!-- Nav Bar -->
+    <nav class="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md sticky top-0 z-30" >
+        <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-14" style="min-height: 77px;">
+            <a href="{% url 'home' %}" class="flex items-center gap-2.5">
+                <div class="bg-primary size-8 rounded-lg flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined text-base">eco</span>
+                </div>
+                <span class="text-base font-bold text-slate-900 dark:text-white">eRecyclo</span>
+            </a>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleDarkMode()" class="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <span class="material-symbols-outlined dark-icon" style="font-size:18px">dark_mode</span>
+                </button>
+                <a href="{% url 'accounts:login' %}" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Sign In</a>
+                <a href="{% url 'accounts:register' %}" class="flex items-center gap-1.5 bg-primary hover:bg-forest text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:16px">person_add</span>
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast messages -->
+    {% if messages %}
+    <div class="fixed top-16 right-4 flex flex-col gap-2 z-50 pointer-events-none">
+        {% for message in messages %}
+        <div class="toast-item pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium min-w-[280px] max-w-sm
+            {% if message.tags == 'success' %}bg-white border-green-200 text-green-700
+            {% elif message.tags == 'error' %}bg-white border-red-200 text-red-700
+            {% elif message.tags == 'warning' %}bg-white border-amber-200 text-amber-700
+            {% else %}bg-white border-blue-200 text-blue-700{% endif %}">
+            <span class="material-symbols-outlined text-xl {% if message.tags == 'success' %}text-green-500{% elif message.tags == 'error' %}text-red-500{% elif message.tags == 'warning' %}text-amber-500{% else %}text-blue-500{% endif %}">
+                {% if message.tags == 'success' %}check_circle{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}
+            </span>
+            <span class="flex-1">{{ message }}</span>
+            <button onclick="this.closest('.toast-item').remove()" class="text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined" style="font-size:16px">close</span></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block page_content %}{% endblock %}
+
+    <script>
+        function toggleDarkMode() {
+            const dark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', dark);
+            document.querySelectorAll('.dark-icon').forEach(i => i.textContent = dark ? 'light_mode' : 'dark_mode');
+        }
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+            document.querySelectorAll('.dark-icon').forEach(i => i.textContent = 'light_mode');
+        }
+        setTimeout(() => {
+            document.querySelectorAll('.toast-item').forEach(t => {
+                t.style.transition = 'opacity 0.4s'; t.style.opacity = '0';
+                setTimeout(() => t.remove(), 400);
+            });
+        }, 5000);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

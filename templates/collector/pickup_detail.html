@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="md:flex">
+            <!-- Photo -->
+            <div class="md:w-1/2">
+                <img src="{{ pickup.photo_post.photo.url }}" alt="{{ pickup.photo_post.title }}" 
+                     class="w-full h-full object-cover">
+            </div>
+            
+            <!-- Details -->
+            <div class="md:w-1/2 p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">{{ pickup.photo_post.title }}</h2>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium
+                        {% if pickup.status == 'completed' %}bg-green-100 text-green-800
+                        {% elif pickup.status == 'in_progress' %}bg-blue-100 text-blue-800
+                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ pickup.get_status_display }}
+                    </span>
+                </div>
+                
+                <!-- Item Details -->
+                <div class="space-y-3 mb-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Item Information</h3>
+                        <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Category:</span>
+                                <span class="font-medium">{{ pickup.photo_post.get_ai_category_display }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Condition:</span>
+                                <span class="font-medium">{{ pickup.photo_post.get_ai_condition_display }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Quantity:</span>
+                                <span class="font-medium">{{ pickup.photo_post.quantity }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Item Value:</span>
+                                <span class="font-bold text-nature-600">₹{{ pickup.photo_post.vendor_final_value|default:pickup.photo_post.ai_estimated_value }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Client Details -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Client Information</h3>
+                        <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Name:</span>
+                                <span class="font-medium">{{ pickup.photo_post.user.get_full_name }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Phone:</span>
+                                <span class="font-medium">{{ pickup.photo_post.user.phone_number }}</span>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 mb-1">Address:</p>
+                                <p class="text-gray-900">{{ pickup.photo_post.address }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Details -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Payment Information</h3>
+                        <div class="bg-green-50 rounded-lg p-3 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Base Fee:</span>
+                                <span class="font-medium">₹{{ pickup.base_fee }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Distance Fee:</span>
+                                <span class="font-medium">₹{{ pickup.distance_fee }}</span>
+                            </div>
+                            <div class="flex justify-between pt-2 border-t border-green-200">
+                                <span class="font-semibold text-gray-900">Total Earning:</span>
+                                <span class="font-bold text-green-600 text-lg">₹{{ pickup.total_payment }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Payment Status:</span>
+                                <span class="px-2 py-1 rounded text-xs font-medium
+                                    {% if pickup.payment_status == 'paid' %}bg-green-100 text-green-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ pickup.get_payment_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dates -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Timeline</h3>
+                        <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Assigned:</span>
+                                <span>{{ pickup.created_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            {% if pickup.completed_at %}
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Completed:</span>
+                                    <span>{{ pickup.completed_at|date:"M d, Y H:i" }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    {% if pickup.notes %}
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-2">Notes</h3>
+                            <div class="bg-blue-50 rounded-lg p-3 text-sm text-gray-800">
+                                {{ pickup.notes }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Proof Photo -->
+                    {% if pickup.proof_photo %}
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-2">Proof of Pickup</h3>
+                            <img src="{{ pickup.proof_photo.url }}" alt="Proof" class="w-full rounded-lg border">
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex gap-3">
+                    <a href="{% url 'collector:my_pickups' %}" 
+                       class="flex-1 bg-gray-200 text-gray-700 text-center px-4 py-3 rounded-lg font-semibold hover:bg-gray-300">
+                        Back to My Pickups
+                    </a>
+                    {% if pickup.status != 'completed' %}
+                        <a href="{% url 'collector:complete_pickup' pickup.pk %}" 
+                           class="flex-1 bg-nature-500 text-white text-center px-4 py-3 rounded-lg font-semibold hover:bg-nature-600">
+                            Complete Pickup
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

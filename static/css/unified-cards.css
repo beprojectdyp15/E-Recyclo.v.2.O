@@ -1,0 +1,380 @@
+/* ============================================================================
+   E-RECYCLO UNIFIED CARD STYLING - COMPREHENSIVE VERSION
+   Works across ALL sections: Client, Vendor, Collector
+   ============================================================================ */
+
+
+/* ============================================================================
+   SECTION 1: CONTAINER WIDTH CONTROL (89%)
+   Applies to card containers in all sections
+   ============================================================================ */
+
+
+/* Client section - my_uploads */
+
+#page-content>.space-y-5>.space-y-4,
+.space-y-5>.space-y-4:has(> div.bg-white) {
+    width: 89%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* Vendor section - pending_requests, accepted_items */
+
+.space-y-4>div.bg-white.rounded-2xl.border,
+.space-y-3>div.bg-white.rounded-2xl.border {
+    width: 89%;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: none !important;
+}
+
+
+/* Collector section - available_pickups, my_pickups */
+
+.space-y-4>div.bg-white[style*="max-width"] {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+
+/* ============================================================================
+   SECTION 2: FILTER TABS WIDTH (89%)
+   ============================================================================ */
+
+.space-y-5>div.bg-white.rounded-2xl:has(nav),
+.space-y-4>div.bg-white.rounded-2xl:has(nav) {
+    width: 89%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ============================================================================
+   SECTION 3: UPLOAD BUTTON POSITIONING (Client only)
+   ============================================================================ */
+
+.space-y-5>.flex.justify-end:first-child {
+    width: 89%;
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: space-between;
+}
+
+
+/* ============================================================================
+   SECTION 4: CARD HEIGHT & STRUCTURE
+   Fixed 300px height with proper flex layout
+   ============================================================================ */
+
+
+/* All product cards across all sections */
+
+div.bg-white.rounded-2xl.border.overflow-hidden:has(div.p-5.flex) {
+    min-height: 300px;
+    max-height: 300px;
+    display: flex;
+    align-items: center;
+}
+
+
+/* Inner padding container */
+
+div.p-5.flex.gap-5,
+div.p-5.flex.gap-4 {
+    width: 100%;
+    min-height: 280px;
+    align-items: center;
+    padding: 10px !important;
+}
+
+
+/* ============================================================================
+   SECTION 5: PRODUCT IMAGE SIZING & POSITIONING
+   Left side, 180px x 260px with padding
+   ============================================================================ */
+
+
+/* Client section images (w-36 h-36) */
+
+div.p-5.flex>img.w-36.h-36,
+div.p-5.flex>div.w-36.h-36 {
+    width: 180px !important;
+    height: 260px !important;
+    min-width: 180px !important;
+    min-height: 260px !important;
+    max-width: 180px !important;
+    max-height: 260px !important;
+    object-fit: cover !important;
+    margin: 5px !important;
+}
+
+
+/* Vendor section images (w-24 h-24) */
+
+div.p-5.flex>img.w-24.h-24,
+div.p-5.flex>div.w-24.h-24 {
+    width: 180px !important;
+    height: 260px !important;
+    min-width: 180px !important;
+    min-height: 260px !important;
+    object-fit: cover !important;
+    margin: 5px !important;
+}
+
+
+/* Image placeholder styling */
+
+div.p-5.flex>div.bg-slate-100.rounded-xl.flex.items-center.justify-center {
+    width: 180px !important;
+    height: 260px !important;
+}
+
+
+/* ============================================================================
+   SECTION 6: CONTENT AREA (Info/Details)
+   Left side, next to image, with space for buttons on right
+   ============================================================================ */
+
+div.p-5.flex>div.flex-1.min-w-0 {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-left: 15px;
+    padding-right: 160px;
+    /* Space for buttons on right */
+    min-height: 260px;
+}
+
+
+/* ============================================================================
+   SECTION 7: STATUS TAG POSITIONING
+   Top-right corner of card, absolute positioning
+   ============================================================================ */
+
+
+/* Status badge in title row */
+
+div.flex-1.min-w-0>div.flex.items-start.justify-between {
+    position: relative;
+}
+
+
+/* Position status badge at top-right of CARD */
+
+div.flex.items-start.justify-between>span.inline-flex.items-center.px-3,
+div.flex.items-start.justify-between>span[class*="rounded-full"][class*="px-2"] {
+    position: absolute !important;
+    top: -270px !important;
+    right: -145px !important;
+    z-index: 10 !important;
+}
+
+
+/* Distance badge in vendor section */
+
+div.flex.items-start.justify-between>div.text-right {
+    position: absolute !important;
+    top: -230px !important;
+    right: -145px !important;
+    z-index: 9 !important;
+}
+
+
+/* ============================================================================
+   SECTION 8: PRODUCT INFO TAGS
+   Category, Price, etc. below title
+   ============================================================================ */
+
+div.flex-1.min-w-0 div.flex.flex-wrap.gap-1\.5 {
+    margin: 8px 0;
+}
+
+
+/* ============================================================================
+   SECTION 9: DETAILS GRID
+   Client info, Quantity, Location, etc.
+   ============================================================================ */
+
+div.flex-1.min-w-0 div.grid.grid-cols-2 {
+    font-size: 12px;
+    gap: 6px 12px;
+    margin: 8px 0;
+}
+
+
+/* ============================================================================
+   SECTION 10: OTP DISPLAYS
+   Enhanced styling for pickup/delivery OTPs
+   ============================================================================ */
+
+div[class*="bg-blue-50"] {
+    padding: 10px 14px;
+    margin: 8px 0;
+    border-radius: 10px;
+}
+
+span.text-2xl.font-black.tracking-widest {
+    font-size: 26px !important;
+    letter-spacing: 4px;
+}
+
+
+/* ============================================================================
+   SECTION 11: NOTIFICATION BOXES
+   In Transit, Under Review, etc.
+   ============================================================================ */
+
+div[class*="bg-orange-50"],
+div[class*="bg-purple-50"],
+div[class*="bg-red-50"],
+div[class*="bg-green-50"],
+div[class*="bg-teal-50"],
+div[class*="bg-amber-50"] {
+    padding: 8px 12px;
+    margin: 6px 0;
+    font-size: 12px;
+}
+
+
+/* ============================================================================
+   SECTION 12: ACTION BUTTONS
+   Right side, vertically stacked
+   ============================================================================ */
+
+
+/* Position button container on right side */
+
+div.flex-1.min-w-0>div.flex.gap-2.pt-3,
+div.flex-1.min-w-0>div.flex.gap-2:not(.flex-wrap) {
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 140px !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+
+/* Button styling */
+
+div.flex.gap-2>button,
+div.flex.gap-2>form>button,
+div.flex.gap-2>a[class*="bg-"],
+div.flex.gap-2>a[class*="border"] {
+    width: 100% !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+}
+
+
+/* Accept/Primary button gradient */
+
+button[class*="bg-primary"],
+button[class*="bg-green"],
+a[class*="bg-primary"],
+a[class*="bg-green"] {
+    background: linear-gradient(135deg, #17cf17 0%, #12a012 100%) !important;
+}
+
+
+/* ============================================================================
+   SECTION 13: VIEW DETAILS LINK
+   Bottom of info section
+   ============================================================================ */
+
+div.flex-1.min-w-0>div.flex.items-center.justify-between.pt-3.border-t {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+}
+
+a[href*="detail"][class*="text-xs"],
+a[href*="detail"][class*="text-primary"] {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+
+/* ============================================================================
+   SECTION 14: RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 1280px) {
+    .space-y-5>.space-y-4,
+    .space-y-4>div.bg-white.rounded-2xl {
+        width: 95% !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    div.bg-white.rounded-2xl:has(div.p-5.flex) {
+        min-height: 280px;
+        max-height: 280px;
+    }
+    div.p-5.flex>img,
+    div.p-5.flex>div.w-36,
+    div.p-5.flex>div.w-24 {
+        width: 150px !important;
+        height: 240px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    div.bg-white.rounded-2xl:has(div.p-5.flex) {
+        min-height: auto;
+        max-height: none;
+    }
+    div.p-5.flex {
+        flex-direction: column;
+        min-height: auto;
+    }
+    div.p-5.flex>img,
+    div.p-5.flex>div {
+        width: 100% !important;
+        height: 200px !important;
+    }
+    div.flex-1.min-w-0 {
+        padding-right: 0;
+    }
+    div.flex-1.min-w-0>div.flex.gap-2 {
+        position: relative !important;
+        transform: none !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        top: auto !important;
+        right: auto !important;
+    }
+    div.flex.items-start.justify-between>span {
+        position: static !important;
+    }
+}
+
+
+/* ============================================================================
+   SECTION 15: SMOOTH TRANSITIONS
+   ============================================================================ */
+
+div.bg-white.rounded-2xl {
+    transition: all 0.2s ease;
+}
+
+div.bg-white.rounded-2xl:hover {
+    transform: translateY(-2px);
+}
+
+
+/* ============================================================================
+   END OF COMPREHENSIVE CARD STYLING
+   ============================================================================ */

@@ -1,0 +1,91 @@
+/* ============================================
+   E-RECYCLO - MINIMAL WIDTH FIX ONLY
+   Only adjusts card width to 89% - preserves all existing design
+   ============================================ */
+
+
+/* 
+   THIS CSS ONLY DOES 3 THINGS:
+   1. Makes card container 89% width
+   2. Makes filter tabs 89% width  
+   3. Positions upload button properly
+   
+   EVERYTHING ELSE stays exactly as your original design
+*/
+
+
+/* ============================================
+   1. CARDS CONTAINER - 89% WIDTH
+   ============================================ */
+
+
+/* Target the div that contains all cards */
+
+.space-y-5>.space-y-4 {
+    width: 89%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ============================================
+   2. FILTER TABS - 89% WIDTH
+   ============================================ */
+
+
+/* Target the filter tabs container */
+
+.space-y-5>.bg-white.dark\:bg-slate-800.rounded-2xl.border:has(nav) {
+    width: 89%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ============================================
+   3. UPLOAD BUTTON CONTAINER - 89% WIDTH
+   ============================================ */
+
+
+/* Target the upload button wrapper */
+
+.space-y-5>.flex.justify-end {
+    width: 89%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ============================================
+   4. REMOVE ANY INLINE MAX-WIDTH ON CARDS
+   ============================================ */
+
+
+/* Your cards have inline style="max-width: 90%" - remove it */
+
+.space-y-4>div[style*="max-width"] {
+    max-width: none !important;
+}
+
+
+/* ============================================
+   THAT'S IT - NO OTHER CHANGES
+   ============================================ */
+
+
+/* 
+   This CSS does NOT change:
+   - Card height (stays auto as designed)
+   - Image size (stays your perfect square)
+   - Button positions (stays on right)
+   - Status badge (stays top-right)
+   - Any colors
+   - Any spacing
+   - Any fonts
+   - Sidebar
+   - Header
+   - Background
+   
+   It ONLY makes the cards, filter tabs, and upload button
+   container 89% wide and centers them.
+*/

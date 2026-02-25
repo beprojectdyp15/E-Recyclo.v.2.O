@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - E-RECYCLO</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #17cf17 0%, #15803d 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .email-body {
+            padding: 40px 30px;
+        }
+        .otp-box {
+            background-color: #f0fdf4;
+            border: 2px dashed #17cf17;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .otp-code {
+            font-size: 42px;
+            font-weight: bold;
+            color: #17cf17;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        .info-box {
+            background-color: #fff7ed;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .email-footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #17cf17;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>🌿 E-RECYCLO</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px;">Verify Your Email Address</p>
+        </div>
+        
+        <div class="email-body">
+            <h2 style="color: #1f2937;">Hi {{ user.first_name }},</h2>
+            
+            <p style="color: #4b5563; line-height: 1.6;">
+                Thank you for registering with E-RECYCLO! To complete your registration and activate your account, 
+                please use the verification code below:
+            </p>
+            
+            <div class="otp-box">
+                <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">Your Verification Code</p>
+                <div class="otp-code">{{ otp }}</div>
+                <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 12px;">Valid for {{ expires_in }}</p>
+            </div>
+            
+            <div class="info-box">
+                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                    <strong>⚠️ Important:</strong><br>
+                    • Don't share this code with anyone<br>
+                    • This code will expire in 10 minutes<br>
+                    • If you didn't request this, please ignore this email
+                </p>
+            </div>
+            
+            <p style="color: #4b5563; line-height: 1.6;">
+                Enter this code on the verification page to activate your account and start recycling e-waste responsibly!
+            </p>
+            
+            <p style="color: #4b5563; line-height: 1.6; margin-top: 30px;">
+                Best regards,<br>
+                <strong>The E-RECYCLO Team</strong>
+            </p>
+        </div>
+        
+        <div class="email-footer">
+            <p style="margin: 0 0 10px 0;">© {{ year }} E-RECYCLO. All rights reserved.</p>
+            <p style="margin: 0;">Making Maharashtra Greener, One Device at a Time 🌿</p>
+        </div>
+    </div>
+</body>
+</html>

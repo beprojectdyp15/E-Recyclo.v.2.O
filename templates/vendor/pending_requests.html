@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Pending Requests - eRecyclo{% endblock %}
+{% block page_title %}Pending Requests{% endblock %}
+{% block page_subtitle %}E-waste items within 5km of your location waiting for vendor acceptance{% endblock %}
+
+{% block page_content %}
+<div class="space-y-4">
+
+<!-- Info Banner -->
+<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">info</span>
+        <div class="text-sm text-blue-800 dark:text-blue-300">
+            <p class="font-medium">How it works:</p>
+            <ul class="mt-1 space-y-1 text-blue-700 dark:text-blue-400">
+                <li>• Items shown are within <strong>5km</strong> of your business location</li>
+                <li>• Multiple vendors can see the same item - <strong>first to accept gets it</strong></li>
+                <li>• Once you accept, a collector will be assigned for pickup</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% if requests %}
+<p class="text-sm text-slate-500 mb-4">{{ total_count }} item{{ total_count|pluralize }} available in your area</p>
+
+{% for req in requests %}
+<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-shadow" >
+    <div class="p-5 flex gap-5">
+        {% if req.item.photo %}
+        <img src="{{ req.item.photo.url }}" alt="{{ req.item.title }}" class="w-36 h-36 object-cover rounded-xl flex-shrink-0 border border-slate-100 dark:border-slate-700">
+        {% else %}
+        <div class="w-36 h-36 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-slate-400 text-4xl">devices</span>
+        </div>
+        {% endif %}
+        <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white text-base">{{ req.item.title }}</h3>
+                    <div class="flex flex-wrap gap-1.5 mt-1.5">
+                        <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">{{ req.item.get_ai_category_display }}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full {% if req.item.ai_condition == 'excellent' %}bg-green-100 text-green-700{% elif req.item.ai_condition == 'good' %}bg-blue-100 text-blue-700{% elif req.item.ai_condition == 'fair' %}bg-amber-100 text-amber-700{% else %}bg-red-100 text-red-700{% endif %}">{{ req.item.get_ai_condition_display }}</span>
+                        {% if req.item.ai_estimated_value %}
+                        <span class="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 rounded-full text-green-700 dark:text-green-400 font-semibold">AI Est. ₹{{ req.item.ai_estimated_value }}</span>
+                        {% endif %}
+                        {% if req.item.item_size %}
+                        <span class="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-700 dark:text-purple-400">{{ req.item.get_item_size_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full font-medium">
+                        <span class="material-symbols-outlined" style="font-size:12px">near_me</span>
+                        {{ req.distance }} km
+                    </span>
+                    <p class="text-xs text-slate-400 mt-1">{{ req.item.created_at|date:"M d, H:i" }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 mb-3 text-xs">
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-slate-400" style="font-size:14px">person</span>
+                    <span class="text-slate-500">Client:</span>
+                    <span class="font-medium text-slate-800 dark:text-white ml-1">{{ req.item.user.get_full_name }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-slate-400" style="font-size:14px">inventory</span>
+                    <span class="text-slate-500">Qty:</span>
+                    <span class="font-medium text-slate-800 dark:text-white ml-1">{{ req.item.quantity }}</span>
+                </div>
+                <div class="flex items-center gap-1 col-span-2 truncate">
+                    <span class="material-symbols-outlined text-slate-400" style="font-size:14px">location_on</span>
+                    <span class="text-slate-500 truncate">{{ req.item.address|truncatechars:55 }}</span>
+                </div>
+            </div>
+            {% if req.item.description %}
+            <p class="text-xs text-slate-400 dark:text-slate-500 mb-3 line-clamp-1">{{ req.item.description }}</p>
+            {% endif %}
+            <div class="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+                <form method="POST" action="{% url 'vendor:accept_item' req.item.pk %}" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-forest text-white py-3 rounded-xl text-sm font-bold transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:16px">check_circle</span>Accept
+                    </button>
+                </form>
+                <a href="{% url 'vendor:reject_item' req.item.pk %}" class="flex-1 flex items-center justify-center gap-1.5 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 py-3 rounded-xl text-sm font-bold transition-colors">
+                    <span class="material-symbols-outlined" style="font-size:16px">close</span>Pass
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-12 text-center">
+    <div class="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-slate-400 text-3xl">inbox</span>
+    </div>
+    <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">No Pending Requests</h3>
+    <p class="text-slate-500 dark:text-slate-400 text-sm">There are no e-waste items within 5km of your location right now.<br>Check back later for new submissions.</p>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

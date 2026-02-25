@@ -1,0 +1,596 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>E-RECYCLO | AI-Powered E-Waste Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#14b814",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#112111",
+                        "sage": {
+                            50: "#f2f7f2",
+                            100: "#e1ede1",
+                            200: "#c5dbc5",
+                            300: "#9fbf9f",
+                            400: "#729e72",
+                            500: "#518051",
+                            600: "#3f663f",
+                            700: "#345234",
+                            800: "#2b422b",
+                            900: "#253825",
+                        }
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                    
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Space Grotesk', sans-serif; }
+        .glass-nav {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.8);
+    border-bottom: 1px solid rgba(20, 184, 20, 0.08);
+}
+
+        .glow-node {
+            box-shadow: 0 0 15px rgba(20, 184, 20, 0.5);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #14b814 0%, #a7f3d0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        h1,h2,h3,h4,h5,h6{
+    color:#0f172a !important; /* slate-900 */
+}
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-sage-100 font-display transition-colors duration-300">
+
+
+    <!-- Navigation -->
+     <!-- Navigation -->
+<nav id="smartHeader" class="w-full glass-nav fixed top-0 left-0 z-50 transition-transform duration-300">
+
+
+    <div class="max-w-7xl mx-auto px-6 py-6 flex items-center">
+
+        <!-- LEFT : Logo -->
+        <div class="flex items-center space-x-2 flex-1">
+            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md">
+                <span class="material-symbols-outlined text-white text-xl">
+    recycling
+</span>
+
+            </div>
+            <span class="text-2xl font-bold tracking-tight text-slate-900">
+                E-RECYCLO
+            </span>
+        </div>
+
+        <!-- CENTER : Nav Menu -->
+        <div class="hidden md:flex space-x-10 items-center justify-center flex-1 text-sm font-semibold text-slate-700">
+            <a href="#" class="hover:text-primary transition-colors">Process</a>
+            <a href="#" class="hover:text-primary transition-colors">Ecosystem</a>
+            <a href="#" class="hover:text-primary transition-colors">AI Tech</a>
+            <a href="#" class="hover:text-primary transition-colors">Impact</a>
+        </div>
+
+        <!-- RIGHT : Auth Buttons -->
+        <div class="hidden md:flex items-center gap-4 flex-1 justify-end">
+
+            <!-- Sign In -->
+            <a href="{% url 'accounts:login' %}"
+               class="px-5 py-2 rounded-full border border-primary text-primary font-semibold hover:bg-primary/5 transition-all">
+                Sign In
+            </a>
+
+            <!-- Register / Get Started -->
+            <a href="{% url 'accounts:register' %}"
+               class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-full font-semibold transition-all shadow-lg shadow-primary/20">
+                Get Started
+            </a>
+
+        </div>
+
+    </div>
+</nav>
+
+
+
+
+
+<!-- Hero Section -->
+<!-- Hero Section (Centered Text Only) -->
+<section class="relative pt-44 py-32 px-6 bg-white overflow-hidden" >
+
+    <!-- Soft Background Accent -->
+    <div class="absolute inset-0 bg-primary/5 blur-3xl opacity-40"></div>
+
+    <div class="max-w-5xl mx-auto text-center relative z-10">
+
+        <!-- Top Badge -->
+        <span class="inline-block px-4 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-8">
+            India's First AI E-Waste Platform
+        </span>
+
+        <!-- Main Heading -->
+        <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-slate-900 mb-8">
+            The Intelligent Way to <br/>
+            Manage E-Waste.
+        </h1>
+
+        <!-- Subtext -->
+        <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">
+            Harnessing Artificial Intelligence to connect sustainability with technology.
+            Upload devices, get instant valuation, schedule smart pickups, and recycle responsibly.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+
+            <a href="{% url 'accounts:register' %}"
+               class="bg-primary text-white px-10 py-4 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+                Start Recycling Now
+            </a>
+
+            
+
+        </div>
+
+    </div>
+</section>
+
+
+
+<!-- Process Section -->
+<section class="py-24 bg-background-light dark:bg-background-dark">
+<div class="max-w-7xl mx-auto px-6">
+<div class="mb-16">
+<h2 class="text-3xl md:text-4xl font-bold mb-4">How it works</h2>
+<div class="w-20 h-1.5 bg-primary rounded-full"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Step 1 -->
+<div class="glass-card p-8 rounded-xl relative group border border-slate-200 hover:border-primary/40 transition-all">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-slate-900 transition-all">
+<span class="material-icons">add_a_photo</span>
+</div>
+<div class="absolute top-8 right-8 text-4xl font-black text-primary/10 italic">01</div>
+<h3 class="text-xl font-bold mb-3">Upload</h3>
+<p class="text-slate-500 dark:text-slate-400">Snap a quick photo of your electronic device via our app or web portal.</p>
+</div>
+<!-- Step 2 -->
+<div class="glass-card p-8 rounded-xl relative group border border-slate-200 hover:border-primary/40 transition-all">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-slate-900 transition-all">
+<span class="material-icons">psychology</span>
+</div>
+<div class="absolute top-8 right-8 text-4xl font-black text-primary/10 italic">02</div>
+<h3 class="text-xl font-bold mb-3">AI Verify</h3>
+<p class="text-slate-500 dark:text-slate-400">Our neural network instantly identifies the model, condition, and fair value.</p>
+</div>
+<!-- Step 3 -->
+<div class="glass-card p-8 rounded-xl relative group border border-slate-200 hover:border-primary/40 transition-all">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-slate-900 transition-all">
+<span class="material-icons">local_shipping</span>
+</div>
+<div class="absolute top-8 right-8 text-4xl font-black text-primary/10 italic">03</div>
+<h3 class="text-xl font-bold mb-3">Pickup</h3>
+<p class="text-slate-500 dark:text-slate-400">Schedule a convenient doorstep pickup with our certified collectors.</p>
+</div>
+<!-- Step 4 -->
+<div class="glass-card p-8 rounded-xl relative group border border-slate-200 hover:border-primary/40 transition-all">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-slate-900 transition-all">
+<span class="material-icons">payments</span>
+</div>
+<div class="absolute top-8 right-8 text-4xl font-black text-primary/10 italic">04</div>
+<h3 class="text-xl font-bold mb-3">Earn</h3>
+<p class="text-slate-500 dark:text-slate-400">Receive instant payment in your preferred digital wallet upon verification.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Ecosystem Grid -->
+<section class="py-24 bg-slate-100 dark:bg-black/20">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">One Platform. Every Stakeholder.</h2>
+<p class="text-slate-500 dark:text-slate-400">Building a connected circular economy for electronic waste.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Client -->
+<div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-10 rounded-2xl flex items-start gap-6 hover:border-primary/50 transition-all">
+<div class="shrink-0 w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons text-4xl">person_outline</span>
+</div>
+<div>
+<h4 class="text-2xl font-bold mb-2">For Clients</h4>
+<p class="text-slate-500 dark:text-slate-400">Individual users looking to responsibly dispose of old phones, laptops, and appliances for rewards.</p>
+</div>
+</div>
+<!-- Vendor -->
+<div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-10 rounded-2xl flex items-start gap-6 hover:border-primary/50 transition-all">
+<div class="shrink-0 w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons text-4xl">storefront</span>
+</div>
+<div>
+<h4 class="text-2xl font-bold mb-2">For Vendors</h4>
+<p class="text-slate-500 dark:text-slate-400">E-waste recyclers and refurbishing units seeking high-quality feedstock for their operations.</p>
+</div>
+</div>
+<!-- Collector -->
+<div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-10 rounded-2xl flex items-start gap-6 hover:border-primary/50 transition-all">
+<div class="shrink-0 w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons text-4xl">directions_bike</span>
+</div>
+<div>
+<h4 class="text-2xl font-bold mb-2">For Collectors</h4>
+<p class="text-slate-500 dark:text-slate-400">Logistic partners and independent collectors earning through organized pick-up routes.</p>
+</div>
+</div>
+<!-- Admin -->
+<div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-10 rounded-2xl flex items-start gap-6 hover:border-primary/50 transition-all">
+<div class="shrink-0 w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-icons text-4xl">admin_panel_settings</span>
+</div>
+<div>
+<h4 class="text-2xl font-bold mb-2">For Admins</h4>
+<p class="text-slate-500 dark:text-slate-400">Government bodies and platform moderators monitoring real-time flow and compliance.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+
+<!-- Ecosystem Tabs -->
+<section class="py-24 relative overflow-hidden">
+<div class="absolute inset-0 bg-primary/5 -skew-y-3 origin-right"></div>
+<div class="max-w-7xl mx-auto px-6 relative z-10">
+<div class="flex flex-col md:flex-row justify-between items-end mb-12">
+<div class="max-w-xl">
+<h2 class="text-4xl font-bold mb-4">Tailored Ecosystem</h2>
+<p class="text-sage-400">Whether you are an individual, a corporation, or a recycler, we have a platform designed for your needs.</p>
+</div>
+<div class="flex bg-sage-800/40 p-1 rounded-xl mt-6 md:mt-0">
+<button class="px-6 py-2 rounded-lg bg-primary text-slate-900 font-medium">Individual</button>
+<button class="px-6 py-2 rounded-lg hover:bg-white/5 transition-colors font-medium">Enterprise</button>
+<button class="px-6 py-2 rounded-lg hover:bg-white/5 transition-colors font-medium">Recycler</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-white dark:bg-sage-900/60 p-8 rounded-2xl border border-primary/10 hover:scale-[1.02] transition-transform">
+<span class="material-icons text-primary text-4xl mb-4">account_balance_wallet</span>
+<h4 class="text-xl font-bold mb-3">Instant Cash-out</h4>
+<p class="text-sage-300 text-sm leading-relaxed">Turn your old gadgets into direct bank transfers. Transparent pricing driven by market analytics.</p>
+</div>
+<div class="bg-white dark:bg-sage-900/60 p-8 rounded-2xl border border-primary/10 hover:scale-[1.02] transition-transform">
+<span class="material-icons text-primary text-4xl mb-4">verified</span>
+<h4 class="text-xl font-bold mb-3">Green Certificates</h4>
+<p class="text-sage-300 text-sm leading-relaxed">Verified documentation for your sustainable contributions, recognized by environmental agencies.</p>
+</div>
+<div class="bg-white dark:bg-sage-900/60 p-8 rounded-2xl border border-primary/10 hover:scale-[1.02] transition-transform">
+<span class="material-icons text-primary text-4xl mb-4">redeem</span>
+<h4 class="text-xl font-bold mb-3">Loyalty Eco-Points</h4>
+<p class="text-sage-300 text-sm leading-relaxed">Earn points for every kilogram recycled. Redeem them at our partner sustainable brand network.</p>
+</div>
+</div>
+</div>
+</section>
+
+
+<!-- AI Pricing Engine Visualization -->
+<section class="py-24 bg-background-light dark:bg-background-dark">
+<div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="order-2 lg:order-1">
+<div class="relative p-1 bg-gradient-to-tr from-primary/30 to-sage-500/10 rounded-3xl overflow-hidden">
+<div class="bg-sage-950/80 p-8 rounded-[22px] backdrop-blur-xl">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold">Neural Pricing Engine</h3>
+<div class="flex space-x-2">
+<div class="w-2 h-2 rounded-full bg-red-500"></div>
+<div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex items-center space-x-4">
+<div class="flex-1 bg-sage-800 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+<span class="text-xs text-sage-400">Market Fluctuations</span>
+</div>
+<div class="flex items-center space-x-4">
+<div class="flex-1 bg-sage-800 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+<span class="text-xs text-sage-400">Device Condition</span>
+</div>
+<div class="flex items-center space-x-4">
+<div class="flex-1 bg-sage-800 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[95%]"></div>
+</div>
+<span class="text-xs text-sage-400">Recycling Yield</span>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4">
+<div class="p-4 rounded-xl bg-sage-900/50 border border-primary/20">
+<span class="text-primary text-xs font-bold block mb-1">ACCURACY</span>
+<span class="text-2xl font-bold">99.2%</span>
+</div>
+<div class="p-4 rounded-xl bg-sage-900/50 border border-primary/20">
+<span class="text-primary text-xs font-bold block mb-1">LATENCY</span>
+<span class="text-2xl font-bold">120ms</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="order-1 lg:order-2">
+<h2 class="text-4xl font-bold mb-6">AI-Powered Economics</h2>
+<p class="text-sage-300 text-lg mb-8">Our proprietary "Recyclo-Sense" engine processes over 1,000 data points including global metal prices, local logistics costs, and hardware lifespan models to ensure you get the most fair and transparent pricing in the market.</p>
+<ul class="space-y-4">
+<li class="flex items-start space-x-3">
+<span class="material-icons text-primary mt-1">check_circle</span>
+<div>
+<span class="font-bold">Real-time Commodity Tracking</span>
+<p class="text-sm text-sage-400">Tied directly to LME (London Metal Exchange) for gold, silver, and copper yields.</p>
+</div>
+</li>
+<li class="flex items-start space-x-3">
+<span class="material-icons text-primary mt-1">check_circle</span>
+<div>
+<span class="font-bold">Computer Vision Diagnostics</span>
+<p class="text-sm text-sage-400">Our mobile app uses CV to detect screen damage and cosmetic wear instantly.</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</section>
+
+
+<!-- AI Tech Feature -->
+<section class="py-24 overflow-hidden">
+<div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div>
+<h2 class="text-4xl md:text-5xl font-bold mb-8 leading-tight">Advanced Computer Vision for Precision Grading.</h2>
+<div class="space-y-6">
+<div class="flex items-start gap-4">
+<div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<p class="text-slate-400"><strong class="text-slate-900 block mb-1">98.5% Accuracy</strong> Our AI detects minute component details, ensuring you get the most accurate valuation in the market.</p>
+</div>
+<div class="flex items-start gap-4">
+<div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<p class="text-slate-400"><strong class="text-slate-900 block mb-1">Edge Processing</strong> Lightweight models run directly on your smartphone for zero-latency identification.</p>
+</div>
+<div class="flex items-start gap-4">
+<div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<p class="text-slate-400"><strong class="text-slate-900 block mb-1">Material Prediction</strong> Predicts the volume of gold, copper, and rare-earth metals inside each device.</p>
+</div>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -inset-4 bg-primary/20 blur-3xl rounded-full"></div>
+<div class="relative glass-card rounded-2xl p-4 overflow-hidden border-white/10">
+<div class="bg-black/60 aspect-video rounded-xl relative overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="Close up of a green printed circuit board with tech overlay" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-HiDJ4GO7xE4BhWwUezn8d-EglBvRIJKm0dpGkZhoLuiec_nnhjgP7yw4yme3-VuHhJRcpRIBzL9nwwCNDGIJvyji28wPIGRO518j4Ox26KLSy5VSs3Poq152MbY2n7irR5nb5WwP443_u836SpIYsfuKDzqJ-I-5dR8JDCAu7b-B8RFP7sXGJidzyXnNkj5QtUEMCFswf8rvuKckBvsyz1pRbJQj7cpj612m5-wXcj4Fd6Kh8qm0s8eQwoCjzMaYXkcWY9H1rCY"/>
+<!-- AI Scan Overlay Mockup -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-3/4 h-3/4 border-2 border-primary border-dashed rounded-lg flex flex-col items-center justify-between p-4 relative">
+<div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-primary"></div>
+<div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-primary"></div>
+<div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-primary"></div>
+<div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-primary"></div>
+<div class="w-full h-[2px] bg-primary animate-pulse shadow-[0_0_10px_#14b814]"></div>
+<div class="bg-black/80 p-3 rounded-lg border border-primary/40 flex items-center gap-3 backdrop-blur-sm">
+<div class="text-xs space-y-1">
+<div class="text-primary font-bold">DEVICE IDENTIFIED</div>
+<div class="text-slate-900">NVIDIA GeForce RTX Series</div>
+<div class="text-slate-400">Condition: 82% Grade B+</div>
+</div>
+<div class="text-primary text-xl font-bold">₹12,400</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+
+
+<!-- Final CTA -->
+<section class="py-24 px-6">
+<div class="max-w-7xl mx-auto bg-primary rounded-[2.5rem] p-12 md:p-24 text-center text-slate-900 relative overflow-hidden">
+<div class="absolute inset-0 opacity-10">
+<img alt="Forest background" class="w-full h-full object-cover" data-alt="Dense green forest canopy from above" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4SPPagG7lesDS4igXBXU8EP0xVHXkr6gADN0WxArga4teaUh-HgJQHoaEwoer51NbhFH1L5guM4Q0pFQ8vrZdtmlXrrFYVkYl5pH7-323LP15VkuXQEPQTfjg6gIqxb3gwnO6Hv7MmoNrzhO5Gn9i5E2xkuGkdfE3NBhTqwbpxmywK7gTqC6mpD7QCmaecuUuZomFBu4P1qDo_ws0GqbtflGCtzmxrXfZ2GZnN0_o38E9gKBebt2U0oK4a5lSUtqtx7Awvr8-8XU"/>
+</div>
+<div class="relative z-10">
+<h2 class="text-4xl md:text-6xl font-bold mb-8">Ready to Join the Movement?</h2>
+<p class="text-xl mb-12 max-w-2xl mx-auto text-slate-900/90">The electronic waste crisis is solvable with the right technology. Be part of the ecosystem that's redefining the future of recycling.</p>
+<div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+<a href="{% url 'accounts:register' %}"
+   class="inline-block bg-white text-primary px-10 py-5 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl">
+    Start Recycling Now !
+</a>
+
+
+</div>
+</div>
+</div>
+</section>
+
+
+
+<!-- Footer -->
+<!-- Modern Minimal Footer -->
+<footer class="bg-white pt-20 pb-5 px-6 border-t border-slate-200">
+
+    <div class="max-w-7xl mx-auto flex flex-col items-center text-center">
+
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 mb-8">
+            <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-white text-xl">
+    recycling
+</span>
+
+            </div>
+            <span class="text-3xl font-bold tracking-tight text-slate-900">
+                E-RECYCLO
+            </span>
+        </div>
+
+        <!-- Tagline -->
+        <p class="text-slate-600 text-base max-w-xl leading-relaxed mb-10">
+            Harnessing intelligent technology to build a cleaner, greener future. 
+            Smart recycling powered by AI, logistics, and sustainable innovation.
+        </p>
+
+        <!-- Social Icons -->
+        <div class="flex gap-5 mb-14">
+
+    <!-- Facebook -->
+    <a href="#"
+       class="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm">
+        <span class="material-icons">facebook</span>
+    </a>
+
+    <!-- Instagram -->
+    <a href="#"
+       class="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm">
+        <span class="material-icons">photo_camera</span>
+    </a>
+
+    <!-- LinkedIn -->
+    <a href="#"
+       class="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm">
+        <span class="material-icons">business_center</span>
+    </a>
+
+    <!-- X / Twitter -->
+    <a href="#"
+       class="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm">
+        <span class="material-icons">alternate_email</span>
+    </a>
+
+    <!-- Email -->
+    <a href="#"
+       class="w-12 h-12 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm">
+        <span class="material-icons">mail</span>
+    </a>
+
+</div>
+
+
+        <!-- Bottom Text -->
+       <div class="text-base text-slate-700 border-t border-slate-200 pt-8 pb-5 w-full font-medium">
+
+
+
+
+            © 2026 E-RECYCLO India. Building a sustainable tomorrow.
+        </div>
+
+    </div>
+</footer>
+
+
+
+<!-- Scroll To Top Button -->
+<button id="scrollTopBtn"
+class="fixed bottom-6 right-6 bg-primary text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:scale-110 z-50">
+
+    <span class="material-symbols-outlined">arrow_upward</span>
+
+</button>
+
+
+
+
+<script>
+let lastScrollTop = 0;
+const header = document.getElementById("smartHeader");
+
+window.addEventListener("scroll", function () {
+    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    // hide/show header
+    if (scrollTop > lastScrollTop) {
+        header.style.transform = "translateY(-100%)";
+    } else {
+        header.style.transform = "translateY(0)";
+    }
+
+    // add shadow only when scrolled
+    if(scrollTop > 10){
+        header.classList.add("shadow-lg");
+    } else {
+        header.classList.remove("shadow-lg");
+    }
+
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+});
+
+
+const scrollBtn = document.getElementById("scrollTopBtn");
+
+window.addEventListener("scroll", () => {
+
+    if (window.scrollY > 300) {
+        scrollBtn.classList.remove("opacity-0","pointer-events-none");
+        scrollBtn.classList.add("opacity-100");
+    } else {
+        scrollBtn.classList.add("opacity-0","pointer-events-none");
+        scrollBtn.classList.remove("opacity-100");
+    }
+});
+
+// Smooth scroll + instant hide
+scrollBtn.addEventListener("click", () => {
+
+    // 👉 Hide immediately
+    scrollBtn.classList.add("opacity-0","pointer-events-none");
+    scrollBtn.classList.remove("opacity-100");
+
+    // Scroll to top
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+});
+
+
+</script>
+
+
+
+
+</body></html>

@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}My Pickups - eRecyclo{% endblock %}
+{% block page_title %}My Pickups{% endblock %}
+{% block page_subtitle %}Track and complete your assigned pickups{% endblock %}
+
+{% block page_content %}
+<div class="space-y-6">
+
+    <!-- Filter Tabs -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <nav class="flex overflow-x-auto">
+            <a href="?" class="flex-shrink-0 flex items-center gap-2 px-5 py-4 text-sm font-semibold border-b-2 transition-colors
+                {% if not status_filter %}border-primary text-primary bg-primary/5{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700{% endif %}">
+                <span class="material-symbols-outlined text-base">list_alt</span>
+                All <span class="text-xs px-2 py-0.5 rounded-full {% if not status_filter %}bg-primary text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-600{% endif %}">{{ counts.all }}</span>
+            </a>
+            <a href="?status=active" class="flex-shrink-0 flex items-center gap-2 px-5 py-4 text-sm font-semibold border-b-2 transition-colors
+                {% if status_filter == 'active' %}border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700{% endif %}">
+                <span class="material-symbols-outlined text-base">local_shipping</span>
+                Active <span class="text-xs px-2 py-0.5 rounded-full {% if status_filter == 'active' %}bg-amber-500 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-600{% endif %}">{{ counts.active }}</span>
+            </a>
+            <a href="?status=completed" class="flex-shrink-0 flex items-center gap-2 px-5 py-4 text-sm font-semibold border-b-2 transition-colors
+                {% if status_filter == 'completed' %}border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700{% endif %}">
+                <span class="material-symbols-outlined text-base">check_circle</span>
+                Completed <span class="text-xs px-2 py-0.5 rounded-full {% if status_filter == 'completed' %}bg-green-500 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-600{% endif %}">{{ counts.completed }}</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Pickups List -->
+    {% if pickups %}
+    <div class="grid grid-cols-1 gap-4">
+        {% for pickup in pickups %}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-shadow">
+            <div class="p-5">
+                <div class="flex gap-4">
+
+                    {% if pickup.photo_post.photo %}
+                    <img src="{{ pickup.photo_post.photo.url }}" alt="{{ pickup.photo_post.title }}"
+                         class="w-24 h-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    {% else %}
+                    <div class="w-24 h-24 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-slate-400 text-3xl">devices</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="flex-1 min-w-0">
+                        <!-- Header row -->
+                        <div class="flex items-start justify-between mb-2 gap-3">
+                            <h3 class="font-bold text-slate-900 dark:text-white text-lg leading-tight">{{ pickup.photo_post.title }}</h3>
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-bold rounded-full flex-shrink-0
+                                {% if pickup.status == 'completed' %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400
+                                {% elif pickup.status == 'in_progress' %}bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400
+                                {% elif pickup.status == 'accepted' %}bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400
+                                {% elif pickup.status == 'cancelled' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400
+                                {% else %}bg-slate-100 dark:bg-slate-700 text-slate-600{% endif %}">
+                                {{ pickup.get_status_display }}
+                            </span>
+                        </div>
+
+                        <!-- Info Grid -->
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:14px">person</span>
+                                <span class="text-slate-400">Client:</span>
+                                <span class="font-medium text-slate-900 dark:text-white ml-1">{{ pickup.photo_post.user.get_full_name }}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:14px">call</span>
+                                <span class="text-slate-400">Phone:</span>
+                                <span class="font-medium text-slate-900 dark:text-white ml-1">{{ pickup.photo_post.user.phone_number }}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-green-500" style="font-size:14px">currency_rupee</span>
+                                <span class="text-slate-400">Your earning:</span>
+                                <span class="font-bold text-green-600 dark:text-green-400 ml-1">₹{{ pickup.total_payment }}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-slate-400" style="font-size:14px">calendar_today</span>
+                                <span class="text-slate-400">Accepted:</span>
+                                <span class="font-medium text-slate-900 dark:text-white ml-1">{{ pickup.created_at|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="flex items-start gap-2 mb-3 text-sm">
+                            <span class="material-symbols-outlined text-slate-400 text-base mt-0.5">location_on</span>
+                            <span class="text-slate-500 dark:text-slate-400">{{ pickup.photo_post.address|truncatewords:12 }}</span>
+                        </div>
+
+                        <!-- OTP Progress for active pickups -->
+                        {% if pickup.status in 'assigned accepted in_progress' %}
+                        <div class="flex items-center gap-3 mb-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl text-xs">
+                            <div class="flex items-center gap-1.5">
+                                <div class="size-5 rounded-full flex items-center justify-center
+                                    {% if pickup.status == 'in_progress' or pickup.status == 'completed' %}bg-green-500{% else %}bg-slate-300 dark:bg-slate-600{% endif %}">
+                                    {% if pickup.status == 'in_progress' or pickup.status == 'completed' %}
+                                    <span class="material-symbols-outlined text-white" style="font-size:12px">check</span>
+                                    {% else %}
+                                    <span class="text-slate-500 font-bold" style="font-size:10px">1</span>
+                                    {% endif %}
+                                </div>
+                                <span class="{% if pickup.status == 'in_progress' or pickup.status == 'completed' %}text-green-600 dark:text-green-400 font-semibold{% else %}text-slate-400{% endif %}">Pickup OTP</span>
+                            </div>
+                            <div class="flex-1 h-0.5 {% if pickup.status == 'in_progress' %}bg-green-400{% else %}bg-slate-200 dark:bg-slate-600{% endif %}"></div>
+                            <div class="flex items-center gap-1.5">
+                                <div class="size-5 rounded-full flex items-center justify-center
+                                    {% if pickup.status == 'completed' %}bg-green-500{% else %}bg-slate-300 dark:bg-slate-600{% endif %}">
+                                    {% if pickup.status == 'completed' %}
+                                    <span class="material-symbols-outlined text-white" style="font-size:12px">check</span>
+                                    {% else %}
+                                    <span class="text-slate-500 font-bold" style="font-size:10px">2</span>
+                                    {% endif %}
+                                </div>
+                                <span class="{% if pickup.status == 'completed' %}text-green-600 dark:text-green-400 font-semibold{% else %}text-slate-400{% endif %}">Delivery OTP</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2 flex-wrap">
+                            {% if pickup.status == 'accepted' or pickup.status == 'assigned' %}
+                            <a href="{% url 'collector:verify_pickup_otp' pickup.pk %}"
+                               class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-forest text-white rounded-xl text-xs font-bold transition-colors">
+                                <span class="material-symbols-outlined" style="font-size:16px">pin</span>
+                                Enter Pickup OTP
+                            </a>
+
+                            {% elif pickup.status == 'in_progress' %}
+                            <a href="{% url 'collector:verify_delivery_otp' pickup.pk %}"
+                               class="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors">
+                                <span class="material-symbols-outlined" style="font-size:16px">pin</span>
+                                Enter Delivery OTP
+                            </a>
+
+                            {% elif pickup.status == 'completed' %}
+                            <a href="{% url 'collector:pickup_detail' pickup.pk %}"
+                               class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors">
+                                <span class="material-symbols-outlined" style="font-size:16px">visibility</span>
+                                View Details
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center py-16 text-center">
+        <div class="size-16 bg-slate-100 dark:bg-slate-700/50 rounded-2xl flex items-center justify-center mb-4">
+            <span class="material-symbols-outlined text-3xl text-slate-400">local_shipping</span>
+        </div>
+        <h4 class="text-base font-semibold text-slate-700 dark:text-slate-300 mb-2">No Pickups Found</h4>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Accept pickups to get started</p>
+        <a href="{% url 'collector:available_pickups' %}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-forest text-white rounded-xl text-sm font-semibold transition-colors">
+            <span class="material-symbols-outlined text-base">search</span>
+            Find Pickups
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
