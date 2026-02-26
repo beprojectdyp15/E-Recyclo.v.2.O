@@ -18,13 +18,3 @@ aptPkgs = [
     "libfontconfig1", 
     "libice6"
 ]
-
-[phases.install]
-# 3. Use 'python -m pip' to be extra safe
-cmds = ["pip install -r requirements.txt"]
-
-[phases.build]
-cmds = ["python manage.py collectstatic --noinput --settings=config.settings.production"]
-
-[start]
-cmd = "python manage.py migrate --noinput --settings=config.settings.production && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
