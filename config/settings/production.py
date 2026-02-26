@@ -1,5 +1,6 @@
 """
 Production settings for E-RECYCLO on Railway
+This file OVERRIDES base.py settings for production
 """
 
 from .base import *
@@ -7,7 +8,7 @@ import dj_database_url
 import os
 
 # ========================================
-# DEBUG SETTINGS
+# DEBUG - Turn OFF in production
 # ========================================
 
 DEBUG = False
@@ -22,16 +23,20 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
-# Add custom domain if provided
+# Add custom domain if you set one later
 if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
     ALLOWED_HOSTS.append(os.environ.get('RAILWAY_PUBLIC_DOMAIN'))
 
 # ========================================
-# DATABASE (Railway PostgreSQL)
+# DATABASE - COMPLETELY OVERRIDE base.py
 # ========================================
 
-# Railway provides DATABASE_URL automatically
+# This REPLACES the DATABASES setting from base.py
+# Railway provides DATABASE_URL environment variable
+# It looks like: postgresql://user:password@host:port/database
+
 if 'DATABASE_URL' in os.environ:
+    # Use Railway's PostgreSQL (PRODUCTION)
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
@@ -41,14 +46,14 @@ if 'DATABASE_URL' in os.environ:
         )
     }
 else:
-    # Fallback to base.py settings
+    # Fallback to base.py settings (should never happen in production)
+    # But keeps local testing working if you run with production settings
     pass
 
 # ========================================
 # SECURITY SETTINGS
 # ========================================
 
-# SSL/HTTPS
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -57,12 +62,17 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
 # HSTS
-SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# Proxy headers (Railway uses proxies)
+# Proxy headers
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.railway.app',
+]
 
 # ========================================
 # EMAIL (Your Brevo SMTP)
@@ -72,15 +82,18 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp-relay.brevo.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@erecyclo.com')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='E-RECYCLO <noreply@erecyclo.in>')
 
 # ========================================
 # STATIC FILES (WhiteNoise)
 # ========================================
 
+# Insert WhiteNoise middleware
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# WhiteNoise storage
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATIC_URL = '/static/'
@@ -93,11 +106,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Note: Railway doesn't persist media files on free tier
-# Consider using Cloudinary or AWS S3 for production
-
 # ========================================
-# REDIS (Railway provides this)
+# REDIS CACHING
 # ========================================
 
 if 'REDIS_URL' in os.environ:
@@ -107,13 +117,14 @@ if 'REDIS_URL' in os.environ:
             'LOCATION': os.environ.get('REDIS_URL'),
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+                'RETRY_ON_TIMEOUT': True,
             },
             'KEY_PREFIX': 'erecyclo',
             'TIMEOUT': 300,
         }
     }
-    
-    # Use Redis for sessions
     SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
     SESSION_CACHE_ALIAS = 'default'
 else:
@@ -121,7 +132,15 @@ else:
     SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # ========================================
-# LOGGING (Production)
+# CELERY (if using)
+# ========================================
+
+if 'REDIS_URL' in os.environ:
+    CELERY_BROKER_URL = os.environ.get('REDIS_URL')
+    CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL')
+
+# ========================================
+# LOGGING
 # ========================================
 
 LOGGING = {
@@ -129,7 +148,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '[{levelname}] {asctime} {module} {message}',
             'style': '{',
         },
     },
@@ -153,12 +172,11 @@ LOGGING = {
 }
 
 # ========================================
-# CORS (if using API)
+# ADMINS
 # ========================================
 
-CORS_ALLOWED_ORIGINS = [
-    'https://*.railway.app',
+ADMINS = [
+    ('Admin', config('ADMIN_EMAIL', default='admin@erecyclo.com')),
 ]
 
-if os.environ.get('FRONTEND_URL'):
-    CORS_ALLOWED_ORIGINS.append(os.environ.get('FRONTEND_URL'))
+MANAGERS = ADMINS
