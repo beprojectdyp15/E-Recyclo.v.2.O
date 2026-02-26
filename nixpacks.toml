@@ -2,30 +2,29 @@
 # Provides system dependencies for OpenCV/YOLO
 
 [phases.setup]
-# System packages required for OpenCV and YOLO
+# 1. ADD THIS LINE: This tells Railway to actually install Python
+nixPkgs = ["python311", "gcc"] 
+
+# 2. Your existing system libraries for OpenCV/YOLO
 aptPkgs = [
-    "libgl1",           # OpenGL library (required by cv2)
-    "libglib2.0-0",     # GLib library
-    "libsm6",           # X11 Session Management library
-    "libxext6",         # X11 extensions library
-    "libxrender-dev",   # X11 Render extension
-    "libgomp1",         # GNU OpenMP runtime
-    "ffmpeg",           # Video processing (OpenCV dependency)
-    "libgthread-2.0-0", # GLib threading
-    "libfontconfig1",   # Font configuration
-    "libice6",          # Inter-Client Exchange library
+    "libgl1", 
+    "libglib2.0-0", 
+    "libsm6", 
+    "libxext6", 
+    "libxrender-dev", 
+    "libgomp1", 
+    "ffmpeg", 
+    "libgthread-2.0-0", 
+    "libfontconfig1", 
+    "libice6"
 ]
 
 [phases.install]
-# Install Python dependencies
-cmds = ["pip install -r requirements.txt"]
+# 3. Use 'python -m pip' to be extra safe
+cmds = ["python -m pip install --upgrade pip", "python -m pip install -r requirements.txt"]
 
 [phases.build]
-# Collect static files (migrations run at start, not build)
-cmds = [
-    "python manage.py collectstatic --noinput --settings=config.settings.production"
-]
+cmds = ["python manage.py collectstatic --noinput --settings=config.settings.production"]
 
 [start]
-# Run migrations then start gunicorn
 cmd = "python manage.py migrate --noinput --settings=config.settings.production && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
