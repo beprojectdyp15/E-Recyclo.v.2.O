@@ -1,175 +1,192 @@
 """
-YOLO Model Predictor for E-Waste Classification
-Handles model loading, prediction, and result processing
+E-Waste Detection Predictor
+Uses YOLOv8 model for classification with lazy loading
 """
-import os
-import torch
 from pathlib import Path
+from PIL import Image
+import numpy as np
 from django.conf import settings
-from .category_mapper import CategoryMapper
-from .image_processor import ImageProcessor
+import logging
 
-# ============================================
-# FIX FOR PYTORCH 2.6+ WEIGHTS_ONLY SECURITY
-# ============================================
-# Method 1: Add safe globals for ultralytics
-try:
-    import ultralytics.nn.tasks
-    torch.serialization.add_safe_globals([ultralytics.nn.tasks.DetectionModel])
-except Exception:
-    pass
+logger = logging.getLogger(__name__)
 
-# Method 2: Monkey-patch torch.load to use weights_only=False for .pt files
-_original_torch_load = torch.load
+# Model path
+MODEL_PATH = Path(__file__).parent / 'ml_weights' / 'best.pt'
 
-def _patched_torch_load(*args, **kwargs):
-    # Force weights_only=False for model files
-    if 'weights_only' not in kwargs:
-        kwargs['weights_only'] = False
-    return _original_torch_load(*args, **kwargs)
-
-torch.load = _patched_torch_load
-# ============================================
-
-from ultralytics import YOLO
 
 class EWastePredictor:
-    """YOLOv8 based E-Waste classifier"""
+    """
+    Singleton predictor for e-waste detection
     
-    _model = None  # Singleton pattern - load model once
+    IMPORTANT: Model loads lazily to avoid import issues during Django migrations.
+    This is critical for Railway/Docker deployments where YOLO/OpenCV can't load
+    during the build phase (missing system libraries).
+    """
     
-    MODEL_PATH = Path(__file__).parent / 'ml_weights' / 'best.pt'
+    _instance = None
+    _model = None
     
-    @classmethod
-    def get_model(cls):
-        """Load model (singleton pattern for efficiency)"""
-        if cls._model is None:
-            try:
-                print(f"Loading YOLO model from: {cls.MODEL_PATH}")
-                cls._model = YOLO(str(cls.MODEL_PATH))
-                print("✓ Model loaded successfully!")
-            except Exception as e:
-                print(f"✗ Failed to load model: {e}")
-                raise RuntimeError(f"Could not load YOLO model: {str(e)}")
-        
-        return cls._model
+    def __new__(cls):
+        """Singleton pattern - only one predictor instance"""
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
     
-    @classmethod
-    def predict(cls, image_file, return_details=False):
+    @property
+    def model(self):
         """
-        Predict e-waste category from uploaded image
+        Lazy load YOLO model only when first prediction is made.
+        
+        This prevents import errors during:
+        - Django migrations
+        - collectstatic
+        - Server startup in environments without GPU/display
+        
+        Returns:
+            YOLO model instance
+        """
+        if self._model is None:
+            try:
+                # Import YOLO here, not at module level
+                # This prevents loading during migrations/collectstatic
+                from ultralytics import YOLO
+                
+                if not MODEL_PATH.exists():
+                    logger.error(f"Model file not found at {MODEL_PATH}")
+                    raise FileNotFoundError(f"YOLO model not found at {MODEL_PATH}")
+                
+                logger.info(f"Loading YOLO model from {MODEL_PATH}")
+                self._model = YOLO(str(MODEL_PATH))
+                logger.info("✓ YOLO model loaded successfully")
+                
+            except ImportError as e:
+                logger.error(f"Failed to import ultralytics: {e}")
+                logger.error("Make sure ultralytics is installed: pip install ultralytics")
+                raise
+            except Exception as e:
+                logger.error(f"Failed to load YOLO model: {e}")
+                raise
+        
+        return self._model
+    
+    def predict(self, image_path, confidence_threshold=0.25):
+        """
+        Predict e-waste category from image
+        
+        Args:
+            image_path: Path to image file, PIL Image, or numpy array
+            confidence_threshold: Minimum confidence (0-1) for predictions
+            
+        Returns:
+            dict: {
+                'success': bool,
+                'category': str,
+                'confidence': float,
+                'all_predictions': list,
+                'message': str
+            }
         """
         try:
-            # Preprocess image
-            img, original_size = ImageProcessor.preprocess_image(image_file)
+            # Model loads here on first prediction (lazy loading)
+            results = self.model(image_path, conf=confidence_threshold, verbose=False)
             
-            # Get model
-            model = cls.get_model()
-            
-            # Run prediction with LOWER confidence threshold for better detection
-            results = model(img, conf=0.15)  # Lowered from 0.25 to 0.15
-            
-            # Extract prediction
-            if len(results) > 0 and len(results[0].boxes) > 0:
-                # Get ALL predictions, not just top one
-                boxes = results[0].boxes
-                
-                # Sort by confidence
-                confidences = boxes.conf.cpu().numpy()
-                sorted_indices = confidences.argsort()[::-1]
-                
-                # Get top prediction
-                top_idx = sorted_indices[0]
-                class_id = int(boxes.cls[top_idx])
-                confidence = float(boxes.conf[top_idx])
-                
-                print(f"🔍 Detection: Class {class_id}, Confidence: {confidence:.2%}")
-                print(f"   Image size: {original_size}")
-                
-                # ENHANCED MAPPING with size-based logic
-                yolo_class = CategoryMapper.YOLO_CLASSES.get(class_id, 'other')
-                
-                # Smart override for 'appliance' if detected as monitor-sized
-                if yolo_class == 'appliance':
-                    width, height = original_size
-                    aspect_ratio = width / height if height > 0 else 1
-                    
-                    # If aspect ratio is very wide (>1.5), likely a TV/Monitor
-                    if aspect_ratio > 1.5:
-                        print(f"   ⚠️ Appliance but wide aspect {aspect_ratio:.2f} → Likely Monitor/TV")
-                        # Keep as appliance (will show as "Home Appliance" which includes TV)
-                    else:
-                        print(f"   ✓ Appliance with aspect {aspect_ratio:.2f} → Large appliance")
-                
-                # Map to user-friendly category
-                category_info = CategoryMapper.map_prediction(
-                    class_id, 
-                    confidence,
-                    original_size
-                )
-                
-                # Add alternative suggestions if confidence is low
-                suggestions = []
-                if confidence < 0.50:  # Low confidence
-                    # Get top 3 predictions
-                    for idx in sorted_indices[:3]:
-                        alt_class_id = int(boxes.cls[idx])
-                        alt_conf = float(boxes.conf[idx])
-                        alt_class = CategoryMapper.YOLO_CLASSES.get(alt_class_id, 'other')
-                        suggestions.append({
-                            'category': alt_class,
-                            'confidence': round(alt_conf * 100, 1)
-                        })
-                
-                prediction_result = {
-                    'success': True,
-                    'category': category_info['yolo_class'],
-                    'display_name': category_info['display_name'],
-                    'description': category_info['description'],
-                    'confidence': category_info['confidence'],
-                    'icon': category_info['icon'],
-                    'recyclable_parts': category_info['recyclable_parts'],
-                    'ai_detected': True,
-                    'suggestions': suggestions,  # Alternative categories
-                }
-                
-                if return_details:
-                    prediction_result['raw_class_id'] = class_id
-                    prediction_result['bounding_box'] = boxes.xyxy[top_idx].tolist()
-                
-                return prediction_result
-                
-            else:
-                # No detection
+            if not results or len(results) == 0:
                 return {
-                    'success': True,
-                    'category': 'other',
-                    'display_name': 'Computer Accessory',
-                    'description': 'Could not classify - please select manually',
+                    'success': False,
+                    'category': None,
                     'confidence': 0.0,
-                    'icon': 'devices_other',
-                    'recyclable_parts': ['Plastic', 'Circuit Board', 'Metal Parts'],
-                    'ai_detected': False,
-                    'suggestions': [],
+                    'all_predictions': [],
+                    'message': 'No objects detected in image'
                 }
+            
+            # Get first result
+            result = results[0]
+            
+            # Check if any predictions
+            if result.boxes is None or len(result.boxes) == 0:
+                return {
+                    'success': False,
+                    'category': None,
+                    'confidence': 0.0,
+                    'all_predictions': [],
+                    'message': 'No e-waste detected in image'
+                }
+            
+            # Get all predictions sorted by confidence
+            predictions = []
+            for box in result.boxes:
+                class_id = int(box.cls[0])
+                confidence = float(box.conf[0])
+                class_name = result.names[class_id]
                 
-        except Exception as e:
-            print(f"❌ Prediction error: {e}")
-            import traceback
-            traceback.print_exc()
+                predictions.append({
+                    'category': class_name,
+                    'confidence': confidence,
+                    'class_id': class_id
+                })
+            
+            # Sort by confidence (highest first)
+            predictions.sort(key=lambda x: x['confidence'], reverse=True)
+            
+            # Return top prediction
+            top_prediction = predictions[0]
+            
             return {
-                'success': False,
-                'error': str(e),
-                'category': 'other',
-                'display_name': 'Other E-Waste',
-                'ai_detected': False,
-                'suggestions': [],
+                'success': True,
+                'category': top_prediction['category'],
+                'confidence': top_prediction['confidence'],
+                'all_predictions': predictions,
+                'message': f"Detected {top_prediction['category']} with {top_prediction['confidence']:.1%} confidence"
             }
             
-    @classmethod
-    def batch_predict(cls, image_files):
-        """Predict multiple images at once"""
+        except Exception as e:
+            logger.error(f"Prediction failed: {str(e)}")
+            return {
+                'success': False,
+                'category': None,
+                'confidence': 0.0,
+                'all_predictions': [],
+                'message': f"Prediction error: {str(e)}"
+            }
+    
+    def predict_batch(self, image_paths, confidence_threshold=0.25):
+        """
+        Predict e-waste categories for multiple images
+        
+        Args:
+            image_paths: List of image paths
+            confidence_threshold: Minimum confidence (0-1) for predictions
+            
+        Returns:
+            list of prediction dicts
+        """
         results = []
-        for image_file in image_files:
-            results.append(cls.predict(image_file))
+        for image_path in image_paths:
+            results.append(self.predict(image_path, confidence_threshold))
         return results
+    
+    def is_model_loaded(self):
+        """Check if model is currently loaded in memory"""
+        return self._model is not None
+    
+    def unload_model(self):
+        """Unload model from memory (useful for freeing RAM)"""
+        if self._model is not None:
+            logger.info("Unloading YOLO model from memory")
+            self._model = None
+
+
+# Create singleton instance (but model not loaded yet!)
+predictor = EWastePredictor()
+
+
+# Convenience function for easy imports
+def predict_ewaste(image_path, confidence_threshold=0.25):
+    """
+    Convenience function for e-waste prediction
+    
+    Usage:
+        from apps.ai_services.predictor import predict_ewaste
+        result = predict_ewaste('path/to/image.jpg')
+    """
+    return predictor.predict(image_path, confidence_threshold)

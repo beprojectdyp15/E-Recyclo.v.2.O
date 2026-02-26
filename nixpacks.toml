@@ -1,0 +1,31 @@
+# Railway/Nixpacks configuration for E-RECYCLO
+# Provides system dependencies for OpenCV/YOLO
+
+[phases.setup]
+# System packages required for OpenCV and YOLO
+aptPkgs = [
+    "libgl1",           # OpenGL library (required by cv2)
+    "libglib2.0-0",     # GLib library
+    "libsm6",           # X11 Session Management library
+    "libxext6",         # X11 extensions library
+    "libxrender-dev",   # X11 Render extension
+    "libgomp1",         # GNU OpenMP runtime
+    "ffmpeg",           # Video processing (OpenCV dependency)
+    "libgthread-2.0-0", # GLib threading
+    "libfontconfig1",   # Font configuration
+    "libice6",          # Inter-Client Exchange library
+]
+
+[phases.install]
+# Install Python dependencies
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+# Collect static files (migrations run at start, not build)
+cmds = [
+    "python manage.py collectstatic --noinput --settings=config.settings.production"
+]
+
+[start]
+# Run migrations then start gunicorn
+cmd = "python manage.py migrate --noinput --settings=config.settings.production && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
