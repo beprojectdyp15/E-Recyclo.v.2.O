@@ -1,16 +1,17 @@
 {% load static %}
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html class="light" lang="en" style="color-scheme: light;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
     <title>{% block title %}eRecyclo{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% comment %} <link rel="stylesheet" href="{% static 'css/unified-cards.css' %}">
     <link rel="stylesheet" href="{% static 'css/card-width-fix.css' %}"> {% endcomment %}
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script id="tailwind-config">
         tailwind.config = {
@@ -24,23 +25,108 @@
                         "sage": "#87a96b",
                         "forest": "#228b22",
                     },
-                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                    fontFamily: { 
+                        "sans": ["Plus Jakarta Sans", "sans-serif"],
+                        "display": ["Plus Jakarta Sans", "sans-serif"] 
+                    },
                 },
             },
         }
     </script>
     <style>
-        body { font-family: 'Manrope', sans-serif; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        html, body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color-scheme: light only;
+        }
+        
+        /* Global Input Caret Fix */
+        input, textarea, [contenteditable] { 
+            caret-color: #1e293b !important; 
+            color: #1e293b;
+        }
+        .dark input, .dark textarea { 
+            caret-color: #f1f5f9 !important; 
+            color: #f1f5f9;
+        }
+
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        #sidebar { transition: width 0.3s ease; width: 256px; }
-        #sidebar.collapsed { width: 72px; }
+        
+        #sidebar { 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            width: 280px;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 10px 0 40px -15px rgba(0, 0, 0, 0.04);
+        }
+
+        .dark #sidebar {
+            background: rgba(15, 23, 42, 0.65);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 20px 0 50px -10px rgba(0, 0, 0, 0.3);
+        }
+
+        #sidebar.collapsed { width: 92px; }
         #sidebar.collapsed .nav-text { display: none; }
-        #sidebar.collapsed .nav-link { justify-content: center; }
+        #sidebar.collapsed .nav-link { 
+            justify-content: center; 
+            padding: 9px 0; 
+            margin-left: 15px; 
+            margin-right: 15px; 
+        }
         #sidebar.collapsed .logo-text { display: none; }
         #sidebar.collapsed .profile-section { display: none; }
-        #sidebar.collapsed .sidebar-section-label { display: none; }
-        .nav-link.active { background: rgb(23 207 23 / 0.1); color: #17cf17; font-weight: 600; }
-        .nav-link.active .material-symbols-outlined { color: #17cf17; }
+        #sidebar.collapsed .sidebar-section-label { text-align: center; font-size: 8px; }
+        #sidebar.collapsed .logo-wrapper { justify-content: center; padding-left: 0; }
+
+        .nav-text { 
+            font-size: 13.5px !important; 
+            font-weight: 700 !important;
+            letter-spacing: -0.01em;
+            text-transform: none !important;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            margin: 4px 14px;
+            color: #64748b;
+            padding: 10px 14px; /* Adjusted padding for new design */
+            border-radius: 0.75rem; /* Reduced from 1rem */
+        }
+
+        .nav-link:hover {
+            color: #17cf17;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateX(4px);
+        }
+        .dark .nav-link:hover { background: rgba(255, 255, 255, 0.05); }
+
+        .nav-link.active { 
+            color: #17cf17 !important; 
+            background: white !important;
+            box-shadow: 0 10px 20px -5px rgba(23, 207, 23, 0.15) !important;
+        }
+        .dark .nav-link.active { 
+            background: rgba(23, 207, 23, 0.1) !important;
+            border: 1px solid rgba(23, 207, 23, 0.2);
+            box-shadow: none !important;
+        }
+
+        .premium-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+        .dark .premium-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .premium-shadow-right {
+            /* Handled by #sidebar */
+        }
+
         @keyframes slideIn { from { opacity:0; transform:translateX(100%); } to { opacity:1; transform:translateX(0); } }
         .toast-item { animation: slideIn 0.3s ease; }
         
@@ -66,248 +152,236 @@
             background-color: #1e293b;
             border-color: #334155;
             color: #f1f5f9;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2317cf17' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
         }
         
-        select:hover {
-            border-color: #17cf17;
-            background-color: #f0fdf4;
-        }
-        
-        .dark select:hover {
-            border-color: #17cf17;
-            background-color: #14251b;
-        }
-        
-        select:focus {
-            outline: none;
-            border-color: #17cf17;
-            box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
-            background-color: #ffffff;
-        }
-        
-        .dark select:focus {
-            background-color: #1e293b;
-            box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
-        }
-        
-        select option {
-            padding: 0.75rem 1rem;
-            background-color: #ffffff;
-            color: #0f172a;
-            font-weight: 500;
-        }
-        
-        .dark select option {
-            background-color: #1e293b;
-            color: #f1f5f9;
-        }
-        
-        select option:hover,
-        select option:checked {
-            background-color: #17cf17 !important;
-            color: #ffffff !important;
-        }
-        
-        /* Disabled state */
-        select:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background-color: #f1f5f9;
-            border-color: #cbd5e1;
-        }
-        
-        .dark select:disabled {
-            background-color: #0f172a;
-            border-color: #1e293b;
-        }
+        select:hover { border-color: #17cf17; background-color: #f0fdf4; }
+        .dark select:hover { border-color: #17cf17; background-color: #14251b; }
+        select:focus { outline: none; border-color: #17cf17; box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1); }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen antialiased">
 <div class="flex h-screen overflow-hidden">
 
 <!-- SIDEBAR -->
-<aside id="sidebar" class="border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark flex flex-col justify-between flex-shrink-0 overflow-hidden">
-    <div class="p-4 overflow-y-auto flex-1 min-w-0">
-        <div class="flex items-center gap-3 mb-6" style="min-height: 54px;">
-            <div class="bg-primary size-9 rounded-xl flex items-center justify-center text-white flex-shrink-0">
-                <span class="material-symbols-outlined text-lg">eco</span>
+<aside id="sidebar" class="collapsed flex flex-col justify-between flex-shrink-0 relative z-30">
+    <div class="px-3 py-[20px] overflow-y-auto flex-1 min-w-0">
+        <div class="logo-wrapper flex items-center h-[45px] gap-3.5 mb-[24px] pl-4">
+            <div class="bg-primary size-10 rounded-2xl flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-primary/30">
+                <span class="material-symbols-outlined text-xl">eco</span>
             </div>
             <div class="logo-text min-w-0">
-                <h1 class="text-slate-900 dark:text-white text-[27px] font-bold leading-none">eRecyclo</h1>
-                <p class="text-primary text-[10px] font-semibold uppercase tracking-widest mt-0.5">
+                <h1 class="text-slate-900 dark:text-white text-2xl font-black tracking-tighter leading-none">eRecyclo</h1>
+                <p class="text-primary text-[9px] font-bold uppercase tracking-[0.2em] mt-1.5 opacity-80">
                     {% if user.is_client %}Client{% elif user.is_vendor %} Vendor{% elif user.is_collector %}Collector{% elif user.is_admin or user.is_superuser %}Admin{% endif %} Portal
                 </p>
             </div>
         </div>
-
         
+        <!-- Divider aligning with header baseline -->
+        <div class="mx-4 border-b border-slate-200/60 dark:border-slate-800 mb-4 -mt-[1px]"></div>
 
-        <nav class="space-y-0.5">
+        <nav class="space-y-1 pt-2">
             {% if user.is_client %}
-                <p class="sidebar-section-label text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 pb-1 pt-1">Menu</p>
+
                 {% url 'client:dashboard' as dash_url %}
                 {% url 'client:upload_ewaste' as upload_url %}
                 {% url 'client:my_uploads' as myup_url %}
                 {% url 'client:wallet' as wallet_url %}
-                {% url 'client:collection_centers' as centers_url %}
+                {% url 'client:wallet' as wallet_url %}
                 {% url 'client:bulk_pickup' as bulk_url %}
-                <a href="{{ dash_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == dash_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">dashboard</span><span class="nav-text text-sm">Dashboard</span>
+                <a href="{{ dash_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == dash_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">dashboard</span><span class="nav-text text-sm font-semibold">Dashboard</span>
                 </a>
-                <a href="{{ upload_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == upload_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">upload_file</span><span class="nav-text text-sm">Upload E-Waste</span>
+                <a href="{{ upload_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == upload_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">recycling</span><span class="nav-text text-sm font-semibold">Recycle Now</span>
                 </a>
-                <a href="{{ myup_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == myup_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">history</span><span class="nav-text text-sm">My Requests</span>
+                <a href="{{ myup_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.resolver_match.url_name in 'my_uploads,upload_detail,review_offer,request_return,transfer_to_vendor,accept_last_offer' %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">package_2</span><span class="nav-text text-sm font-semibold">Track Items</span>
                 </a>
-                <a href="{{ wallet_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == wallet_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">account_balance_wallet</span><span class="nav-text text-sm">Wallet</span>
+                <a href="{{ wallet_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == wallet_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">wallet</span><span class="nav-text text-sm font-semibold">Earnings</span>
                 </a>
-                <a href="{{ centers_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == centers_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">store</span><span class="nav-text text-sm">Drop-off Centers</span>
-                </a>
-                <a href="{{ bulk_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == bulk_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">local_shipping</span><span class="nav-text text-sm">Bulk Pickup</span>
+                <a href="{{ bulk_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == bulk_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">local_shipping</span><span class="nav-text text-sm font-semibold">Bulk Pickup</span>
                 </a>
 
             {% elif user.is_vendor %}
-                <p class="sidebar-section-label text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 pb-1 pt-1">Menu</p>
+
                 {% url 'vendor:dashboard' as vdash_url %}
                 {% url 'vendor:pending_requests' as vreq_url %}
                 {% url 'vendor:accepted_items' as vacc_url %}
                 {% url 'vendor:reports' as vrep_url %}
-                <a href="{{ vdash_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == vdash_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">dashboard</span><span class="nav-text text-sm">Dashboard</span>
+                <a href="{{ vdash_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == vdash_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">dashboard</span><span class="nav-text text-sm font-semibold">Market Overview</span>
                 </a>
-                <a href="{{ vreq_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == vreq_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">pending_actions</span><span class="nav-text text-sm">Pending Requests</span>
+                <a href="{{ vreq_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == vreq_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">shopping_basket</span><span class="nav-text text-sm font-semibold">Open Bids</span>
                 </a>
-                <a href="{{ vacc_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == vacc_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">inventory_2</span><span class="nav-text text-sm">Accepted Items</span>
+                <a href="{{ vacc_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.resolver_match.url_name in 'accepted_items,item_detail,evaluate_item,accept_item,reject_item,decline_reevaluation' %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">inventory</span><span class="nav-text text-sm font-semibold">My Inventory</span>
                 </a>
-                <a href="{{ vrep_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == vrep_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">analytics</span><span class="nav-text text-sm">Reports</span>
+                <a href="{{ vrep_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == vrep_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">analytics</span><span class="nav-text text-sm font-semibold">Performance</span>
                 </a>
 
             {% elif user.is_collector %}
-                <p class="sidebar-section-label text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 pb-1 pt-1">Menu</p>
+
                 {% url 'collector:dashboard' as cdash_url %}
                 {% url 'collector:available_pickups' as cavail_url %}
                 {% url 'collector:my_pickups' as cmypick_url %}
                 {% url 'collector:earnings' as cearn_url %}
-                <a href="{{ cdash_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == cdash_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">dashboard</span><span class="nav-text text-sm">Dashboard</span>
+                <a href="{{ cdash_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == cdash_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">dashboard_customize</span><span class="nav-text text-sm font-semibold">Collector Hub</span>
                 </a>
-                <a href="{{ cavail_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == cavail_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">package_2</span><span class="nav-text text-sm">Available Pickups</span>
+                <a href="{{ cavail_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == cavail_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">explore</span><span class="nav-text text-sm font-semibold">Find Pickups</span>
                 </a>
-                <a href="{{ cmypick_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == cmypick_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">local_shipping</span><span class="nav-text text-sm">My Pickups</span>
+                <a href="{{ cmypick_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.resolver_match.url_name in 'my_pickups,pickup_detail,verify_pickup_otp,verify_delivery_otp,complete_pickup,accept_pickup' %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">local_shipping</span><span class="nav-text text-sm font-semibold">Active Jobs</span>
                 </a>
-                <a href="{{ cearn_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == cearn_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">payments</span><span class="nav-text text-sm">Earnings</span>
+                <a href="{{ cearn_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == cearn_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">payments</span><span class="nav-text text-sm font-semibold">My Earnings</span>
                 </a>
 
             {% elif user.is_admin or user.is_superuser %}
-                <p class="sidebar-section-label text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 pb-1 pt-1">Admin</p>
+
                 {% url 'admin_custom:dashboard' as adash_url %}
                 {% url 'admin_custom:pending_approvals' as aapproval_url %}
                 {% url 'admin_custom:users' as ausers_url %}
                 {% url 'admin_custom:analytics' as aanalytics_url %}
-                <a href="{{ adash_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == adash_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">dashboard</span><span class="nav-text text-sm">Dashboard</span>
+                <a href="{{ adash_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == adash_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">shield_person</span><span class="nav-text text-sm font-semibold">Admin Panel</span>
                 </a>
-                <a href="{{ aapproval_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == aapproval_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">approval</span><span class="nav-text text-sm">Approvals</span>
+                <a href="{{ aapproval_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == aapproval_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">verified_user</span><span class="nav-text text-sm font-semibold">Approvals</span>
                 </a>
-                <a href="{{ ausers_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == ausers_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">group</span><span class="nav-text text-sm">Users</span>
+                <a href="{{ ausers_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == ausers_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">group</span><span class="nav-text text-sm font-semibold">User Management</span>
                 </a>
-                <a href="{{ aanalytics_url }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors {% if request.path == aanalytics_url %}active{% endif %}">
-                    <span class="material-symbols-outlined flex-shrink-0">bar_chart</span><span class="nav-text text-sm">Analytics</span>
+                <a href="{{ aanalytics_url }}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 transition-all {% if request.path == aanalytics_url %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">data_exploration</span><span class="nav-text text-sm font-semibold">System Insights</span>
                 </a>
             {% endif %}
 
-            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <a href="{% url 'accounts:profile' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                    <span class="material-symbols-outlined flex-shrink-0">manage_accounts</span><span class="nav-text text-sm">Profile & Settings</span>
+
+            <div class="mt-4">
+                <div class="mx-6 border-b border-slate-200/30 dark:border-slate-800/50 mb-4 mt-[17px]"></div>
+                <a href="{% url 'accounts:profile' %}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 rounded-2xl transition-all {% if request.resolver_match.url_name in 'profile,edit_profile' %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">settings</span><span class="nav-text text-sm font-semibold">Settings</span>
                 </a>
             </div>
         </nav>
     </div>
-    <div style="padding: 10px;">
-    {% if user.is_vendor or user.is_collector %}
-        <div class="profile-section mb-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center gap-2.5 mb-2.5">
-                <div class="size-9 bg-gradient-to-br from-primary to-forest rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+
+    <!-- SIDEBAR FOOTER (PROFILE) -->
+    <div class="p-5 pt-0">
+        {% if user.is_authenticated and not user.is_client %}
+        <div class="profile-section bg-white/40 dark:bg-slate-800/20 backdrop-blur-md rounded-[2rem] p-4 border border-white/40 dark:border-slate-700/30 shadow-sm relative overflow-hidden group">
+            <div class="flex items-center gap-3.5 relative z-10">
+                <div class="size-11 rounded-2xl flex items-center justify-center font-black text-sm flex-shrink-0 shadow-lg shadow-primary/20 transition-transform group-hover:scale-105 overflow-hidden bg-primary text-white">
+                    {% if user.is_client and user.client_profile.profile_photo %}
+                        <img src="{{ user.client_profile.profile_photo.url }}" class="w-full h-full object-cover sidebar-avatar" alt="User">
+                    {% elif user.is_vendor and user.vendor_profile.profile_photo %}
+                        <img src="{{ user.vendor_profile.profile_photo.url }}" class="w-full h-full object-cover sidebar-avatar" alt="User">
+                    {% elif user.is_collector and user.collector_profile.profile_photo %}
+                        <img src="{{ user.collector_profile.profile_photo.url }}" class="w-full h-full object-cover sidebar-avatar" alt="User">
+                    {% else %}
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    {% endif %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-semibold text-slate-900 dark:text-white truncate">{{ user.get_full_name }}</p>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ user.get_role }}</p>
+                    <p class="text-[13px] font-black text-slate-800 dark:text-white truncate">{{ user.get_full_name }}</p>
+                    <p class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">{{ user.get_role|default:"User"|upper }}</p>
                 </div>
             </div>
-            {% with pct=user.profile_completion.completion_percentage status=user.profile_completion.approval_status %}
-            <div class="space-y-1">
-                <div class="flex justify-between text-[10px]">
-                    <span class="text-slate-500 font-medium">Profile Completion</span>
-                    <span class="font-bold {% if pct == 100 %}text-primary{% elif pct >= 50 %}text-amber-500{% else %}text-red-500{% endif %}">{{ pct }}%</span>
+            
+            {% if user.is_vendor or user.is_collector %}
+            {% with pct=user.profile_completion.completion_percentage %}
+            <div class="mt-4">
+                <div class="mx-4 border-b border-slate-200/60 dark:border-slate-700/40 opacity-70 mb-3"></div>
+                <div class="flex justify-between text-[9px] mb-1.5 px-0.5">
+                    <span class="text-slate-400 font-bold uppercase tracking-tighter">Profile Mastery</span>
+                    <span class="font-black text-primary">{{ pct }}%</span>
                 </div>
                 <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all duration-500 {% if pct == 100 %}bg-primary{% elif pct >= 50 %}bg-amber-400{% else %}bg-red-400{% endif %}" style="width:{{ pct }}%"></div>
+                    <div class="h-full rounded-full bg-primary transition-all duration-1000 shadow-[0_0_8px_rgba(23,207,23,0.4)]" style="width:{{ pct }}%"></div>
                 </div>
-                {% if status == 'approved' %}
-                    <span class="flex items-center gap-1 text-[10px] font-semibold text-primary"><span class="material-symbols-outlined" style="font-size:12px">verified</span>Approved</span>
-                {% elif status == 'pending' %}
-                    <span class="flex items-center gap-1 text-[10px] font-semibold text-amber-500"><span class="material-symbols-outlined" style="font-size:12px">schedule</span>Under Review</span>
-                {% else %}
-                    <a href="{% if user.is_vendor %}{% url 'accounts:complete_vendor_profile' %}{% else %}{% url 'accounts:complete_collector_profile' %}{% endif %}" class="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"><span class="material-symbols-outlined" style="font-size:12px">edit</span>Complete Profile</a>
-                {% endif %}
             </div>
             {% endwith %}
+            {% endif %}
         </div>
-    {% endif %}
-    </div>
-    <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-        <a href="{% url 'accounts:logout' %}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors">
-            <span class="material-symbols-outlined flex-shrink-0">logout</span><span class="nav-text text-sm">Sign Out</span>
-        </a>
+        {% endif %}
+        
+        <div class="mt-3">
+            <div class="mx-6 border-b border-slate-200/30 dark:border-slate-800/50 mb-4 mt-[7px]"></div>
+            <a href="{% url 'accounts:logout' %}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 rounded-2xl text-red-500 hover:text-red-600 transition-all font-semibold">
+                <span class="material-symbols-outlined text-[22px]">logout</span><span class="nav-text text-sm">Sign Out</span>
+            </a>
+        </div>
     </div>
 </aside>
 
 <!-- MAIN CONTENT -->
 <main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark flex flex-col min-w-0">
     <!-- HEADER -->
-    <header class="sticky top-0 z-20 flex items-center justify-between px-5 py-3 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex-shrink-0" style="min-height: 87px;">
-        <div class="flex items-center gap-3">
-            <button id="sidebarToggleBtn" onclick="toggleSidebar()" class="size-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                <span class="material-symbols-outlined text-xl toggle-icon">chevron_left</span>
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800/60 px-6 py-[18px] flex items-center justify-between shrink-0 premium-shadow">
+        <div class="flex items-center gap-6">
+            <button id="sidebarToggleBtn" onclick="toggleSidebar()" class="size-9 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-primary hover:shadow-lg transition-all border border-slate-100 dark:border-slate-800">
+                <span class="material-symbols-outlined text-2xl toggle-icon">chevron_left</span>
             </button>
             <div class="hidden sm:block">
-                <p class="text-sm font-semibold text-slate-900 dark:text-white leading-none">{% block page_title %}Dashboard{% endblock %}</p>
-                <p class="text-xs text-slate-400 mt-0.5">{% block page_subtitle %}{% endblock %}</p>
+                <h2 class="text-[15px] font-black text-slate-800 dark:text-white tracking-tight leading-none ">{% block page_title %}Dashboard{% endblock %}</h2>
+                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-2">{% block page_subtitle %}Overview{% endblock %}</p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
-            <button onclick="toggleDarkMode()" class="size-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+
+        <div class="flex items-center gap-4">
+            <!-- Theme Toggle -->
+            <button onclick="toggleDarkMode()" class="size-9 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-amber-500 hover:shadow-lg transition-all border border-slate-100 dark:border-slate-800">
                 <span class="material-symbols-outlined text-xl dark-icon">dark_mode</span>
             </button>
-            <button class="size-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors relative">
+            
+            <!-- Notifications -->
+            <button class="size-9 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-primary hover:shadow-lg transition-all border border-slate-100 dark:border-slate-800 relative">
                 <span class="material-symbols-outlined text-xl">notifications</span>
-                <span class="absolute top-2 right-2 size-1.5 bg-primary rounded-full ring-2 ring-white dark:ring-background-dark"></span>
+                <span class="absolute top-2.5 right-2.5 size-2 bg-primary rounded-full ring-2 ring-white dark:ring-slate-950 shadow-sm animate-pulse"></span>
             </button>
-            <a href="{% url 'accounts:profile' %}" class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                <div class="size-7 bg-gradient-to-br from-primary to-forest rounded-full flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
-                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            
+            <div class="h-7 w-[1px] bg-slate-200 dark:border-slate-800 ml-2 -mr-2"></div>
+
+            <!-- Profile Dropdown -->
+            <div class="relative group">
+                <div class="flex items-center gap-3 pl-3 pr-1.5 py-1 rounded-2xl transition-all cursor-pointer">
+                    <div class="hidden md:block text-right">
+                        <p class="text-[13px] font-bold text-slate-600 dark:text-slate-400 leading-none whitespace-nowrap uppercase [word-spacing:0.1em]">{{ user.get_full_name }}</p>
+                    </div>
+                    <div class="size-11 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-black text-sm border border-primary/20 transition-colors duration-300 overflow-hidden">
+                        {% if user.is_vendor and user.vendor_profile.profile_photo and 'default' not in user.vendor_profile.profile_photo.url %}
+                            <img src="{{ user.vendor_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                        {% elif user.is_collector and user.collector_profile.profile_photo and 'default' not in user.collector_profile.profile_photo.url %}
+                            <img src="{{ user.collector_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                        {% elif user.is_client and user.client_profile.profile_photo and 'default' not in user.client_profile.profile_photo.url %}
+                            <img src="{{ user.client_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="hidden md:block">
-                    <p class="text-xs font-semibold text-slate-900 dark:text-white leading-none">{{ user.get_full_name }}</p>
-                    <p class="text-[10px] text-slate-400 mt-0.5">{{ user.get_role }}</p>
+                
+                <!-- Dropdown Menu -->
+                <div class="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 transform origin-top-right group-hover:translate-y-0 translate-y-2">
+                    <a href="{% url 'accounts:profile' %}" class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+                        <span class="material-symbols-outlined text-[18px]">settings</span>
+                        Profile & Settings
+                    </a>
+                    <div class="h-[1px] bg-slate-100 dark:bg-slate-800/60 my-1 mx-4"></div>
+                    <a href="{% url 'accounts:logout' %}" class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all">
+                        <span class="material-symbols-outlined text-[18px]">logout</span>
+                        Logout
+                    </a>
                 </div>
-                <span class="material-symbols-outlined text-slate-400" style="font-size:16px">expand_more</span>
-            </a>
+            </div>
         </div>
     </header>
 
@@ -354,10 +428,19 @@ function toggleDarkMode() {
     document.querySelectorAll('.dark-icon').forEach(i => i.textContent = dark ? 'light_mode' : 'dark_mode');
 }
 document.addEventListener('DOMContentLoaded', function() {
-    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    const sidebarStoredState = localStorage.getItem('sidebarCollapsed');
+    // Default to 'collapsed' (true) if no state is stored
+    const sidebarCollapsed = sidebarStoredState === null ? true : sidebarStoredState === 'true';
+    
+    const sidebar = document.getElementById('sidebar');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    
     if (sidebarCollapsed) {
-        document.getElementById('sidebar').classList.add('collapsed');
-        document.querySelector('.toggle-icon').textContent = 'chevron_right';
+        sidebar.classList.add('collapsed');
+        if (toggleIcon) toggleIcon.textContent = 'chevron_right';
+    } else {
+        sidebar.classList.remove('collapsed');
+        if (toggleIcon) toggleIcon.textContent = 'chevron_left';
     }
     const dark = localStorage.getItem('darkMode') === 'true';
     if (dark) {

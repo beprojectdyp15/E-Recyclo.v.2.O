@@ -442,6 +442,15 @@ def decline_reevaluation(request, pk):
         
         # Preserve the last offer values so client can accept them
         if last_offer:
+            EvaluationHistory.objects.create(
+                post=item, vendor=request.user,
+                evaluation_type=last_offer.evaluation_type,
+                vendor_final_value=last_offer.vendor_final_value,
+                eco_points_awarded=last_offer.eco_points_awarded,
+                vendor_remarks=item.vendor_remarks,
+                condition_notes=last_offer.condition_notes,
+                price_breakdown=last_offer.price_breakdown,
+            )
             item.vendor_final_value = last_offer.vendor_final_value
             item.eco_points_awarded = last_offer.eco_points_awarded
             item.evaluation_type = last_offer.evaluation_type

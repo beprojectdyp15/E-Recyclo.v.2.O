@@ -10,6 +10,10 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile
+import base64
+import uuid
 
 from .models import Account, EmailVerification, ProfileCompletion
 from .forms import (
@@ -725,4 +729,51 @@ def reset_password_view(request):
             messages.success(request, 'Password reset successfully! Please login.')
             return redirect('accounts:login')
     
-    return render(request, 'accounts/reset_password.html', {'page_title': 'Reset Password'})
+
+# ============================================
+# AJAX: UPDATE PROFILE PHOTO
+# ============================================
+
+@login_required
+@require_http_methods(["POST"])
+def update_profile_photo(request):
+    """
+    Handle AJAX profile picture upload with cropping
+    """
+    image_data = request.POST.get('image')
+    if not image_data:
+        return JsonResponse({'success': False, 'message': 'No image data received'})
+    
+    try:
+        # Detect and remove data:image/...;base64, header
+        if 'base64,' in image_data:
+            format, imgstr = image_data.split('base64,')
+        else:
+            imgstr = image_data
+            
+        ext = 'png' # Default extension
+        data = ContentFile(base64.b64decode(imgstr), name=f'profile_{request.user.id}_{uuid.uuid4().hex[:8]}.{ext}')
+        
+        user = request.user
+        profile_instance = None
+        
+        if user.is_client:
+            profile_instance = user.client_profile
+        elif user.is_vendor:
+            profile_instance = user.vendor_profile
+        elif user.is_collector:
+            profile_instance = user.collector_profile
+            
+        if profile_instance:
+            profile_instance.profile_photo = data
+            profile_instance.save()
+            return JsonResponse({
+                'success': True, 
+                'message': 'Profile photo updated!',
+                'image_url': profile_instance.profile_photo.url
+            })
+        else:
+            return JsonResponse({'success': False, 'message': 'Profile record not found'})
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})

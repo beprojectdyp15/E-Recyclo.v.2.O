@@ -35,4 +35,5 @@ urlpatterns = [
     # AJAX
     path('check-username/', views.check_username_view, name='check_username'),
     path('cleanup-registration/', views.cleanup_registration_view, name='cleanup_registration'),
+    path('update-profile-photo/', views.update_profile_photo, name='update_profile_photo'),
 ]

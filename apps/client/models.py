@@ -301,6 +301,25 @@ class PhotoPost(models.Model):
         }
         return status_classes.get(self.status, 'bg-gray-100 text-gray-800')
 
+    def get_status_badge_pilled_class(self):
+        """Get premium pilled status badge colors"""
+        pill_classes = {
+            'pending':           'bg-yellow-50 text-yellow-600 border border-yellow-100',
+            'assigned':          'bg-blue-50 text-blue-600 border border-blue-100',
+            'accepted':          'bg-green-50 text-green-600 border border-green-100',
+            'pickup_scheduled':  'bg-emerald-50 text-emerald-600 border border-emerald-100',
+            'in_transit':        'bg-blue-50 text-blue-600 border border-blue-100',
+            'collected':         'bg-indigo-50 text-indigo-600 border border-indigo-100',
+            'under_review':      'bg-purple-50 text-purple-600 border border-purple-100',
+            'return_requested':  'bg-amber-50 text-amber-600 border border-amber-100',
+            'return_pickup_scheduled':'bg-amber-50 text-amber-600 border border-amber-100',
+            'return_in_transit': 'bg-amber-50 text-amber-600 border border-amber-100',
+            'returned_to_client':'bg-teal-50 text-teal-600 border border-teal-100',
+            'completed':         'bg-primary/10 text-primary border border-primary/20',
+            'rejected':          'bg-rose-50 text-rose-600 border border-rose-100',
+        }
+        return pill_classes.get(self.status, 'bg-slate-50 text-slate-600 border border-slate-100')
+
 
 # ============================================
 # BULK PICKUP MODEL
@@ -641,6 +660,7 @@ class EvaluationHistory(models.Model):
     )
     evaluation_type    = models.CharField(max_length=20, blank=True)
     vendor_final_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    client_requested_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     eco_points_awarded = models.IntegerField(default=0)
     vendor_remarks     = models.TextField(blank=True)
     condition_notes    = models.TextField(blank=True)
@@ -648,6 +668,18 @@ class EvaluationHistory(models.Model):
     evaluated_at       = models.DateTimeField(auto_now_add=True)
     rejected_by_client = models.BooleanField(default=False)
     rejection_reason   = models.TextField(blank=True)
+    client_accepted    = models.BooleanField(default=False)
+    client_choice      = models.CharField(
+        max_length=20, 
+        choices=[
+            ('accepted', 'Accepted Offer'),
+            ('rejected', 'Requested Re-evaluation'),
+            ('return', 'Requested Return'),
+            ('transfer', 'Transferred to New Vendor'),
+        ],
+        blank=True,
+        null=True
+    )
 
     class Meta:
         db_table = 'client_evaluationhistory'

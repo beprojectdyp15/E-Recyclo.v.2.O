@@ -1,654 +1,614 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Upload E-Waste - eRecyclo{% endblock %}
 {% block page_title %}Upload E-Waste{% endblock %}
-{% block page_subtitle %}Let our AI identify your e-waste automatically{% endblock %}
-
-{% block page_content %}
-<div class="max-w-4xl mx-auto">
-
-<form method="POST" enctype="multipart/form-data" id="uploadForm">
-{% csrf_token %}
-
-    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 space-y-6">
-
-        <!-- ========================================
-             IMAGE UPLOAD WITH AI SCANNING
-             ======================================== -->
-        <div class="border-2 border-dashed border-primary rounded-2xl p-12 text-center relative" id="uploadArea">
-            
-            <!-- UPLOAD PROMPT -->
-            <div id="uploadPrompt">
-                <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span class="material-symbols-outlined text-primary text-4xl">photo_camera</span>
-                </div>
-                <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">Upload E-Waste Photo</h3>
-                <p class="text-slate-500 dark:text-slate-400 mb-6">
-                    Our AI will automatically identify the category
-                </p>
-                <button type="button" onclick="document.getElementById('id_photo').click()"
-                    class="inline-block bg-primary text-white px-8 py-3 rounded-xl font-semibold cursor-pointer hover:bg-forest shadow-lg shadow-primary/20 transition-colors">
-                    Select Image
-                </button>
-                <input type="file" name="photo" id="id_photo" accept="image/*" style="display: none;">
-            </div>
-
-            <!-- AI SCANNING ANIMATION -->
-            <div id="scanningAnimation" class="hidden">
-                <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 relative">
-                    <span class="material-symbols-outlined text-primary text-5xl animate-pulse">smart_toy</span>
-                    <div class="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-                <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-2">AI Scanning...</h3>
-                <p class="text-slate-500 dark:text-slate-400 mb-4">Analyzing e-waste category</p>
-                <div class="w-64 mx-auto bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-                    <div id="scanProgress" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <p id="scanStatus" class="text-xs text-slate-500 dark:text-slate-400 mt-2">Initializing...</p>
-            </div>
-
-            <!-- AI DETECTION RESULT -->
-            <div id="detectionResult" class="hidden">
-                <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span class="material-symbols-outlined text-primary text-5xl" id="categoryIcon">check_circle</span>
-                </div>
-                <div class="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-3">
-                    <span class="material-symbols-outlined text-primary text-sm">smart_toy</span>
-                    <span class="text-xs font-bold text-primary">AI DETECTED</span>
-                    <span class="text-xs font-bold text-primary" id="confidencePercent">0%</span>
-                </div>
-                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2" id="categoryName">Category</h3>
-                <p class="text-slate-500 dark:text-slate-400 mb-4" id="categoryDesc">Description</p>
-                
-                <!-- ACTION BUTTONS - ALWAYS VISIBLE -->
-                <div class="flex flex-wrap items-center justify-center gap-3">
-                    <button type="button" onclick="retryUpload()"
-                        class="px-6 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                        <span class="material-symbols-outlined text-base align-middle">refresh</span>
-                        Change Photo
-                    </button>
-                    <button type="button" onclick="toggleManualSelect()"
-                        class="px-6 py-2 border border-primary text-primary rounded-lg text-sm font-semibold hover:bg-primary/5 transition-colors">
-                        <span class="material-symbols-outlined text-base align-middle">edit</span>
-                        Change Category
-                    </button>
-                </div>
-            </div>
-
-            <!-- FILE PREVIEW -->
-            <div id="filePreviewCard" class="hidden mt-6">
-                <img id="imagePreview" class="max-w-full h-auto rounded-lg border border-slate-200 dark:border-slate-700 mx-auto" style="max-height: 300px"/>
-            </div>
-
-        </div>
-        <!-- END UPLOAD AREA -->
-
-        <!-- ========================================
-             MANUAL CATEGORY SELECTION (OUTSIDE BORDER)
-             ======================================== -->
-        <div id="manualCategorySection" class="hidden">
-            <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-                <span class="material-symbols-outlined text-base">category</span>
-                Select Different Category
-            </label>
-            <select id="manualCategory" class="styled-select w-full">
-                <option value="">Choose a category...</option>
-                {% for cat in categories %}
-                <option value="{{ cat.value }}" data-icon="{{ cat.icon }}" data-label="{{ cat.label }}" data-desc="{{ cat.description }}">
-                    {{ cat.label }} - {{ cat.description }}
-                </option>
-                {% endfor %}
-            </select>
-            <button type="button" onclick="applyManualCategory()"
-                class="mt-3 w-full bg-primary hover:bg-forest text-white py-3 rounded-xl font-semibold transition-colors">
-                Apply Category
-            </button>
-        </div>
-
-        <!-- HIDDEN AI FIELDS -->
-        <input type="hidden" name="ai_category" id="aiCategory">
-        <input type="hidden" name="ai_confidence" id="aiConfidence">
-
-        
-
-
-        {{ form.latitude }}
-        {{ form.longitude }}
-
-        <!-- ========================================
-             PRODUCT NAME
-             ======================================== -->
-        <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Product Name <span class="text-red-500">*</span>
-            </label>
-            {{ form.title }}
-        </div>
-
-        <!-- ========================================
-             DESCRIPTION
-             ======================================== -->
-        <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Description</label>
-            {{ form.description }}
-        </div>
-
-        <!-- ========================================
-             PICKUP ADDRESS
-             ======================================== -->
-        <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Pickup Address <span class="text-red-500">*</span>
-            </label>
-            {{ form.address }}
-        </div>
-
-        <!-- ========================================
-             LOCATION TOGGLE
-             ======================================== -->
-        <div>
-            <div class="flex items-center justify-between mb-3">
-                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Location <span class="text-red-500">*</span>
-                </label>
-                <button type="button" id="locationToggle" onclick="toggleLocationFetch()"
-                    class="relative w-12 h-6 bg-gray-300 dark:bg-slate-600 rounded-full transition-colors">
-                    <span id="toggleDot" class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"></span>
-                </button>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Latitude</label>
-                    <input id="lat_display" readonly
-                        class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
-                        placeholder="00.000000"/>
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Longitude</label>
-                    <input id="lng_display" readonly
-                        class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
-                        placeholder="00.000000"/>
-                </div>
-            </div>
-        </div>
-
-
-        <div>
-            <label class="text-sm font-medium text-gray-700">Quantity *</label>
-            {{ form.quantity }}
-        </div>
-
-        <!-- WEIGHT AND SIZE - For Collector Vehicle Matching -->
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="text-sm font-medium text-gray-700">Estimated Weight</label>
-                {{ form.estimated_weight }}
-                <p class="text-xs text-gray-400 mt-1">Helps assign the right collector vehicle</p>
-            </div>
-            <div>
-                <label class="text-sm font-medium text-gray-700">Item Size</label>
-                {{ form.item_size }}
-                <p class="text-xs text-gray-400 mt-1">How big is the item?</p>
-            </div>
-        </div>
-
-        <!-- AI CONDITION -->
-        <div>
-            <label class="text-sm font-medium ">AI Detected Condition</label>
-            <input value="Condition - Excellent/Good/Fair/Poor/Bad" readonly
-            class="w-full bg-gray-100 border border-dashed border-nature-500 rounded-xl px-4 py-3 text-nature-200 font-medium text-xs"/>
-        </div>
-
-
-        <!-- ========================================
-             SUBMIT BUTTON
-             ======================================== -->
-        <div class="pt-4">
-            <button type="submit" id="submitBtn" disabled
-                class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 py-4 rounded-xl font-semibold cursor-not-allowed transition-all">
-                Submit Request
-            </button>
-        </div>
-
-    </div>
-
-</form>
-
-</div>
-{% endblock %}
+{% block page_subtitle %}Recycle your e-waste with ease{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ============================================
-   CUSTOM FORM STYLING
-   ============================================ */
-input[type="file"] { 
-    display: none; 
-}
+    :root {
+        --accent: #17cf17;
+        --accent-glow: rgba(23, 207, 23, 0.15);
+        --field-bg: rgba(248, 250, 252, 0.8);
+        --border-color: #e2e8f0;
+        --radius-card: 1.25rem;
+        --radius-field: 0.85rem;
+    }
 
-textarea, 
-input[type="text"], 
-input[type="tel"] {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: #f8fafc;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 0.75rem;
-    font-size: 0.875rem;
-    color: #0f172a;
-    outline: none;
-    transition: all 0.2s;
-}
+    .dark {
+        --field-bg: rgba(15, 23, 42, 0.6);
+        --border-color: rgba(255, 255, 255, 0.1);
+    }
 
-.dark textarea, 
-.dark input[type="text"], 
-.dark input[type="tel"] {
-    background: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
-}
+    /* PREMIUM CARD SYSTEM */
+    .pro-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: var(--radius-card);
+        box-shadow: 
+            0 10px 15px -3px rgba(0, 0, 0, 0.02),
+            0 4px 6px -4px rgba(0, 0, 0, 0.02),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-textarea:focus, 
-input[type="text"]:focus, 
-input[type="tel"]:focus {
-    border-color: #17cf17;
-    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
-    background: #fff;
-}
+    .dark .pro-card {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.03);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+    }
 
-.dark textarea:focus, 
-.dark input[type="text"]:focus, 
-.dark input[type="tel"]:focus {
-    border-color: #17cf17;
-    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
-    background: #0f172a;
-}
+    /* INPUT ARCHITECTURE */
+    .f-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: #475569;
+        margin-bottom: 0.6rem;
+        display: block;
+        padding-left: 0.25rem;
+    }
+    .f-label::after {
+        content: ' *';
+        color: #ef4444;
+        font-size: 0.75rem;
+        font-weight: 900;
+    }
 
-/* ============================================
-   STYLED SELECT DROPDOWN
-   ============================================ */
-.styled-select,
-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    width: 100%;
-    padding: 0.875rem 3rem 0.875rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.5;
-    color: #0f172a;
-    background-color: #f8fafc;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.875rem center;
-    background-size: 1.25rem;
-}
+    .f-input, .input-wrapper input, .input-wrapper textarea, .sel-trigger {
+        width: 100%;
+        height: 48px;
+        padding: 0 1.25rem;
+        display: flex;
+        align-items: center;
+        background: var(--field-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: var(--radius-field);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #1e293b;
+        transition: all 0.3s ease;
+        outline: none;
+        backdrop-filter: blur(4px);
+    }
 
-.styled-select:hover,
-select:hover {
-    border-color: #cbd5e1;
-    background-color: #fff;
-}
+    /* Override for textarea as it shouldn't have fixed height */
+    .input-wrapper textarea {
+        height: auto;
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+    }
 
-.styled-select:focus,
-select:focus {
-    outline: none;
-    border-color: #17cf17;
-    background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1);
-}
+    .dark .f-input, .dark .input-wrapper input, .dark .input-wrapper textarea {
+        color: #f1f5f9;
+    }
 
-/* Dark mode select */
-.dark .styled-select,
-.dark select {
-    color: #f1f5f9;
-    background-color: #1e293b;
-    border-color: #334155;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-}
+    .f-input:focus, .input-wrapper input:focus, .input-wrapper textarea:focus {
+        background: #ffffff !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 4px var(--accent-glow);
+        transform: translateY(-1px);
+    }
 
-.dark .styled-select:hover,
-.dark select:hover {
-    border-color: #475569;
-    background-color: #0f172a;
-}
+    .dark .f-input:focus, .dark .input-wrapper input:focus, .dark .input-wrapper textarea:focus {
+        background: #0f172a !important;
+    }
 
-.dark .styled-select:focus,
-.dark select:focus {
-    border-color: #17cf17;
-    background-color: #0f172a;
-    box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.15);
-}
+    /* PLACEHOLDER REFINEMENT */
+    ::placeholder {
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        opacity: 0.6;
+    }
 
-/* Select options styling */
-.styled-select option,
-select option {
-    padding: 0.875rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    background-color: #fff;
-    color: #0f172a;
-}
+    .input-wrapper { position: relative; }
+    .char-counter {
+        position: absolute;
+        bottom: 8px;
+        right: 12px;
+        font-size: 9px;
+        font-weight: 800;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+        pointer-events: none;
+    }
 
-.styled-select option:hover,
-.styled-select option:checked,
-select option:hover,
-select option:checked {
-    background-color: #e8f9e8 !important;
-    background: #e8f9e8 linear-gradient(0deg, #e8f9e8 0%, #e8f9e8 100%);
-    color: #17cf17 !important;
-    font-weight: 600;
-}
+    /* SCANNER VIEWPORT */
+    .viewport {
+        position: relative;
+        aspect-ratio: 1/1;
+        background: #f1f5f9;
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .dark .viewport { background: #0f172a; }
 
-.dark .styled-select option,
-.dark select option {
-    background-color: #1e293b;
-    color: #f1f5f9;
-}
+    .scanner-line {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        box-shadow: 0 0 20px var(--accent);
+        z-index: 20;
+        animation: scan 4s ease-in-out infinite;
+    }
 
-.dark .styled-select option:hover,
-.dark .styled-select option:checked,
-.dark select option:hover,
-.dark select option:checked {
-    background-color: rgba(23, 207, 23, 0.15) !important;
-    background: rgba(23, 207, 23, 0.15) linear-gradient(0deg, rgba(23, 207, 23, 0.15) 0%, rgba(23, 207, 23, 0.15) 100%);
-    color: #17cf17 !important;
-    font-weight: 600;
-}
+    @keyframes scan {
+        0%, 100% { top: 0%; opacity: 0; }
+        10%, 90% { opacity: 1; }
+        50% { top: 100%; }
+    }
 
-/* ============================================
-   ANIMATIONS
-   ============================================ */
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+    /* CUSTOM SELECTS */
+    .sel-trigger {
+        cursor: pointer;
+        justify-content: space-between;
+    }
+    .sel-trigger:hover { border-color: var(--accent); }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
+    .sel-popover {
+        position: absolute;
+        top: 110%; left: 0; right: 0;
+        background: #ffffff;
+        border-radius: 0.85rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        z-index: 100;
+        display: none;
+        overflow: hidden;
+        animation: pop 0.2s ease-out;
+    }
+    .dark .sel-popover { background: #1e293b; border-color: #334155; }
 
-.animate-spin {
-    animation: spin 1s linear infinite;
-}
+    @keyframes pop {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
 
-.animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
+    /* TOGGLE */
+    .ios-toggle {
+        width: 44px;
+        height: 22px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        position: relative;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .dark .ios-toggle { background: #334155; }
+    .ios-toggle::after {
+        content: '';
+        position: absolute;
+        left: 2px; top: 2px;
+        width: 18px; height: 18px;
+        background: white;
+        border-radius: 50%;
+        transition: 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .ios-toggle.active { background: var(--accent); }
+    .ios-toggle.active::after { transform: translateX(22px); }
+
 </style>
 {% endblock %}
 
-{% block extra_js %}
+{% block page_content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-8 py-6">
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            
+            <!-- LEFT COLUMN: STUDIO SCANNER -->
+            <div class="lg:col-span-5">
+                <div class="pro-card p-4 h-full flex flex-col">
+                    <div class="viewport group cursor-pointer relative" onclick="document.getElementById('id_photo').click()">
+                        <input type="file" name="photo" id="id_photo" class="hidden" accept="image/*">
+                        
+                        <!-- VIEWPORT STATES -->
+                        <div id="v_placeholder" class="absolute inset-0 flex flex-col items-center justify-center transition-all">
+                            <div class="w-14 h-14 rounded-full !bg-primary/20 flex items-center justify-center !text-primary group-hover:!bg-primary group-hover:!text-white group-hover:scale-110 shadow-sm transition-all duration-500">
+                                <span class="material-symbols-outlined text-3xl">add_a_photo</span>
+                            </div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-5 letter-spacing-2 text-center px-4">Upload E-Waste Image</p>
+                        </div>
+
+                        <div id="v_preview_container" class="hidden absolute inset-0 bg-slate-50 dark:bg-slate-900/20">
+                            <img id="v_preview" class="w-full h-full object-contain transition-all duration-700">
+                            <div class="absolute inset-0 bg-black/5"></div>
+                        </div>
+
+                        <div id="v_scanning" class="hidden">
+                            <div class="scanner-line"></div>
+                            <div class="absolute inset-0 bg-accent/5 backdrop-blur-[1px]"></div>
+                        </div>
+
+                        <!-- FLOATING RESULT CHIP -->
+                        <div id="v_result" class="hidden absolute bottom-4 inset-x-4 z-30 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-4 rounded-xl shadow-xl border border-primary/20 flex items-center gap-4">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined text-xl" id="res_icon">auto_awesome</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Detected Type</h4>
+                                    <p class="text-sm font-black text-slate-800 dark:text-white" id="res_name">Scanning...</p>
+                                </div>
+                                <button type="button" onclick="retryScan()" class="text-slate-400 hover:text-accent transition-colors">
+                                    <span class="material-symbols-outlined">restart_alt</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 px-2 py-1 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[14px] text-primary/80 font-bold">auto_awesome</span>
+                            <p class="text-[9px] font-extrabold text-primary/80 uppercase tracking-widest leading-none">AI Image Categorization</p>
+                        </div>
+                        <div class="text-[9px] font-black text-primary/70 tracking-widest leading-none">R-AI v1.4.2</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: ITEM INTELLIGENCE -->
+            <div class="lg:col-span-7">
+                <div class="pro-card p-8 flex flex-col justify-start h-full">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 gap-8">
+                            <div>
+                                <span class="f-label">Item Name</span>
+                                <div class="input-wrapper">{{ form.title }}</div>
+                            </div>
+                            
+                            <div>
+                                <span class="f-label">Item Description</span>
+                                <div class="input-wrapper">
+                                    {{ form.description }}
+                                    <div class="char-counter" id="desc_count">0 / 120</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                            <div>
+                                <span class="f-label">Quantity</span>
+                                <div class="input-wrapper">{{ form.quantity }}</div>
+                            </div>
+                            
+                            <div class="relative" id="w_drop">
+                                <span class="f-label">Weight</span>
+                                <div class="sel-trigger" onclick="toggleD('w_list')">
+                                    <span id="w_label" class="text-slate-400">Choose</span>
+                                    <span class="material-symbols-outlined text-sm">expand_more</span>
+                                </div>
+                                <div id="w_list" class="sel-popover">
+                                    <div class="px-5 py-4 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" onclick="setS('w','4','Less than 5kg')">Less than 5kg</div>
+                                    <div class="px-5 py-4 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" onclick="setS('w','8','5kg to 10kg')">5kg to 10kg</div>
+                                    <div class="px-5 py-4 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" onclick="setS('w','15','More than 10kg')">More than 10kg</div>
+                                </div>
+                                <div class="hidden">{{ form.estimated_weight }}</div>
+                            </div>
+
+                             <div class="relative" id="s_drop">
+                                <span class="f-label">Dimensions</span>
+                                <div class="sel-trigger" onclick="toggleD('s_list')">
+                                    <span id="s_label" class="text-slate-400">Choose</span>
+                                    <span class="material-symbols-outlined text-sm">expand_more</span>
+                                </div>
+                                <div id="s_list" class="sel-popover">
+                                    <div class="dim-opt px-5 py-4 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" data-w="lt5" onclick="setS('s','small','Small')">Small (Fits in Backpack)</div>
+                                    <div class="dim-opt px-5 py-4 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" data-w="lt5,5to10,gt10" onclick="setS('s','medium','Medium')">Medium (Fits on Bike)</div>
+                                    <div class="dim-opt px-5 py-4 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" data-w="5to10,gt10" onclick="setS('s','large','Large')">Large (Requires Van)</div>
+                                    <div class="dim-opt px-5 py-4 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer" data-w="gt10" onclick="setS('s','huge','Huge')">Huge (Requires Tempo)</div>
+                                </div>
+                                <div class="hidden">{{ form.item_size }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETECTED CATEGORY SECTION -->
+                    <div class="mt-8 p-6 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-6">
+                        <div class="flex items-center gap-4">
+                            <div class="size-10 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center text-primary shadow-sm border border-slate-100 dark:border-slate-700">
+                                <span class="material-symbols-outlined" id="cat_main_icon">auto_awesome</span>
+                            </div>
+                            <div>
+                                <h5 class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">Detected Category</h5>
+                                <p class="text-[12px] font-bold text-slate-500 dark:text-slate-400 leading-tight" id="cat_main_display">Upload image of E-waste to get Categorization</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="toggleManualSelect()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:text-primary hover:border-primary transition-all">
+                            Change Category
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGISTIC FOOTER -->
+            <div class="lg:col-span-12">
+                <div class="pro-card px-8 pt-8 pb-14">
+                    <div class="flex items-center gap-3 mb-10">
+                        <span class="material-symbols-outlined text-black text-xl">location_on</span>
+                        <h3 class="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Pick-up Address</h3>
+                    </div>
+
+                    <div class="space-y-10">
+                        <!-- GRID SYSTEM FOR ALIGNMENT -->
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                            <!-- LEFT: ADDRESS COLUMN -->
+                            <div class="lg:col-span-7 flex flex-col">
+                                <span class="f-label mb-4 block">Detailed Address</span>
+                                <div class="input-wrapper flex-grow">
+                                    {{ form.address }}
+                                    <div class="char-counter" id="addr_count">0 / 120</div>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT: COORDINATES COLUMN -->
+                            <div class="lg:col-span-5 flex flex-col">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="f-label !mb-0">Coordinates</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Auto-Detect</span>
+                                        <div onclick="toggleLoc()" id="l_toggle" class="ios-toggle scale-90"></div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-grow items-center"> <!-- Centered vertically in the remaining space -->
+                                    <div class="flex gap-4 w-full">
+                                        <div class="flex-1 flex flex-col gap-2">
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Latitude</span>
+                                            <input id="lat_d" readonly class="f-input w-full !text-left px-4 !text-[11px] !bg-slate-50/50 placeholder:text-[9px]" placeholder="00.000000">
+                                        </div>
+                                        <div class="flex-1 flex flex-col gap-2">
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Longitude</span>
+                                            <input id="lng_d" readonly class="f-input w-full !text-left px-4 !text-[11px] !bg-slate-50/50 placeholder:text-[9px]" placeholder="00.000000">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hidden">{{ form.latitude }} {{ form.longitude }}</div>
+
+
+                    </div>
+                </div>
+            </div>
+ 
+             <!-- STANDALONE SUBMIT ACTION -->
+             <div class="lg:col-span-12 flex justify-center pt-10 pb-20">
+                 <button type="submit" id="submitBtn" disabled 
+                     class="w-full md:w-[408px] !bg-primary text-white py-[18px] rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-2xl shadow-primary/40 transition-all hover:scale-[1.03] active:scale-[0.98] text-center flex items-center justify-center gap-3 disabled:cursor-not-allowed">
+                     <span class="material-symbols-outlined text-[20px]">verified</span> 
+                     <span>Submit E-Waste</span>
+                 </button>
+             </div>
+
+        </div>
+
+        <!-- HIDDEN AI STORAGE -->
+        <input type="hidden" name="ai_category" id="aiCategory">
+        <input type="hidden" name="ai_confidence" id="aiConfidence">
+    </form>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div id="catModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-md bg-slate-900/40 animate-in fade-in duration-300">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl p-8 shadow-2xl relative border border-slate-100 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h5 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Manual Selection</h5>
+                <p class="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Select relevant category</p>
+            </div>
+            <button onclick="toggleManualSelect()" class="text-slate-400 hover:text-accent transition-colors">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+            {% for cat in categories %}
+            <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-transparent hover:border-accent hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer group"
+                 onclick="applyManual('{{ cat.value }}', '{{ cat.label }}', '{{ cat.icon }}')">
+                 <div class="flex items-center gap-3">
+                     <span class="material-symbols-outlined text-slate-400 group-hover:text-accent transition-colors">{{ cat.icon }}</span>
+                     <span class="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">{{ cat.label }}</span>
+                 </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
 <script>
-let locationEnabled = false;
-let aiDetectedCategory = null;
+    // --- DROPDOWNS ---
+    function toggleD(id) {
+        document.querySelectorAll('.sel-popover').forEach(p => { if(p.id !== id) p.style.display = 'none'; });
+        const list = document.getElementById(id);
+        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+        event.stopPropagation();
+    }
+    window.onclick = () => document.querySelectorAll('.sel-popover').forEach(p => p.style.display = 'none');
 
-// ============================================
-// PHOTO UPLOAD AND AI DETECTION
-// ============================================
-document.getElementById('id_photo').addEventListener('change', async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+    function setS(type, val, label) {
+        if(type === 'w') {
+            document.getElementById('w_label').textContent = label;
+            document.getElementById('w_label').className = "text-slate-800 dark:text-white";
+            document.querySelector('[name=estimated_weight]').value = val;
+            
+            // Filter Dimensions
+            const weightVal = parseFloat(val);
+            const weightKey = weightVal < 5 ? 'lt5' : (weightVal <= 10 ? '5to10' : 'gt10');
+            
+            document.querySelectorAll('.dim-opt').forEach(opt => {
+                const keys = opt.dataset.w.split(',');
+                if(keys.includes(weightKey)) opt.style.display = 'block';
+                else opt.style.display = 'none';
+            });
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        this.value = '';
-        return;
+            // Reset Dimension Choice
+            document.getElementById('s_label').textContent = "Choose";
+            document.getElementById('s_label').className = "text-slate-400";
+            document.querySelector('[name=item_size]').value = "";
+        } else {
+            document.getElementById('s_label').textContent = label;
+            document.getElementById('s_label').className = "text-slate-800 dark:text-white";
+            document.querySelector('[name=item_size]').value = val;
+        }
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
-        this.value = '';
-        return;
-    }
+    // --- PHOTO + AI ---
+    document.getElementById('id_photo').addEventListener('change', async function() {
+        const file = this.files[0];
+        if(!file) return;
 
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById('imagePreview').src = e.target.result;
-        document.getElementById('filePreviewCard').classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
+        // Preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('v_preview').src = e.target.result;
+            document.getElementById('v_preview_container').classList.remove('hidden');
+            document.getElementById('v_placeholder').classList.add('opacity-0');
+        };
+        reader.readAsDataURL(file);
 
-    // Show scanning animation
-    document.getElementById('uploadPrompt').classList.add('hidden');
-    document.getElementById('scanningAnimation').classList.remove('hidden');
+        document.getElementById('v_scanning').classList.remove('hidden');
+        const startTime = Date.now();
 
-    // Simulate scanning progress
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-        progress += 5;
-        document.getElementById('scanProgress').style.width = progress + '%';
-        
-        if (progress < 30) document.getElementById('scanStatus').textContent = 'Loading image...';
-        else if (progress < 60) document.getElementById('scanStatus').textContent = 'Running AI model...';
-        else if (progress < 90) document.getElementById('scanStatus').textContent = 'Analyzing category...';
-        
-        if (progress >= 95) clearInterval(progressInterval);
-    }, 100);
-
-    // Call AI prediction API
-    try {
-        const formData = new FormData();
-        formData.append('photo', file);
-
-        const response = await fetch(window.location.href, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: formData
-        });
-
-        const result = await response.json();
-
-        // Complete progress
-        clearInterval(progressInterval);
-        document.getElementById('scanProgress').style.width = '100%';
-        document.getElementById('scanStatus').textContent = 'Complete!';
-
-        setTimeout(() => {
-            if (result.success) {
-                showDetectionResult(result);
-            } else {
-                alert('AI detection failed: ' + (result.error || 'Unknown error'));
-                showManualSelect();
-            }
-        }, 500);
-
-    } catch (error) {
-        clearInterval(progressInterval);
-        console.error('Prediction error:', error);
-        alert('AI detection failed. Please select category manually.');
-        showManualSelect();
-    }
-});
-
-// ============================================
-// SHOW DETECTION RESULT
-// ============================================
-function showDetectionResult(result) {
-    document.getElementById('scanningAnimation').classList.add('hidden');
-    document.getElementById('detectionResult').classList.remove('hidden');
-
-    // Populate results
-    document.getElementById('categoryIcon').textContent = result.icon || 'check_circle';
-    document.getElementById('categoryName').textContent = result.display_name;
-    document.getElementById('categoryDesc').textContent = result.description;
-    document.getElementById('confidencePercent').textContent = Math.round(result.confidence) + '%';
-
-    // Store AI category
-    aiDetectedCategory = result.category;
-    document.getElementById('aiCategory').value = result.category;
-    document.getElementById('aiConfidence').value = result.confidence;
-
-    // Enable submit button
-    enableSubmitButton();
-}
-
-// ============================================
-// RETRY UPLOAD (CHANGE PHOTO)
-// ============================================
-function retryUpload() {
-    document.getElementById('id_photo').value = '';
-    document.getElementById('detectionResult').classList.add('hidden');
-    document.getElementById('manualCategorySection').classList.add('hidden');
-    document.getElementById('uploadPrompt').classList.remove('hidden');
-    document.getElementById('filePreviewCard').classList.add('hidden');
-    document.getElementById('aiCategory').value = '';
-    document.getElementById('aiConfidence').value = '';
-    disableSubmitButton();
-}
-
-// ============================================
-// TOGGLE MANUAL CATEGORY SELECTION
-// ============================================
-function toggleManualSelect() {
-    const section = document.getElementById('manualCategorySection');
-    if (section.classList.contains('hidden')) {
-        section.classList.remove('hidden');
-        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-        section.classList.add('hidden');
-    }
-}
-
-// ============================================
-// APPLY MANUAL CATEGORY
-// ============================================
-function applyManualCategory() {
-    const select = document.getElementById('manualCategory');
-    if (!select.value) {
-        alert('Please select a category');
-        return;
-    }
-    
-    const selectedOption = select.options[select.selectedIndex];
-    const categoryValue = select.value;
-    const categoryLabel = selectedOption.getAttribute('data-label') || selectedOption.text.split(' - ')[0];
-    const categoryDesc = selectedOption.getAttribute('data-desc') || selectedOption.text.split(' - ')[1] || '';
-    const categoryIcon = selectedOption.getAttribute('data-icon') || 'check_circle';
-    
-    // Update AI category fields
-    document.getElementById('aiCategory').value = categoryValue;
-    document.getElementById('aiConfidence').value = 100;
-    
-    // Update detection result display
-    document.getElementById('categoryName').textContent = categoryLabel;
-    document.getElementById('categoryDesc').textContent = categoryDesc;
-    document.getElementById('categoryIcon').textContent = categoryIcon;
-    document.getElementById('confidencePercent').textContent = '100% (Manual)';
-    
-    // Update icon color to show manual selection
-    const iconElement = document.getElementById('categoryIcon');
-    iconElement.classList.remove('text-primary');
-    iconElement.classList.add('text-green-500');
-    
-    // Show detection result if hidden
-    if (document.getElementById('detectionResult').classList.contains('hidden')) {
-        document.getElementById('scanningAnimation').classList.add('hidden');
-        document.getElementById('uploadPrompt').classList.add('hidden');
-        document.getElementById('detectionResult').classList.remove('hidden');
-    }
-    
-    // Hide manual section
-    document.getElementById('manualCategorySection').classList.add('hidden');
-    
-    // Enable submit
-    enableSubmitButton();
-}
-
-// ============================================
-// SHOW MANUAL SELECT (FALLBACK)
-// ============================================
-function showManualSelect() {
-    document.getElementById('scanningAnimation').classList.add('hidden');
-    document.getElementById('uploadPrompt').classList.add('hidden');
-    document.getElementById('manualCategorySection').classList.remove('hidden');
-    
-    document.getElementById('manualCategory').addEventListener('change', function() {
-        if (this.value) {
-            applyManualCategory();
+        try {
+            const fd = new FormData();
+            fd.append('photo', file);
+            const resp = await fetch(window.location.href, {
+                method: 'POST',
+                headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': '{{ csrf_token }}'},
+                body: fd
+            });
+            const res = await resp.json();
+            
+            // Artificial delay to ensure scanning is seen
+            const elapsed = Date.now() - startTime;
+            const delay = Math.max(0, 7000 - elapsed);
+            
+            setTimeout(() => {
+                if(res.success) renderScanRes(res);
+                else handleScanFail();
+            }, delay);
+            
+        } catch(e) { 
+            const elapsed = Date.now() - startTime;
+            const delay = Math.max(0, 7000 - elapsed);
+            setTimeout(() => handleScanFail(), delay);
         }
     });
-}
 
-// ============================================
-// ENABLE/DISABLE SUBMIT BUTTON
-// ============================================
-function enableSubmitButton() {
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = false;
-    btn.classList.remove('bg-slate-300', 'dark:bg-slate-700', 'text-slate-500', 'dark:text-slate-400', 'cursor-not-allowed');
-    btn.classList.add('bg-primary', 'hover:bg-forest', 'text-white', 'cursor-pointer');
-}
-
-function disableSubmitButton() {
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.classList.add('bg-slate-300', 'dark:bg-slate-700', 'text-slate-500', 'dark:text-slate-400', 'cursor-not-allowed');
-    btn.classList.remove('bg-primary', 'hover:bg-forest', 'text-white', 'cursor-pointer');
-}
-
-// ============================================
-// LOCATION TOGGLE
-// ============================================
-function toggleLocationFetch() {
-    const btn = document.getElementById('locationToggle');
-    const dot = document.getElementById('toggleDot');
-    locationEnabled = !locationEnabled;
-    
-    if (locationEnabled) {
-        btn.style.backgroundColor = '#17cf17';
-        dot.style.transform = 'translateX(24px)';
-        fetchLocation();
-    } else {
-        btn.style.backgroundColor = document.documentElement.classList.contains('dark') ? '#475569' : '#d1d5db';
-        dot.style.transform = 'translateX(0px)';
-        document.getElementById('lat_display').value = '';
-        document.getElementById('lng_display').value = '';
-        const latInput = document.querySelector('input[name="latitude"]');
-        const lngInput = document.querySelector('input[name="longitude"]');
-        if (latInput) latInput.value = '';
-        if (lngInput) lngInput.value = '';
+    function renderScanRes(res) {
+        document.getElementById('v_scanning').classList.add('hidden');
+        document.getElementById('v_result').classList.remove('hidden');
+        
+        document.getElementById('res_name').textContent = res.display_name;
+        document.getElementById('res_icon').textContent = res.icon || 'deployed_code';
+        
+        document.getElementById('cat_main_display').textContent = res.display_name;
+        document.getElementById('cat_main_icon').textContent = res.icon || 'category';
+        
+        document.getElementById('aiCategory').value = res.category;
+        document.getElementById('aiConfidence').value = res.confidence;
+        document.getElementById('submitBtn').disabled = false;
     }
-}
 
-function fetchLocation() {
-    if (!navigator.geolocation) {
-        alert('Geolocation not supported by your browser');
-        return;
+    function retryScan() {
+        // Reset Viewport UI
+        document.getElementById('v_preview_container').classList.add('hidden');
+        document.getElementById('v_placeholder').classList.remove('opacity-0');
+        document.getElementById('v_scanning').classList.add('hidden');
+        document.getElementById('v_result').classList.add('hidden');
+        
+        // Reset Detected Category Display
+        document.getElementById('cat_main_display').textContent = "Upload image of E-waste to get Categorization";
+        document.getElementById('cat_main_icon').textContent = "category";
+        
+        // Reset Input
+        document.getElementById('id_photo').value = '';
+        
+        // Clear Hidden Inputs
+        document.getElementById('aiCategory').value = '';
+        document.getElementById('aiConfidence').value = '';
     }
-    
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            const lat = position.coords.latitude.toFixed(6);
-            const lng = position.coords.longitude.toFixed(6);
-            
-            const latInput = document.querySelector('input[name="latitude"]');
-            const lngInput = document.querySelector('input[name="longitude"]');
-            
-            if (latInput) latInput.value = lat;
-            if (lngInput) lngInput.value = lng;
-            
-            document.getElementById('lat_display').value = lat;
-            document.getElementById('lng_display').value = lng;
-        },
-        function(error) {
-            alert('Could not detect location. Please allow location access and try again.');
-            toggleLocationFetch();
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-}
+    function toggleManualSelect() {
+        const m = document.getElementById('catModal');
+        m.classList.toggle('hidden');
+    }
+
+    function applyManual(v, l, i) {
+        renderScanRes({display_name: l, icon: i, confidence: 100, category: v});
+        toggleManualSelect();
+    }
+
+    function handleScanFail() { alert('Neural Match Interrupted.'); toggleManualSelect(); }
+
+    // --- LOCATION ---
+    let loc = false;
+    function toggleLoc() {
+        loc = !loc;
+        const btn = document.getElementById('l_toggle');
+        if(loc) {
+            btn.classList.add('active');
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(p => {
+                    const lat = p.coords.latitude.toFixed(6);
+                    const lng = p.coords.longitude.toFixed(6);
+                    document.getElementById('lat_d').value = lat;
+                    document.getElementById('lng_d').value = lng;
+                    document.querySelector('[name=latitude]').value = lat;
+                    document.querySelector('[name=longitude]').value = lng;
+                }, () => {
+                   alert('Location Access Denied');
+                   btn.classList.remove('active');
+                   loc = false;
+                });
+            }
+        } else {
+            btn.classList.remove('active');
+            document.getElementById('lat_d').value = '';
+            document.getElementById('lng_d').value = '';
+            document.querySelector('[name=latitude]').value = '';
+            document.querySelector('[name=longitude]').value = '';
+        }
+    }
+    // CHARACTER LIMIT LOGIC
+    function initCharLimit(fieldId, counterId, limit) {
+        const field = document.getElementById(fieldId);
+        const counter = document.getElementById(counterId);
+        
+        if (!field || !counter) return;
+
+        field.setAttribute('maxlength', limit);
+        
+        const update = () => {
+            const length = field.value.length;
+            counter.innerText = `${length} / ${limit}`;
+            if (length >= limit) counter.classList.add('text-primary');
+            else counter.classList.remove('text-primary');
+        };
+
+        field.addEventListener('input', update);
+        update(); // Initial state
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // We need to find the actual input IDs generated by Django
+        // Assuming Standard Django naming: id_description and id_address
+        const descField = document.querySelector('textarea[name="description"]');
+        const addrField = document.querySelector('textarea[name="address"]') || document.querySelector('input[name="address"]');
+
+        if (descField) {
+            descField.id = descField.id || 'id_description';
+            initCharLimit(descField.id, 'desc_count', 120);
+        }
+        if (addrField) {
+            addrField.id = addrField.id || 'id_address';
+            initCharLimit(addrField.id, 'addr_count', 120);
+        }
+    });
 </script>
 {% endblock %}

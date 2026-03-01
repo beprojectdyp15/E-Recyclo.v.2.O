@@ -51,6 +51,31 @@
                 <a href="{% url 'vendor:accepted_items' %}" class="block text-center border border-slate-200 dark:border-slate-700 text-slate-600 px-6 py-2 rounded-xl hover:bg-slate-50 text-sm font-medium transition-colors">
                     ← Back to Accepted Items
                 </a>
+
+                {% if is_current_vendor %}
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-700">
+                        {% if post.status == 'collected' and post.rejection_count == 0 and not post.vendor_declined_reevaluation %}
+                        <a href="{% url 'vendor:evaluate_item' post.pk %}"
+                           class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold transition-colors shadow-sm">
+                            <span class="material-symbols-outlined" style="font-size:20px">rate_review</span>Evaluate & Send Offer
+                        </a>
+                        {% elif post.status == 'collected' and post.rejection_count > 0 and not post.vendor_declined_reevaluation %}
+                        <div class="flex flex-col gap-2">
+                            <a href="{% url 'vendor:evaluate_item' post.pk %}"
+                               class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-bold transition-colors">
+                                <span class="material-symbols-outlined" style="font-size:20px">refresh</span>Prepare Re-evaluation
+                            </a>
+                        </div>
+                        {% elif post.status == 'pickup_scheduled' or post.status == 'in_transit' %}
+                        <div class="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 p-3 rounded-xl">
+                            <p class="text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-2 leading-none">
+                                <span class="material-symbols-outlined text-[14px]">info</span>Awaiting Physical Receipt
+                            </p>
+                            <p class="text-[11px] text-amber-600/80 leading-relaxed">Once the collector delivers the item and verifies your Delivery OTP, you'll be able to perform the technical evaluation.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

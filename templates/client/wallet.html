@@ -1,50 +1,415 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block page_title %}My Wallet{% endblock %}
+{% block page_subtitle %}Digital Earnings & Transaction History{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --premium-bg: #f8fafc;
+    }
+
+    html.dark {
+        --premium-bg: #0f172a;
+    }
+
+    body {
+        background-color: var(--premium-bg) !important;
+    }
+
+    .premium-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 1.5rem;
+    }
+
+    .dark .premium-card {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .txn-row {
+        transition: all 0.2s ease;
+    }
+
+    .txn-row:hover {
+        background: rgba(248, 250, 252, 0.8);
+        transform: translateX(4px);
+    }
+
+    .dark .txn-row:hover {
+        background: rgba(30, 41, 59, 0.5);
+    }
+
+    .status-badge {
+        font-size: 8px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 4px 10px;
+        border-radius: 9999px;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+{% endblock %}
 
 {% block page_content %}
-<div class="max-w-4xl mx-auto space-y-6">
-    <div class="bg-nature-500 from-nature-500 to-nature-600 rounded-lg shadow-lg p-8 text-white">
-        <h2 class="text-lg mb-2">Wallet Balance</h2>
-        <p class="text-4xl font-bold mb-4">₹{{ wallet.balance }}</p>
-        <div class="flex space-x-4 text-sm">
-            <div>
-                <p class="opacity-80">Total Earned</p>
-                <p class="font-semibold">₹{{ wallet.total_earned }}</p>
+<div class="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    
+    <!-- COMPACT BALANCE HEADER -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 premium-card px-8 py-[30px] flex flex-col md:flex-row items-center justify-between gap-8 bg-gradient-to-br from-primary to-forest text-white border-none shadow-xl shadow-primary/10">
+            <div class="space-y-4 text-center md:text-left">
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Available Balance</p>
+                <div class="flex items-end justify-center md:justify-start gap-2">
+                    <span class="text-2xl font-black mb-1 opacity-70">₹</span>
+                    <h2 class="text-6xl font-black tracking-tighter tabular-nums leading-none">{{ wallet.balance|default:"0.00" }}</h2>
+                </div>
             </div>
-            <div>
-                <p class="opacity-80">Total Withdrawn</p>
-                <p class="font-semibold">₹{{ wallet.total_withdrawn }}</p>
+            
+            <div class="flex flex-col gap-3 w-full md:w-auto">
+                <button class="bg-white text-primary px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                    <span class="material-symbols-outlined text-base">payments</span>
+                    Redeem to Bank
+                </button>
+                <div class="flex items-center justify-center md:justify-start gap-8 px-2">
+                    <div class="text-center md:text-left">
+                        <p class="text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1">Lifetime</p>
+                        <p class="text-sm font-black tabular-nums">₹{{ total_earned|default:"0.00" }}</p>
+                    </div>
+                    <div class="w-[1px] h-6 bg-white/20"></div>
+                    <div class="text-center md:text-left">
+                        <p class="text-[8px] font-bold text-white/50 uppercase tracking-widest mb-1">Withdrawn</p>
+                        <p class="text-sm font-black tabular-nums">₹{{ wallet.total_withdrawn|default:"0.00" }}</p>
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <!-- STATEMENT DOWNLOAD SECTION -->
+        <div class="premium-card px-6 py-[22px] bg-white dark:bg-slate-800 flex flex-col justify-between border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-4 mb-5">
+                <div class="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-xl">file_download</span>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-widest leading-tight mb-0.5">Report Center</h4>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Statement export</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 mb-5">
+                <!-- CUSTOM PREMIUM DROPDOWN -->
+                <div class="relative" id="dropdownContainer">
+                    <button onclick="toggleDropdown()" id="dropdownTrigger" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl py-4 px-5 flex items-center justify-between transition-all hover:border-primary/30 group">
+                        <span id="selectedOptionText">Complete Statement</span>
+                        <span class="material-symbols-outlined text-lg transition-transform duration-300" id="dropdownArrow">expand_more</span>
+                    </button>
+                    
+                    <div id="dropdownMenu" class="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden hidden transform origin-top transition-all duration-200 opacity-0 scale-95">
+                        <div onclick="selectOption('all', 'Complete Statement')" class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800/50">
+                            Complete Statement
+                        </div>
+                        <div onclick="selectOption('month', 'Monthly Report')" class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800/50">
+                            Monthly Report
+                        </div>
+                        <div onclick="selectOption('week', 'Weekly Summary')" class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary transition-colors cursor-pointer border-b border-slate-50 dark:border-slate-800/50">
+                            Weekly Summary
+                        </div>
+                        <div onclick="selectOption('custom', 'Custom Range')" class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary transition-colors cursor-pointer">
+                            Custom Range
+                        </div>
+                    </div>
+                    <input type="hidden" id="reportPeriod" value="all">
+                </div>
+            </div>
+
+            <button onclick="downloadStatement()" class="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.03] active:scale-[0.97] transition-all flex items-center justify-center gap-3">
+                <span class="material-symbols-outlined text-base">download_2</span>
+                Download Statement
+            </button>
         </div>
     </div>
-    
-    <div class="bg-white rounded-lg shadow">
-        <div class="p-6 border-b">
-            <h2 class="text-lg font-semibold">Recent Transactions</h2>
+
+    <!-- PREMIUM CUSTOM DATE MODAL -->
+    <div id="dateModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
+        <!-- Backdrop -->
+        <div onclick="closeDateModal()" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative w-[90%] max-w-md bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-10 transform animate-in zoom-in-95 slide-in-from-bottom-5 duration-300">
+            <div class="text-center space-y-2 mb-8">
+                <div class="size-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-3xl">calendar_month</span>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Select Timeframe</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Custom Statement Range</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="space-y-2 group">
+                    <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">From Date</label>
+                    <div class="relative">
+                        <input type="date" id="modalStartDate" 
+                               min="{{ request.user.date_joined|date:'Y-m-d' }}" 
+                               max="{% now 'Y-m-d' %}"
+                               value="{{ request.user.date_joined|date:'Y-m-d' }}"
+                               class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 text-slate-800 dark:text-white text-xs font-bold rounded-2xl py-4 px-5 focus:outline-none focus:border-primary transition-all appearance-none">
+                    </div>
+                </div>
+
+                <div class="space-y-2 group">
+                    <label class="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">To Date</label>
+                    <div class="relative">
+                        <input type="date" id="modalEndDate" 
+                               min="{{ request.user.date_joined|date:'Y-m-d' }}" 
+                               max="{% now 'Y-m-d' %}"
+                               value="{% now 'Y-m-d' %}"
+                               class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 text-slate-800 dark:text-white text-xs font-bold rounded-2xl py-4 px-5 focus:outline-none focus:border-primary transition-all appearance-none">
+                    </div>
+                </div>
+                
+                <div class="pt-4 grid grid-cols-2 gap-4">
+                    <button onclick="closeDateModal()" class="py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="confirmCustomDate()" class="py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.05] transition-all">
+                        Apply Range
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="closeDateModal()" class="absolute top-6 right-6 text-slate-300 hover:text-red-500 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-        <div class="p-6">
+    </div>
+
+    <!-- TRANSACTION HISTORY SECTION -->
+    <div class="premium-card overflow-hidden">
+        <div class="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="size-10 rounded-xl bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center text-slate-800 dark:text-white border border-slate-100 dark:border-slate-800">
+                    <span class="material-symbols-outlined">receipt_long</span>
+                </div>
+                <div>
+                    <h3 class="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-[0.2em] leading-none mb-1.5">Transaction History</h3>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Complete activity log</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 md:p-6 overflow-x-auto no-scrollbar">
             {% if transactions %}
-                <div class="space-y-3">
+                <div class="min-w-[600px] space-y-1">
                     {% for txn in transactions %}
-                        <div class="flex justify-between items-center p-4 border rounded-lg">
-                            <div>
-                                <p class="font-medium">{{ txn.description }}</p>
-                                <p class="text-sm text-gray-500">{{ txn.created_at|date:"M d, Y H:i" }}</p>
+                    <div class="txn-row px-5 py-6 rounded-2xl flex items-center justify-between group">
+                        <div class="flex items-center gap-5 flex-1 pr-6">
+                            <div class="size-12 rounded-2xl flex items-center justify-center flex-shrink-0 
+                                {% if txn.transaction_type == 'credit' %}
+                                    bg-primary/10 text-primary border border-primary/10
+                                {% else %}
+                                    bg-red-500/10 text-red-500 border border-red-500/10
+                                {% endif %} shadow-sm">
+                                <span class="material-symbols-outlined text-[24px]">
+                                    {% if txn.transaction_type == 'credit' %}add_circle{% else %}remove_circle{% endif %}
+                                </span>
                             </div>
-                            <div class="text-right">
-                                <p class="font-bold {% if txn.transaction_type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
-                                    {% if txn.transaction_type == 'credit' %}+{% else %}-{% endif %}₹{{ txn.amount }}
-                                </p>
-                                <p class="text-sm text-gray-500">Balance: ₹{{ txn.balance_after }}</p>
+                            <div class="min-w-0">
+                                <p class="text-sm font-black text-slate-800 dark:text-white truncate mb-1">{{ txn.description }}</p>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ txn.created_at|date:"M d, Y" }}</span>
+                                    <span class="size-1 bg-slate-200 dark:bg-slate-800 rounded-full"></span>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ txn.created_at|date:"H:i" }}</span>
+                                </div>
                             </div>
                         </div>
+
+                        <div class="text-right flex items-center gap-8">
+                            <div class="space-y-1">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-50">Balance After</p>
+                                <p class="text-xs font-black text-slate-500 tabular-nums">₹{{ txn.balance_after }}</p>
+                            </div>
+                            <div class="min-w-[120px]">
+                                <p class="text-xl font-black tabular-nums 
+                                    {% if txn.transaction_type == 'credit' %}text-primary{% else %}text-red-500{% endif %}">
+                                    {% if txn.transaction_type == 'credit' %}+{% else %}-{% endif %}₹{{ txn.amount }}
+                                </p>
+                                <div class="flex justify-end pt-1">
+                                    <span class="status-badge 
+                                        {% if txn.transaction_type == 'credit' %}bg-primary/10 text-primary{% else %}bg-red-500/10 text-red-500{% endif %}">
+                                        {{ txn.get_transaction_type_display|default:txn.transaction_type }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                        <div class="mx-6 border-b border-slate-50 dark:border-slate-800/30"></div>
+                    {% endif %}
                     {% endfor %}
                 </div>
+                
+                <!-- PREMIUM PAGINATION CONTROLS -->
+                {% if transactions %}
+                <div class="px-8 py-10 flex items-center justify-center gap-4 border-t border-slate-100 dark:border-slate-800">
+                    <!-- Previous Page -->
+                    {% if transactions.has_previous %}
+                    <a href="?page={{ transactions.previous_page_number }}" 
+                       class="size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 transition-all group">
+                        <span class="material-symbols-outlined text-[20px] group-hover:-translate-x-0.5 transition-transform">chevron_left</span>
+                    </a>
+                    {% else %}
+                    <div class="size-10 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-800/50 flex items-center justify-center text-slate-200 dark:text-slate-700 cursor-not-allowed">
+                        <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    <div class="flex items-center gap-2">
+                        {% if transactions.paginator.num_pages > 1 %}
+                            {% for num in transactions.paginator.page_range %}
+                                {% if transactions.number == num %}
+                                <span class="size-10 rounded-xl bg-primary text-white flex items-center justify-center text-[11px] font-black shadow-lg shadow-primary/30">
+                                    {{ num }}
+                                </span>
+                                {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+                                <a href="?page={{ num }}" 
+                                   class="size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-500 hover:border-primary/30 hover:text-primary text-[11px] font-black transition-all">
+                                    {{ num }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <span class="size-10 rounded-xl bg-primary text-white flex items-center justify-center text-[11px] font-black shadow-lg shadow-primary/30">1</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Next Page -->
+                    {% if transactions.has_next %}
+                    <a href="?page={{ transactions.next_page_number }}" 
+                       class="size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 transition-all group">
+                        <span class="material-symbols-outlined text-[20px] group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+                    </a>
+                    {% else %}
+                    <div class="size-10 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-800/50 flex items-center justify-center text-slate-200 dark:text-slate-700 cursor-not-allowed">
+                        <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
             {% else %}
-                <p class="text-center text-gray-500 py-8">No transactions yet</p>
+                <div class="py-20 flex flex-col items-center justify-center text-center opacity-50">
+                    <span class="material-symbols-outlined text-6xl mb-4 text-slate-200">folder_off</span>
+                    <p class="text-xs font-black uppercase tracking-widest">No activities recorded</p>
+                </div>
             {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleDropdown() {
+        const menu = document.getElementById('dropdownMenu');
+        const arrow = document.getElementById('dropdownArrow');
+        const isHidden = menu.classList.contains('hidden');
+        
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            setTimeout(() => {
+                menu.classList.remove('opacity-0', 'scale-95');
+                menu.classList.add('opacity-100', 'scale-100');
+            }, 10);
+            arrow.style.transform = 'rotate(180deg)';
+        } else {
+            menu.classList.remove('opacity-100', 'scale-100');
+            menu.classList.add('opacity-0', 'scale-95');
+            arrow.style.transform = 'rotate(0deg)';
+            setTimeout(() => {
+                menu.classList.add('hidden');
+            }, 200);
+        }
+    }
+
+    function selectOption(value, label) {
+        document.getElementById('selectedOptionText').textContent = label;
+        document.getElementById('reportPeriod').value = value;
+        
+        // Handle Custom Range Modal
+        if (value === 'custom') {
+            openDateModal();
+        }
+        
+        toggleDropdown();
+    }
+
+    function openDateModal() {
+        const modal = document.getElementById('dateModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent scroll
+    }
+
+    function closeDateModal() {
+        const modal = document.getElementById('dateModal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scroll
+        
+        // If they cancelled without applying, reset if needed (optional)
+        if (!document.getElementById('modalStartDate').value) {
+            // Logic to handle cancellation back to 'all' if you prefer
+        }
+    }
+
+    function confirmCustomDate() {
+        const start = document.getElementById('modalStartDate').value;
+        const end = document.getElementById('modalEndDate').value;
+        if (!start || !end) {
+            alert("Please select both start and end dates.");
+            return;
+        }
+        document.getElementById('selectedOptionText').textContent = `${start} — ${end}`;
+        closeDateModal();
+    }
+
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDateModal();
+    });
+
+    window.addEventListener('click', function(e) {
+        const container = document.getElementById('dropdownContainer');
+        if (container && !container.contains(e.target)) {
+            const menu = document.getElementById('dropdownMenu');
+            if (menu && !menu.classList.contains('hidden')) {
+                toggleDropdown();
+            }
+        }
+    });
+
+    function downloadStatement() {
+        const period = document.getElementById('reportPeriod').value;
+        const baseUrl = "{% url 'client:download_statement' %}";
+        let url = `${baseUrl}?period=${period}`;
+        
+        if (period === 'custom') {
+            const start = document.getElementById('modalStartDate').value;
+            const end = document.getElementById('modalEndDate').value;
+            if (!start || !end) {
+                openDateModal();
+                return;
+            }
+            url += `&start_date=${start}&end_date=${end}`;
+        }
+        
+        window.location.href = url;
+    }
+</script>
 {% endblock %}

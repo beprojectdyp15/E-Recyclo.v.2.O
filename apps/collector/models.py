@@ -98,60 +98,6 @@ class CollectorPickup(models.Model):
 
 class CollectorEarnings(models.Model):
     """
-    Track collector earnings
-    """
-    
-    collector = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='collector_earnings',
-        limit_choices_to={'is_collector': True}
-    )
-    
-    total_pickups = models.IntegerField(default=0)
-    completed_pickups = models.IntegerField(default=0)
-    
-    total_earned = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal('0.00')
-    )
-    
-    total_withdrawn = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal('0.00')
-    )
-    
-    available_balance = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal('0.00')
-    )
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'collector_collectorearnings'
-    
-    def __str__(self):
-        return f"{self.collector.email} - ₹{self.available_balance}"
-    
-    def add_earning(self, amount):
-        """Add earnings from completed pickup"""
-        self.total_earned += amount
-        self.available_balance += amount
-        self.completed_pickups += 1
-        self.save()
-        
-        
-from django.db import models
-from django.conf import settings
-from decimal import Decimal
-
-class CollectorEarnings(models.Model):
-    """
     Track collector overall earnings summary (KEEP THIS - DON'T CHANGE)
     """
     

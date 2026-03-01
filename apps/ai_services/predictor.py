@@ -50,14 +50,36 @@ class EWastePredictor:
                 # Import YOLO here, not at module level
                 # This prevents loading during migrations/collectstatic
                 from ultralytics import YOLO
+                import torch
+                import functools
                 
-                if not MODEL_PATH.exists():
-                    logger.error(f"Model file not found at {MODEL_PATH}")
-                    raise FileNotFoundError(f"YOLO model not found at {MODEL_PATH}")
+                # CRITICAL FIX for PyTorch 2.6+ weights_only=True default
+                # Since the safe_globals list is proving insufficient for YOLO's internal complexity,
+                # we temporarily monkey-patch torch.load to default weights_only=False.
+                # We trust our local best.pt file.
                 
-                logger.info(f"Loading YOLO model from {MODEL_PATH}")
-                self._model = YOLO(str(MODEL_PATH))
-                logger.info("✓ YOLO model loaded successfully")
+                original_load = torch.load
+                
+                @functools.wraps(original_load)
+                def patched_load(*args, **kwargs):
+                    if 'weights_only' not in kwargs:
+                        kwargs['weights_only'] = False
+                    return original_load(*args, **kwargs)
+                
+                # Apply the patch
+                torch.load = patched_load
+                
+                try:
+                    if not MODEL_PATH.exists():
+                        logger.error(f"Model file not found at {MODEL_PATH}")
+                        raise FileNotFoundError(f"YOLO model not found at {MODEL_PATH}")
+                    
+                    logger.info(f"Loading YOLO model from {MODEL_PATH}")
+                    self._model = YOLO(str(MODEL_PATH))
+                    logger.info("✓ YOLO model loaded successfully")
+                finally:
+                    # Restore original torch.load immediately after model loading
+                    torch.load = original_load
                 
             except ImportError as e:
                 logger.error(f"Failed to import ultralytics: {e}")
@@ -69,12 +91,12 @@ class EWastePredictor:
         
         return self._model
     
-    def predict(self, image_path, confidence_threshold=0.25):
+    def predict(self, image_data, confidence_threshold=0.25):
         """
         Predict e-waste category from image
         
         Args:
-            image_path: Path to image file, PIL Image, or numpy array
+            image_data: Path to image file, PIL Image, numpy array, or file-like object
             confidence_threshold: Minimum confidence (0-1) for predictions
             
         Returns:
@@ -83,12 +105,22 @@ class EWastePredictor:
                 'category': str,
                 'confidence': float,
                 'all_predictions': list,
-                'message': str
+                'message': str,
+                'error': str (if failed)
             }
         """
         try:
+            # Handle Django UploadedFile or other file-like objects
+            if hasattr(image_data, 'read'):
+                # Handle potential seek issue
+                try:
+                    image_data.seek(0)
+                except:
+                    pass
+                image_data = Image.open(image_data)
+
             # Model loads here on first prediction (lazy loading)
-            results = self.model(image_path, conf=confidence_threshold, verbose=False)
+            results = self.model(image_data, conf=confidence_threshold, verbose=False)
             
             if not results or len(results) == 0:
                 return {
@@ -96,7 +128,8 @@ class EWastePredictor:
                     'category': None,
                     'confidence': 0.0,
                     'all_predictions': [],
-                    'message': 'No objects detected in image'
+                    'message': 'No objects detected in image',
+                    'error': 'No objects detected in image'
                 }
             
             # Get first result
@@ -109,7 +142,8 @@ class EWastePredictor:
                     'category': None,
                     'confidence': 0.0,
                     'all_predictions': [],
-                    'message': 'No e-waste detected in image'
+                    'message': 'No e-waste detected in image',
+                    'error': 'No e-waste detected in image'
                 }
             
             # Get all predictions sorted by confidence
@@ -117,6 +151,7 @@ class EWastePredictor:
             for box in result.boxes:
                 class_id = int(box.cls[0])
                 confidence = float(box.conf[0])
+                # result.names is a dict of {id: name}
                 class_name = result.names[class_id]
                 
                 predictions.append({
@@ -135,6 +170,7 @@ class EWastePredictor:
                 'success': True,
                 'category': top_prediction['category'],
                 'confidence': top_prediction['confidence'],
+                'class_id': top_prediction['class_id'],
                 'all_predictions': predictions,
                 'message': f"Detected {top_prediction['category']} with {top_prediction['confidence']:.1%} confidence"
             }
@@ -146,7 +182,8 @@ class EWastePredictor:
                 'category': None,
                 'confidence': 0.0,
                 'all_predictions': [],
-                'message': f"Prediction error: {str(e)}"
+                'message': f"Prediction error: {str(e)}",
+                'error': str(e)
             }
     
     def predict_batch(self, image_paths, confidence_threshold=0.25):

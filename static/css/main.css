@@ -7,6 +7,18 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Force default dark (black) I-beam cursor on all input/textarea fields */
+input,
+textarea {
+    color-scheme: light only;
+    caret-color: #1e293b !important;
+    forced-color-adjust: none;
+}
+
+select {
+    cursor: pointer !important;
+}
+
 
 /* Custom scrollbar */
 

@@ -1,154 +1,211 @@
 {% extends 'base.html' %}
-{% block title %}My Uploads - eRecyclo{% endblock %}
 {% block page_title %}My Uploads{% endblock %}
+{% block page_subtitle %}Your E-waste Contributions{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --premium-bg: #f8fafc;
+    }
+
+    html.dark {
+        --premium-bg: #0f172a;
+    }
+
+    body {
+        background-color: var(--premium-bg) !important;
+    }
+
+    .premium-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 1.5rem;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: translateY(-2px);
+    }
+
+    .dark .premium-card {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .status-badge {
+        font-size: 8px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        backdrop-filter: blur(4px);
+    }
+
+    .tab-btn {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tab-btn.active {
+        box-shadow: 0 4px 12px -2px rgba(23, 207, 23, 0.2);
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .nav-tabs {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+{% endblock %}
 
 {% block page_content %}
-<div class="space-y-5">
+<div class="max-w-7xl mx-auto pb-24 px-4 sm:px-6">
 
-    <!-- Top Actions -->
-     <div class="flex justify-end">
+    <!-- Top Action & Tabs Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+        <div class="flex-1 min-w-0">
+            <!-- Unified Filter Bar (Matches Button Height) -->
+            <div class="flex items-center h-[55px] p-2 bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 rounded-2xl">
+                <!-- Internal Left Arrow -->
+                <button onclick="document.getElementById('status-tabs').scrollBy({left: -200, behavior: 'smooth'})" 
+                        class="size-10 shrink-0 flex items-center justify-center rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-primary">
+                    <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+
+                <!-- Scrollable Tabs Area -->
+                <div id="status-tabs" class="flex-1 flex items-center gap-2 px-2 overflow-x-auto no-scrollbar scroll-smooth">
+                    {% for label, key, count in tab_list %}
+                    <a href="?status={{ key }}" 
+                       class="tab-btn whitespace-nowrap px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shrink-0
+                       {% if status_filter == key or status_filter == '' and key == '' %}
+                       bg-primary text-white shadow-lg shadow-primary/20 active
+                       {% else %}
+                       text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800
+                       {% endif %}">
+                        {{ label }}
+                        <span class="{% if status_filter == key or status_filter == '' and key == '' %}bg-white/20 text-white{% else %}bg-slate-100 dark:bg-slate-800 text-slate-500{% endif %} rounded-lg px-2 py-0.5 text-[9px] font-black">{{ count }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Internal Right Arrow -->
+                <button onclick="document.getElementById('status-tabs').scrollBy({left: 200, behavior: 'smooth'})" 
+                        class="size-10 shrink-0 flex items-center justify-center rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-primary">
+                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+            </div>
+        </div>
 
         <a href="{% url 'client:upload_ewaste' %}"
-           class="bg-primary hover:bg-forest text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center gap-2">
-            <span class="material-symbols-outlined text-base">add</span> Upload New
+           class="bg-primary text-white px-8 h-[55px] rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 transition-all hover:scale-[1.03] active:scale-[0.98] flex items-center justify-center gap-2 shrink-0">
+            <span class="material-symbols-outlined text-[17px] font-bold">add</span> 
+            <span>Recycle Now</span>
         </a>
-        
     </div>
 
-
-    <!-- Filter Tabs -->
-    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <nav class="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700">
-            {% for label, key, count in tab_list %}
-            <a href="?status={{ key }}" class="flex-shrink-0 flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap
-                {% if status_filter == key or status_filter == '' and key == '' %}border-primary text-primary bg-primary/5{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-200{% endif %}">
-                {{ label }}
-                <span class="text-xs px-1.5 py-0.5 rounded-full
-                    {% if status_filter == key or status_filter == '' and key == '' %}bg-primary text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-500{% endif %}">{{ count }}</span>
-            </a>
-            {% endfor %}
-        </nav>        
-    </div>
-
-    
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 
     {% if uploads %}
-    <div class="space-y-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
         {% for upload in uploads %}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg transition-shadow" >
-            <div class="p-5 flex gap-5">
-
-                {% if upload.photo %}
-                <img src="{{ upload.photo.url }}" alt="{{ upload.title }}"
-                     class="w-36 h-36 object-cover rounded-xl flex-shrink-0 border border-slate-100 dark:border-slate-700">
-                {% else %}
-                <div class="w-36 h-36 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span class="material-symbols-outlined text-slate-400 text-4xl">devices</span>
-                </div>
-                {% endif %}
-
-                <div class="flex-1 min-w-0">
-                    <!-- Title + Status -->
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                        <h3 class="font-bold text-slate-900 dark:text-white text-base leading-tight">{{ upload.title }}</h3>
-                        <span class="text-xs px-2.5 py-1 rounded-full font-bold flex-shrink-0 {{ upload.get_status_badge_class }}">
-                            {{ upload.get_status_display }}
-                        </span>
+        <div class="premium-card overflow-hidden group">
+            <div class="flex flex-col sm:flex-row items-stretch min-h-[300px]">
+                <!-- IMAGE & OTP SIDE (No Border, Compressed) -->
+                <div class="sm:w-[35%] p-6 pr-0 flex flex-col items-center justify-center gap-5">
+                    <!-- Standardized Image Wrapper -->
+                    <div class="size-44 rounded-[1.2rem] overflow-hidden bg-white dark:bg-slate-900 shadow-inner p-2.5 border border-slate-100 dark:border-slate-800 shrink-0">
+                        {% if upload.photo %}
+                        <img src="{{ upload.photo.url }}" alt="{{ upload.title }}"
+                             class="w-full h-full object-cover rounded-[1rem] group-hover:scale-105 transition-transform duration-700">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-700">
+                            <span class="material-symbols-outlined text-4xl">devices</span>
+                        </div>
+                        {% endif %}
                     </div>
 
-                    <!-- Tags -->
-                    <div class="flex flex-wrap gap-1.5 mb-3">
-                        <span class="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-500">{{ upload.get_ai_category_display }}</span>
-                        <span class="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 rounded-full text-green-700 font-semibold">₹{{ upload.get_final_value }}</span>
-                        {% if upload.vendor %}<span class="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600">{{ upload.vendor.get_full_name }}</span>{% endif %}
-                    </div>
-
-                    <!-- Pickup OTP -->
+                    <!-- OTP Info (Beneath image) -->
                     {% if upload.pickup_otp and upload.status == 'pickup_scheduled' %}
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-3 mb-3 flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-xs font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                                <span class="material-symbols-outlined" style="font-size:14px">pin</span>Pickup OTP — share with collector
-                            </p>
+                    <div class="w-full px-4">
+                        <div class="p-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl flex items-center justify-between">
+                            <span class="text-[8px] font-black text-emerald-600 uppercase tracking-widest">OTP</span>
+                            <span class="text-xs font-black text-emerald-700 dark:text-emerald-300 tracking-[0.1em] font-mono leading-none">{{ upload.pickup_otp }}</span>
                         </div>
-                        <span class="text-2xl font-black tracking-widest text-blue-700 dark:text-blue-300 font-mono">{{ upload.pickup_otp }}</span>
                     </div>
                     {% endif %}
+                </div>
 
-                    <!-- In Transit -->
-                    {% if upload.status == 'in_transit' %}
-                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 rounded-xl p-2.5 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-orange-500 text-sm">local_shipping</span>
-                        <p class="text-xs font-semibold text-orange-700 dark:text-orange-400">Collector heading to vendor with your item</p>
-                    </div>
-                    {% endif %}
-
-                    <!-- Offer Under Review -->
-                    {% if upload.status == 'under_review' %}
-                    <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-xl p-3 mb-3 flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-xs font-bold text-purple-700 dark:text-purple-400">📋 Vendor sent offer #{{ upload.offer_count }}!</p>
-                            <p class="text-xs text-purple-600 dark:text-purple-500">₹{{ upload.vendor_final_value }} offered</p>
+                <!-- CONTENT SIDE (Shifted Left) -->
+                <div class="flex-1 p-8 pl-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-base sm:text-lg font-extrabold text-slate-800 dark:text-white leading-tight group-hover:text-primary transition-colors truncate mb-1">{{ upload.title }}</h3>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ upload.created_at|date:"M d, Y" }} · #{{ upload.pk }}</p>
+                            </div>
+                            <div class="shrink-0 flex items-center h-7">
+                                <span class="status-badge {{ upload.get_status_badge_pilled_class }} py-1 px-3 text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-lg leading-none whitespace-nowrap">
+                                    {{ upload.get_status_display }}
+                                </span>
+                            </div>
                         </div>
-                        <a href="{% url 'client:review_offer' upload.pk %}"
-                           class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-bold transition-colors flex-shrink-0">
-                            Review →
-                        </a>
-                    </div>
-                    {% endif %}
 
-                    <!-- Vendor Declined Re-eval (item is back as 'collected') -->
-                    {% if upload.vendor_declined_reevaluation %}
-                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl p-3 mb-3 flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-xs font-bold text-red-700 dark:text-red-400">⚠️ Vendor declined to re-evaluate</p>
-                            <p class="text-xs text-red-600 dark:text-red-500">Request return or wait for transfer</p>
-                        </div>
-                        <a href="{% url 'client:request_return' upload.pk %}"
-                           class="text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg font-bold transition-colors flex-shrink-0">
-                            Request Return →
-                        </a>
-                    </div>
-                    {% endif %}
-
-                    <!-- Return in progress -->
-                    {% if upload.status == 'return_requested' or upload.status == 'return_pickup_scheduled' or upload.status == 'return_in_transit' %}
-                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 rounded-xl p-2.5 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-orange-500 text-sm">autorenew</span>
-                        <p class="text-xs font-semibold text-orange-700 dark:text-orange-400">
-                            {% if upload.status == 'return_requested' %}Return requested — awaiting collector
-                            {% elif upload.status == 'return_pickup_scheduled' %}
-                                Return OTP: <strong class="font-mono tracking-widest ml-1">{{ upload.return_pickup_otp }}</strong>
-                            {% else %}Item on its way back to you{% endif %}
+                        <!-- Description (Capped at 37 Characters) -->
+                        <p class="text-[12px] text-slate-500 font-semibold mb-6 leading-relaxed">
+                            {{ upload.description|default:"No details provided."|truncatechars:37 }}
                         </p>
-                    </div>
-                    {% endif %}
 
-                    <!-- Returned -->
-                    {% if upload.status == 'returned_to_client' %}
-                    <div class="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 rounded-xl p-2.5 mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-teal-500 text-sm">home</span>
-                        <p class="text-xs font-semibold text-teal-700 dark:text-teal-400">Item returned to you successfully</p>
+                        <!-- Optimized Meta Flow -->
+                        <div class="flex gap-4 sm:gap-6 mt-4 mb-8 border-y border-slate-50 dark:border-slate-800/50 py-4">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Qty</p>
+                                <p class="text-[10px] sm:text-[11px] font-black text-slate-700 dark:text-slate-200">1 Unit</p>
+                            </div>
+                            <div class="flex-[1.5] min-w-0">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Category</p>
+                                <p class="text-[10px] sm:text-[11px] font-black text-slate-700 dark:text-slate-200 truncate">{{ upload.get_ai_category_display }}</p>
+                            </div>
+                            <div class="flex-[1.5] min-w-0">
+                                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Condition</p>
+                                <p class="text-[10px] sm:text-[11px] font-black text-slate-700 dark:text-slate-200 truncate">{{ upload.get_ai_condition_display }}</p>
+                            </div>
+                        </div>
                     </div>
-                    {% endif %}
 
-                    <!-- Completed -->
-                    {% if upload.status == 'completed' %}
-                    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-xl p-3 mb-3 flex items-center justify-between gap-3">
-                        <p class="text-xs font-bold text-green-700 dark:text-green-400">✅ ₹{{ upload.vendor_final_value }} credited to wallet</p>
-                        <a href="{% url 'client:download_certificate' upload.pk %}"
-                           class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg font-bold transition-colors flex-shrink-0">
-                            📄 Certificate
-                        </a>
-                    </div>
-                    {% endif %}
+                    <div class="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex-1 min-w-0 flex items-center gap-[9px] sm:gap-[17px] pr-2">
+                            <div class="min-w-0 ml-2 -mt[4px]">
+                                <p class="text-[8px] text-slate-400 font-extrabold uppercase tracking-widest mb-1 truncate">AI Predicted</p>
+                                <p class="font-black text-slate-700 dark:text-white leading-none whitespace-nowrap {% if upload.ai_estimated_value > 99999 %}text-sm{% else %}text-base{% endif %}">
+                                    ₹{{ upload.ai_estimated_value }}
+                                </p>
+                            </div>
+                            {% if upload.vendor_final_value %}
+                            <div class="min-w-0 border-l border-slate-100 dark:border-slate-800/50 pl-3 sm:pl-4">
+                                <p class="text-[8px] text-primary font-extrabold uppercase tracking-widest mb-1 truncate">
+                                    Final Price
+                                </p>
+                                <p class="font-black text-primary leading-none whitespace-nowrap {% if upload.vendor_final_value > 99999 %}text-sm{% else %}text-base{% endif %}">
+                                    ₹{{ upload.vendor_final_value }}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
 
-                    <!-- Footer -->
-                    <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700 mt-3">
-                        <span class="text-xs text-slate-400">{{ upload.created_at|date:"M d, Y" }}</span>
-                        <a href="{% url 'client:upload_detail' upload.pk %}"
-                           class="text-xs text-primary hover:text-forest font-semibold transition-colors">
-                            View Details →
+                        <a href="{% url 'client:upload_detail' upload.pk %}" 
+                           class="shrink-0 py-3 px-6 sm:px-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-slate-900/10">
+                            Details
                         </a>
                     </div>
                 </div>
@@ -158,15 +215,15 @@
     </div>
 
     {% else %}
-    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center py-20 text-center">
-        <div class="size-16 bg-slate-100 dark:bg-slate-700/50 rounded-2xl flex items-center justify-center mb-4">
-            <span class="material-symbols-outlined text-3xl text-slate-400">upload</span>
+    <div class="premium-card p-16 flex flex-col items-center justify-center text-center">
+        <div class="size-24 rounded-[2rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center mb-8 shadow-inner">
+             <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-700">package_2</span>
         </div>
-        <h4 class="text-base font-semibold text-slate-700 dark:text-slate-300 mb-2">No uploads found</h4>
-        <p class="text-sm text-slate-400 mb-5">Start recycling by uploading your first e-waste item!</p>
+        <h4 class="text-xl font-black text-slate-800 dark:text-white mb-3">No recycling journey found</h4>
+        <p class="text-[13px] text-slate-400 font-bold max-w-sm leading-relaxed mb-10">You haven't uploaded any e-waste items for recycling yet. Your contribution helps make the planet greener.</p>
         <a href="{% url 'client:upload_ewaste' %}"
-           class="bg-primary hover:bg-forest text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors">
-            Upload E-Waste
+           class="bg-primary text-white px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+            Start First Recycling
         </a>
     </div>
     {% endif %}

@@ -1,517 +1,788 @@
 {% extends 'base.html' %}
-{% block page_title %}Upload Details{% endblock %}
+{% block page_title %}Item Overview{% endblock %}
+{% block page_subtitle %}Tracking your e-waste recycling journey{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --premium-bg: #f8fafc;
+    }
+
+    html.dark {
+        --premium-bg: #0f172a;
+    }
+
+    body {
+        background-color: var(--premium-bg) !important;
+    }
+
+    .premium-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 1.5rem;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: translateY(-2px);
+    }
+
+    .dark .premium-card {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .dark .premium-card:hover {
+        box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    .no-hover-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+        transform: none !important;
+    }
+
+    .dark .no-hover-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .status-badge {
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        backdrop-filter: blur(4px);
+    }
+
+    .collapsible-active {
+        position: relative;
+    }
+
+    .collapsible-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out;
+        z-index: 10;
+    }
+
+    .collapsible-active .collapsible-content {
+        max-height: 5000px;
+        transition: max-height 1s ease-in;
+    }
+
+    .arrow-icon {
+        transition: transform 0.3s;
+    }
+
+    .collapsible-active .arrow-icon {
+        transform: rotate(180deg);
+    }
+
+    /* Fixed header overlap */
+    .js-collapsible {
+        position: relative;
+        z-index: 1;
+    }
+
+    .collapsible-header-btn {
+        transition: all 0.3s ease;
+    }
+
+    .collapsible-active .collapsible-header-btn {
+        background: #f8fafc !important;
+    }
+
+    .dark .collapsible-active .collapsible-header-btn {
+        background: #1e293b !important;
+    }
+
+    .dashed-line {
+        background-image: linear-gradient(to bottom, #e2e8f0 50%, rgba(255, 255, 255, 0) 0%);
+        background-position: center;
+        background-size: 1px 12px;
+        background-repeat: repeat-y;
+    }
+
+    /* Report Modal Styles */
+    #reportModal {
+        z-index: 1000;
+        backdrop-filter: blur(8px);
+    }
+    .modal-content-zoom {
+        animation: modalZoom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes modalZoom {
+        from { transform: scale(0.9) translateY(10px); opacity: 0; }
+        to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .report-frame {
+        background-image: 
+            radial-gradient(circle at 2px 2px, rgba(0,0,0,0.05) 1px, transparent 0);
+        background-size: 24px 24px;
+    }
+    .dark .report-frame {
+        background-image: 
+            radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+    }
+</style>
+{% endblock %}
 
 {% block page_content %}
-<div class="max-w-4xl mx-auto space-y-5">
+<div class="max-w-5xl mx-auto pb-24 px-4 sm:px-6">
 
-    <!-- Main Item Card -->
-    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div class="md:flex">
-            <div class="md:w-1/2">
-                <img src="{{ post.photo.url }}" alt="{{ post.title }}" class="w-full h-full object-cover min-h-64">
+    <!-- ── PROGRESS TRACKER ── -->
+    <div class="mb-10 premium-card p-6 sm:p-10">
+        <div class="flex items-center justify-between max-w-4xl mx-auto relative px-4">
+            <div class="absolute top-5 left-[50px] right-[50px] h-[3px] bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+
+            {% with s=post.status %}
+            <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
+                <div
+                    class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                    <span class="material-symbols-outlined text-base">cloud_upload</span>
+                </div>
+                <span
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s %}text-primary{% else %}text-slate-400{% endif %}">Uploaded</span>
             </div>
-            <div class="md:w-1/2 p-6 space-y-4">
-                <div class="flex items-start justify-between gap-3">
-                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{{ post.title }}</h2>
-                    <span class="inline-flex items-center px-3 py-1 text-xs font-bold rounded-full flex-shrink-0 {{ post.get_status_badge_class }}">
-                        {{ post.get_status_display }}
+
+            <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
+                <div
+                    class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s != 'pending' %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                    <span class="material-symbols-outlined text-base">person_search</span>
+                </div>
+                <span
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s != 'pending' %}text-primary{% else %}text-slate-400{% endif %}">Vendor Assigned</span>
+            </div>
+
+            <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
+                <div
+                    class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s == 'in_transit' or s == 'collected' or s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                    <span class="material-symbols-outlined text-base">local_shipping</span>
+                </div>
+                <span
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s == 'in_transit' or s == 'collected' or s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' %}text-primary{% else %}text-slate-400{% endif %}">Transit</span>
+            </div>
+
+            <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
+                <div
+                    class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or post.rejection_count %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                    <span class="material-symbols-outlined text-base">verified_user</span>
+                </div>
+                <span
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or post.rejection_count %}text-primary{% else %}text-slate-400{% endif %}">Review</span>
+            </div>
+
+            <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
+                <div
+                    class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s == 'completed' or s == 'returned_to_client' %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                    <span class="material-symbols-outlined text-base">{% if s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' %}assignment_return{% else %}check_circle{% endif %}</span>
+                </div>
+                <span
+                    class="text-[10px] font-extrabold uppercase tracking-widest text-center leading-tight {% if s == 'completed' or s == 'returned_to_client' %}text-primary{% else %}text-slate-400{% endif %}">
+                    {% if s in 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' %}Returned
+                    {% elif s == 'completed' %}Recycled
+                    {% else %}Finishing{% endif %}
+                </span>
+            </div>
+            {% endwith %}
+        </div>
+    </div>
+
+    <!-- ── 1. PRODUCT IMAGE-INFO SECTION ── -->
+    <div class="premium-card overflow-hidden mb-8 !rounded-[1.5rem]">
+        <div class="md:flex items-stretch">
+            <div class="md:w-2/5 p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-900/30">
+                <div
+                    class="aspect-square rounded-[1rem] overflow-hidden bg-white dark:bg-slate-800 shadow-inner p-4 border border-slate-100 dark:border-slate-700">
+                    <img src="{{ post.photo.url }}" alt="{{ post.title }}"
+                        class="w-full h-full object-cover rounded-[0.8rem] shadow-sm">
+                </div>
+            </div>
+
+            <div class="md:w-3/5 p-8 sm:p-10 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-extrabold text-slate-700 dark:text-white leading-tight">{{ post.title }}</h2>
+                    <span
+                        class="status-badge bg-primary/10 text-primary border border-primary/20 text-[10px] px-3 py-1 font-extrabold">
+                        {{ client_status_tag }}
                     </span>
                 </div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between"><span class="text-slate-500">Category</span><span class="font-medium text-slate-900 dark:text-white">{{ post.get_ai_category_display }}</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500">Condition</span><span class="font-medium text-slate-900 dark:text-white">{{ post.get_ai_condition_display }}</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500">AI Estimated Value</span><span class="text-lg font-bold text-green-600">₹{{ post.ai_estimated_value }}</span></div>
-                    {% if post.vendor_final_value and post.status == 'completed' %}
-                    <div class="flex justify-between"><span class="text-slate-500">Final Value (Vendor)</span><span class="text-lg font-bold text-primary">₹{{ post.vendor_final_value }}</span></div>
-                    {% endif %}
-                    <div class="flex justify-between"><span class="text-slate-500">Quantity</span><span class="font-medium text-slate-900 dark:text-white">{{ post.quantity }}</span></div>
-                    {% if post.item_size %}
-                    <div class="flex justify-between"><span class="text-slate-500">Size</span><span class="font-medium text-slate-900 dark:text-white">{{ post.get_item_size_display }}</span></div>
-                    {% endif %}
-                    {% if post.estimated_weight %}
-                    <div class="flex justify-between"><span class="text-slate-500">Weight</span><span class="font-medium text-slate-900 dark:text-white">{{ post.get_estimated_weight_display }}</span></div>
-                    {% endif %}
-                    <div class="flex justify-between"><span class="text-slate-500">Uploaded</span><span class="text-slate-500">{{ post.created_at|date:"M d, Y H:i" }}</span></div>
+
+                <div class="flex-grow">
+                    <div class="mb-14">
+                        <p class="text-[11px] font-extrabold uppercase tracking-[0.15em] text-slate-400 mb-2">Description</p>
+                        <p class="text-slate-600 dark:text-slate-400 text-[15px] leading-relaxed font-semibold line-clamp-2">
+                            {{ post.description|default:"No manufacturer details provided for this unit." }}
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-3">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Quantity</p>
+                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ post.quantity }} Unit{{ post.quantity|pluralize }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">AI Category
+                            </p>
+                            <p class="text-sm font-black font-semibold">{{ post.get_ai_category_display }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">AI Condition
+                            </p>
+                            <p class="text-sm font-black font-semibold">{{ post.get_ai_condition_display }}</p>
+                        </div>
+                    </div>
                 </div>
-                {% if post.description %}
-                <div>
-                    <p class="text-xs font-semibold text-slate-500 mb-1">Description</p>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ post.description }}</p>
+
+                <div
+                    class="pt-6 pb-4 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-8 sm:gap-14">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="size-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                            <span class="material-symbols-outlined text-slate-400 text-xl">smart_toy</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Predicted Price</p>
+                            <p class="text-xl font-extrabold text-slate-700 dark:text-white">₹{{ post.ai_estimated_value }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="size-11 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                            <span class="material-symbols-outlined text-emerald-500 text-xl">payments</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-emerald-500 font-extrabold uppercase tracking-widest">Final Price (Vendor)</p>
+                            <p class="text-xl font-extrabold text-emerald-500">₹{{ post.vendor_final_value|default:"0" }}</p>
+                        </div>
+                    </div>
                 </div>
-                {% endif %}
-                <div>
-                    <p class="text-xs font-semibold text-slate-500 mb-1">Pickup Address</p>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ post.address }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 2. PICK-UP LOGISTICS SECTION ── -->
+    <div class="mb-14 group">
+        <div
+            class="premium-card flex flex-col md:flex-row overflow-hidden hover:shadow-xl transition-all duration-300 border border-slate-100 dark:border-slate-800/60">
+            <!-- Location Panel -->
+            <div
+                class="md:w-1/4 bg-emerald-50/50 dark:bg-emerald-950/20 p-8 flex flex-col items-center justify-center gap-4 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800">
+                <div
+                    class="size-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-primary shadow-md border border-slate-100 dark:border-slate-700">
+                    <span class="material-symbols-outlined text-2xl">location_on</span>
                 </div>
-                <a href="{% url 'client:my_uploads' %}"
-                   class="block text-center border border-slate-200 dark:border-slate-700 text-slate-600 px-6 py-2 rounded-xl hover:bg-slate-50 text-sm font-medium transition-colors">
-                    ← Back to My Uploads
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ STATUS-BASED DYNAMIC SECTIONS ══ -->
-
-    <!-- PENDING: Waiting for vendor -->
-    {% if post.status == 'pending' %}
-    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-amber-600 text-2xl">hourglass_top</span>
-            <div>
-                <h3 class="text-base font-bold text-amber-800 dark:text-amber-300">Waiting for Vendor</h3>
-                <p class="text-sm text-amber-700 dark:text-amber-400">Your item is visible to nearby vendors. One of them will accept it soon.</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- PICKUP_SCHEDULED: Vendor accepted, waiting for collector -->
-    {% if post.status == 'pickup_scheduled' and not post.collector %}
-    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3 mb-3">
-            <span class="material-symbols-outlined text-blue-600 text-2xl">storefront</span>
-            <div>
-                <h3 class="text-base font-bold text-blue-800 dark:text-blue-300">Vendor Accepted!</h3>
-                <p class="text-sm text-blue-700 dark:text-blue-400">{{ post.vendor.get_full_name }} has accepted your item. Waiting for a collector to claim the pickup.</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- PICKUP_SCHEDULED with collector: Show Pickup OTP (ONLY for regular pickups, NOT transfers) -->
-    {% if post.pickup_otp and post.status == 'pickup_scheduled' and post.collector and not is_vendor_transfer %}
-    <div class="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-2xl p-5">
-        <div class="flex items-start justify-between gap-4">
-            <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-blue-600">pin</span>
-                    <h3 class="text-base font-bold text-blue-800 dark:text-blue-300">Your Pickup OTP</h3>
+                <div class="text-center">
+                    <h4 class="text-[10px] font-extrabold uppercase tracking-[0.15em] text-slate-400 mb-1">Pick-up Info</h4>
+                    <p class="text-[13px] font-extrabold text-slate-700 dark:text-slate-200">Pick-up Address</p>
                 </div>
-                <p class="text-sm text-blue-700 dark:text-blue-400">Collector <strong>{{ post.collector.get_full_name }}</strong> is on the way to collect your item. <strong>Share this OTP</strong> when they arrive.</p>
             </div>
-            <div class="text-center flex-shrink-0">
-                <div class="text-4xl font-black tracking-widest text-blue-700 dark:text-blue-300 font-mono bg-white dark:bg-slate-800 border-2 border-blue-300 rounded-xl px-4 py-3 select-all">{{ post.pickup_otp }}</div>
-                <p class="text-xs text-blue-400 mt-1">Pickup OTP</p>
+
+            <!-- Address Content -->
+            <div class="md:w-3/4 p-8 sm:p-10 flex flex-col justify-center bg-white dark:bg-slate-800/10">
+                <div class="mb-8">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Complete Address</p>
+                    <p class="text-[16px] text-slate-800 dark:text-slate-100 font-bold leading-tight">{{ post.address }}
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-4">
+                    <div
+                        class="bg-slate-50 dark:bg-slate-900/40 px-5 py-3 rounded-xl border border-slate-100 dark:border-slate-800 flex-1 min-w-[120px]">
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-tight mb-1">Latitude</p>
+                        <p class="text-xs font-extrabold text-slate-700 dark:text-slate-300">{{ post.latitude|floatformat:4 }}</p>
+                    </div>
+                    <div
+                        class="bg-slate-50 dark:bg-slate-900/40 px-5 py-3 rounded-xl border border-slate-100 dark:border-slate-800 flex-1 min-w-[120px]">
+                        <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-tight mb-1">Longitude</p>
+                        <p class="text-xs font-extrabold text-slate-700 dark:text-slate-300">{{ post.longitude|floatformat:4 }}</p>
+                    </div>
+                    <a href="https://www.google.com/maps?q={{ post.latitude }},{{ post.longitude }}" target="_blank"
+                        class="size-12 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-transform shrink-0">
+                        <span class="material-symbols-outlined">directions</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-    {% endif %}
 
-    <!-- TRANSFER IN PROGRESS: Client sees transfer status (NO OTP - vendors have it) -->
-    {% if post.status == 'pickup_scheduled' and post.collector and is_vendor_transfer %}
-    <div class="bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-300 dark:border-purple-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-purple-600 text-2xl">swap_horiz</span>
-            <div>
-                <h3 class="text-base font-bold text-purple-800 dark:text-purple-300">Transfer Pickup Scheduled</h3>
-                <p class="text-sm text-purple-700 dark:text-purple-400">
-                    Collector {{ post.collector.get_full_name }} will pick up from previous vendor and deliver to {{ post.vendor.get_full_name }}.
-                </p>
-                <p class="text-xs text-purple-500 mt-1">OTPs are with the vendors for this transfer.</p>
+    <!-- ── 3. VENDOR & COLLECTOR SECTION ── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <!-- Recycler Card -->
+        <div
+            class="premium-card p-6 sm:p-8 hover-premium relative overflow-hidden border-green-100/50 hover:shadow-xl transition-all duration-300 dark:border-green-900/20">
+            <div class="absolute top-4 right-4">
+                <span class="status-badge bg-green-50 text-green-600 border border-green-100 text-[8px] shadow-sm">{{ vendor_status_tag|upper }}</span>
             </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- IN_TRANSIT: Collector picked up, heading to vendor -->
-    {% if post.status == 'in_transit' %}
-    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-orange-600 text-2xl animate-pulse">local_shipping</span>
-            <div>
-                {% if post.vendor_remarks and 'TRANSFER_FROM_VENDOR' in post.vendor_remarks %}
-                <h3 class="text-base font-bold text-orange-800 dark:text-orange-300">Transfer In Progress</h3>
-                <p class="text-sm text-orange-700 dark:text-orange-400">
-                    Item is being transferred to {{ post.vendor.get_full_name }} for fresh evaluation.
-                </p>
-                {% else %}
-                <h3 class="text-base font-bold text-orange-800 dark:text-orange-300">Item In Transit to Vendor</h3>
-                <p class="text-sm text-orange-700 dark:text-orange-400">{{ post.collector.get_full_name }} has picked up your item and is heading to {{ post.vendor.get_full_name }} for evaluation.</p>
-                {% endif %}
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <span class="size-1.5 bg-green-500 rounded-full"></span> Recycler
+            </h4>
+            {% if post.vendor %}
+            <div class="flex items-center gap-5">
+                <div
+                    class="size-14 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden">
+                    <span class="material-symbols-outlined text-3xl text-green-600">storefront</span>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-[16px] font-extrabold text-slate-700 dark:text-white truncate">{{ post.vendor.get_full_name|default:"E-Recyclo Partner" }}</p>
+                    <p class="text-xs font-bold text-slate-500 truncate leading-relaxed mt-0.5">{{ post.vendor.email }}</p>
+                    <p class="text-xs font-bold text-slate-500 mt-1">{{ post.vendor.phone_number }}</p>
+                </div>
             </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- COLLECTED: Item at vendor, awaiting evaluation -->
-    {% if post.status == 'collected' and not post.vendor_declined_reevaluation %}
-    <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-indigo-600 text-2xl">inventory_2</span>
-            <div>
-                {% if post.rejection_count > 0 %}
-                <h3 class="text-base font-bold text-indigo-800 dark:text-indigo-300">Re-evaluation in Progress</h3>
-                <p class="text-sm text-indigo-700 dark:text-indigo-400">
-                    You rejected offer #{{ post.rejection_count }}. {{ post.vendor.get_full_name }} is re-evaluating your item and will send a new offer soon.
-                </p>
-                {% else %}
-                <h3 class="text-base font-bold text-indigo-800 dark:text-indigo-300">Item Delivered to Vendor</h3>
-                <p class="text-sm text-indigo-700 dark:text-indigo-400">
-                    Your item is now with {{ post.vendor.get_full_name }}. They are evaluating it and will send you an offer soon.
-                </p>
-                {% endif %}
+            {% else %}
+            <div class="flex items-center gap-4 py-2">
+                <span class="material-symbols-outlined text-slate-300 text-4xl">person_search</span>
+                <p class="text-sm font-bold text-slate-400 ">Finding the best recycler...</p>
             </div>
-        </div>
-        <!-- No return option here - client must wait for vendor's offer -->
-    </div>
-    {% endif %}
-
-    <!-- VENDOR DECLINED RE-EVALUATION -->
-    {% if post.vendor_declined_reevaluation and post.status == 'collected' %}
-    <div class="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3 mb-3">
-            <span class="material-symbols-outlined text-red-600 text-2xl">warning</span>
-            <div>
-                <h3 class="text-base font-bold text-red-800 dark:text-red-300">Vendor Declined Re-evaluation</h3>
-                <p class="text-sm text-red-700 dark:text-red-400">{{ post.vendor.get_full_name }} has declined to provide another offer.</p>
-            </div>
-        </div>
-        {% if post.vendor_remarks %}
-        <p class="text-sm text-red-600 mb-4 bg-red-100 dark:bg-red-900/30 p-3 rounded-xl">{{ post.vendor_remarks }}</p>
-        {% endif %}
-        
-        <!-- Last Offer Info -->
-        {% if last_offer %}
-        <div class="bg-white dark:bg-slate-800 border border-red-200 dark:border-red-700 rounded-xl p-4 mb-4">
-            <p class="text-xs text-slate-500 mb-2">Last Offer from Vendor:</p>
-            <div class="flex items-center gap-4">
-                <span class="text-2xl font-bold text-green-600">₹{{ last_offer.vendor_final_value|default:"0" }}</span>
-                <span class="text-amber-600 font-semibold">+{{ last_offer.eco_points_awarded|default:0 }} eco-points</span>
-            </div>
-        </div>
-        {% endif %}
-        
-        <p class="text-sm text-red-700 dark:text-red-400 mb-4">Choose one of the following options:</p>
-        
-        <div class="grid grid-cols-1 {% if can_transfer and nearby_vendors_exist %}sm:grid-cols-3{% else %}sm:grid-cols-2{% endif %} gap-3">
-            <!-- Accept Last Offer -->
-            <a href="{% url 'client:accept_last_offer' post.pk %}"
-               class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-sm transition-colors">
-                <span class="material-symbols-outlined">check_circle</span>
-                Accept Last Offer
-            </a>
-            <!-- Request Return -->
-            <a href="{% url 'client:request_return' post.pk %}"
-               class="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold text-sm transition-colors">
-                <span class="material-symbols-outlined">undo</span>
-                Request Return
-            </a>
-            <!-- Transfer to Another Vendor (only if allowed and vendors exist) -->
-            {% if can_transfer and nearby_vendors_exist %}
-            <a href="{% url 'client:transfer_to_vendor' post.pk %}"
-               class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold text-sm transition-colors">
-                <span class="material-symbols-outlined">swap_horiz</span>
-                New Vendor
-            </a>
             {% endif %}
         </div>
-        
-        {% if not can_transfer %}
-        <p class="text-xs text-red-500 mt-3">
-            <span class="material-symbols-outlined text-sm align-middle">info</span>
-            Maximum 2 vendor transfers reached. You can only accept the offer or request a return.
-        </p>
-        {% elif not nearby_vendors_exist %}
-        <p class="text-xs text-red-500 mt-3">
-            <span class="material-symbols-outlined text-sm align-middle">info</span>
-            No other vendors available within 5km for transfer.
-        </p>
-        {% endif %}
-    </div>
-    {% endif %}
 
-    <!-- UNDER_REVIEW: Vendor sent offer -->
-    {% if post.status == 'under_review' %}
-    <div class="bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-400 dark:border-purple-600 rounded-2xl p-5">
-        <div class="flex items-start justify-between gap-4">
-            <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-purple-600 text-2xl">local_offer</span>
-                    <h3 class="text-base font-bold text-purple-800 dark:text-purple-300">Vendor Has Sent You an Offer!</h3>
-                </div>
-                <p class="text-sm text-purple-700 dark:text-purple-400 mb-1">
-                    <strong>{{ post.vendor.get_full_name }}</strong> has evaluated your item.
-                </p>
-                <div class="flex flex-wrap gap-3 mt-3">
-                    {% if post.vendor_final_value %}
-                    <span class="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 px-3 py-1.5 rounded-xl text-sm font-bold">
-                        💰 ₹{{ post.vendor_final_value }} offered
-                    </span>
-                    {% endif %}
-                    <span class="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-3 py-1.5 rounded-xl text-sm font-bold">
-                        🌿 {{ post.eco_points_awarded|add:"20" }} eco-points
-                    </span>
-                </div>
+        <!-- Collector Card -->
+        <div
+            class="premium-card p-6 sm:p-8 hover-premium relative overflow-hidden border-amber-100/50 hover:shadow-xl transition-all duration-300 dark:border-amber-900/20">
+            <div class="absolute top-4 right-4">
+                <span class="status-badge bg-amber-50 text-amber-600 border border-amber-100 text-[8px] shadow-sm">{{ collector_status_tag|upper }}</span>
             </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-            <a href="{% url 'client:review_offer' post.pk %}"
-               class="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold text-sm transition-colors">
-                <span class="material-symbols-outlined">rate_review</span>
-                Review Offer & Decide
-            </a>
-            <a href="{% url 'client:request_return' post.pk %}"
-               class="flex items-center justify-center gap-2 border-2 border-orange-300 text-orange-600 hover:bg-orange-50 py-3 rounded-xl font-bold text-sm transition-colors">
-                <span class="material-symbols-outlined">undo</span>
-                Request Return Instead
-            </a>
-        </div>
-    </div>
-    {% endif %}
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <span class="size-1.5 bg-amber-500 rounded-full"></span> Collector
+            </h4>
+            {% if post.collector or post.return_collector %}
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-5 min-w-0">
+                    <div
+                        class="size-14 flex-shrink-0 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden">
+                        <span class="material-symbols-outlined text-3xl text-amber-600">electric_moped</span>
+                    </div>
+                    <div class="min-w-0">
+                        {% with c=post.collector|default:post.return_collector %}
+                        <p class="text-[16px] font-extrabold text-slate-700 dark:text-white truncate">{{ c.get_full_name }}</p>
+                        <p class="text-xs font-bold text-slate-500 truncate mt-0.5">{{ post.collector.email|default:"contact@erecyclo.com" }}</p>
+                        <p class="text-xs font-bold text-slate-500 mt-1">{{ c.phone_number }}</p>
+                        {% if post.return_collector %}
+                        <p class="text-[10px] font-extrabold text-amber-500 mt-1 uppercase tracking-widest">Return active</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
 
-    <!-- RETURN FLOW STATUSES -->
-    {% if post.status == 'return_requested' %}
-    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-orange-600 text-2xl">assignment_return</span>
-            <div>
-                <h3 class="text-base font-bold text-orange-800 dark:text-orange-300">Return Requested</h3>
-                <p class="text-sm text-orange-700 dark:text-orange-400">Your return request has been submitted. A collector will be assigned to pick up the item from the vendor.</p>
+                {% if post.status == 'pickup_scheduled' and post.pickup_otp and not is_transfer %}
+                <!-- Pickup OTP Box -->
+                <div class="flex-shrink-0 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-lg flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[14px] text-emerald-600">vpn_key</span>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-black text-emerald-600/60 uppercase tracking-widest leading-none mb-0.5">Pickup OTP</span>
+                        <span class="text-sm font-black text-emerald-600 tracking-widest leading-none">{{ post.pickup_otp }}</span>
+                    </div>
+                </div>
+                {% elif post.status == 'return_in_transit' and post.return_delivery_otp %}
+                <!-- Return Delivery OTP Box -->
+                <div class="flex-shrink-0 px-3 py-1.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 rounded-lg flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[14px] text-blue-600">settings_backup_restore</span>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-black text-blue-600/60 uppercase tracking-widest leading-none mb-0.5">Delivery OTP</span>
+                        <span class="text-sm font-black text-blue-600 tracking-widest leading-none">{{ post.return_delivery_otp }}</span>
+                    </div>
+                </div>
+                {% endif %}
             </div>
+            {% else %}
+            <div class="flex items-center gap-4 py-2">
+                <span class="material-symbols-outlined text-slate-300 text-4xl">person_search</span>
+                <p class="text-sm font-bold text-slate-400 ">Searching for collector...</p>
+            </div>
+            {% endif %}
         </div>
     </div>
-    {% endif %}
 
-    {% if post.status == 'return_pickup_scheduled' %}
-    <div class="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700 rounded-2xl p-5">
+    <!-- ── CTC BOX ── -->
+    <div
+        class="premium-card no-hover-card p-6 mb-16 bg-emerald-500/5 dark:bg-emerald-500/5 border-emerald-500/20 ring-1 ring-emerald-500/10">
         <div class="flex items-start gap-4">
-            <span class="material-symbols-outlined text-orange-600 text-2xl">local_shipping</span>
-            <div class="flex-1">
-                <h3 class="text-base font-bold text-orange-800 dark:text-orange-300">Collector Assigned for Return</h3>
-                <p class="text-sm text-orange-700 dark:text-orange-400 mt-1">
-                    A collector has been assigned to pick up your item from <strong>{{ post.vendor.get_full_name }}</strong>.
-                </p>
-                <p class="text-xs text-orange-600 dark:text-orange-500 mt-2">
-                    The vendor will share the pickup OTP with the collector. Once picked up, you'll see your delivery OTP here.
-                </p>
+            <div class="size-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                <span class="material-symbols-outlined text-emerald-600 text-xl font-extrabold">verified</span>
             </div>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if post.status == 'return_in_transit' %}
-    <div class="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700 rounded-2xl p-5">
-        <div class="flex items-start justify-between gap-4">
-            <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-orange-600 animate-pulse">local_shipping</span>
-                    <h3 class="text-base font-bold text-orange-800 dark:text-orange-300">Item On Way Back to You!</h3>
-                </div>
-                <p class="text-sm text-orange-700 dark:text-orange-400">
-                    Collector picked up from vendor. Share this OTP when they deliver to you.
-                </p>
-            </div>
-            {% if post.return_delivery_otp %}
-            <div class="text-center flex-shrink-0">
-                <div class="text-4xl font-black tracking-widest text-orange-700 dark:text-orange-300 font-mono bg-white dark:bg-slate-800 border-2 border-orange-300 rounded-xl px-4 py-3 select-all">{{ post.return_delivery_otp }}</div>
-                <p class="text-xs text-orange-400 mt-1">Delivery OTP</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if post.status == 'returned_to_client' %}
-    <div class="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700 rounded-2xl p-5">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-teal-600 text-2xl">home</span>
             <div>
-                <h3 class="text-base font-bold text-teal-800 dark:text-teal-300">Item Returned Successfully</h3>
-                <p class="text-sm text-teal-700 dark:text-teal-400">Your item has been returned to you. Thank you for using E-RECYCLO!</p>
+                <p
+                    class="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1.5">
+                    CURRENT STATUS</p>
+                <p class="text-[15px] font-extrabold text-slate-700 dark:text-slate-100 leading-relaxed">{{ status_msg }}</p>
             </div>
         </div>
     </div>
-    {% endif %}
 
-    <!-- ══ COMPLETED — Full History & Certificate ══ -->
-    {% if post.status == 'completed' %}
-    <div class="bg-green-50 dark:bg-green-900/20 border-2 border-green-400 dark:border-green-600 rounded-2xl p-5">
-        <div class="flex items-center gap-3 mb-4">
-            <span class="material-symbols-outlined text-green-600 text-2xl">verified</span>
-            <h3 class="text-base font-bold text-green-800 dark:text-green-300">Recycling Completed!</h3>
-        </div>
-        
-        <!-- Value Comparison -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            <div class="bg-white dark:bg-slate-800 rounded-xl p-4 text-center border border-green-200">
-                <p class="text-xs text-slate-500 mb-1">AI Estimated</p>
-                <p class="text-2xl font-bold text-slate-600">₹{{ post.ai_estimated_value }}</p>
-            </div>
-            <div class="bg-white dark:bg-slate-800 rounded-xl p-4 text-center border border-green-400">
-                <p class="text-xs text-green-600 mb-1">Final Amount Credited</p>
-                <p class="text-2xl font-bold text-green-600">₹{{ post.vendor_final_value }}</p>
-            </div>
+    <!-- ── ACTIONS ── -->
+    <div class="flex flex-wrap gap-6 mb-20 justify-center items-center mt-10">
+        {% if post.status == 'completed' %}
+        <div class="flex flex-col sm:flex-row flex-wrap gap-4 justify-center w-full max-w-3xl px-4">
+            <!-- Download Button -->
+            <a href="{% url 'client:download_certificate' post.pk %}"
+                class="flex-1 min-w-[300px] bg-primary text-white py-4 px-4 rounded-xl font-black text-[11px] sm:text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-3">
+                <span class="material-symbols-outlined text-[18px]">download</span> 
+                <span class="whitespace-nowrap">Download Report & Certificate</span>
+            </a>
+            
+            <!-- View Button -->
+            <button onclick="toggleModal('reportModal', true)"
+                class="flex-1 min-w-[300px] bg-slate-900 dark:bg-slate-800 text-white py-4 px-4 rounded-xl font-black text-[11px] sm:text-xs uppercase tracking-widest shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-1 flex items-center justify-center gap-3">
+                <span class="material-symbols-outlined text-[18px]">visibility</span> 
+                <span class="whitespace-nowrap">View Report & Certificate</span>
+            </button>
         </div>
 
-        <div class="flex flex-wrap gap-3 mb-4">
-            <span class="bg-green-100 text-green-800 px-3 py-1.5 rounded-xl text-sm font-bold">✅ ₹{{ post.vendor_final_value }} credited</span>
-            <span class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-xl text-sm font-bold">🌿 {{ post.eco_points_awarded }} eco-points</span>
-            <span class="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-xl text-sm font-bold">📅 {{ post.completed_at|date:"M d, Y" }}</span>
+        <!-- ── REPORT MODAL ── -->
+        <div id="reportModal" class="hidden fixed inset-0 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-900/60 transition-opacity" onclick="toggleModal('reportModal', false)"></div>
+            <div class="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden modal-content-zoom border border-slate-200 dark:border-slate-800 flex flex-col">
+                <!-- Modal Header -->
+                <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                    <div class="flex items-center gap-4">
+                        <div class="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary">verified</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white leading-tight">Recycling Verification</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Post ID: #{{ post.pk }}</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleModal('reportModal', false)" class="size-10 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">
+                        <span class="material-symbols-outlined text-slate-500">close</span>
+                    </button>
+                </div>
+
+                <!-- Modal Body (The Report Visual) -->
+                <div class="flex-1 p-4 sm:p-8 bg-slate-100 dark:bg-slate-950 report-frame min-h-[60vh] flex flex-col">
+                    <iframe src="{% url 'client:download_certificate' post.pk %}?inline=true" 
+                            class="w-full flex-1 rounded-[1.5rem] shadow-xl border border-slate-200 dark:border-slate-800" 
+                            title="Recycling Certificate PDF">
+                    </iframe>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-8 py-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end gap-3 flex-wrap">
+                    <button onclick="toggleModal('reportModal', false)" class="flex-1 max-w-[140px] py-4 px-2 rounded-xl font-black text-xs uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Close</button>
+                    <a href="{% url 'client:download_certificate' post.pk %}" class="flex-1 max-w-[240px] py-4 px-2 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 border border-primary/20">
+                        <span class="material-symbols-outlined text-[18px]">download</span>
+                        <span>Download PDF</span>
+                    </a>
+                </div>
+            </div>
         </div>
-        
-        <a href="{% url 'client:download_certificate' post.pk %}"
-           class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold text-sm transition-colors">
-            <span class="material-symbols-outlined">download</span>
-            Download Recycling Certificate (PDF)
+        {% endif %}
+
+        {% if post.status == 'under_review' %}
+        <!-- Request Return Button -->
+        <a href="{% url 'client:request_return' post.pk %}"
+            class="w-[250px] bg-slate-600 text-white py-5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all hover:scale-105 hover:bg-slate-700 text-center flex items-center justify-center">
+            Request Return
         </a>
+
+        <!-- Accept Offer Button -->
+        <a href="{% url 'client:review_offer' post.pk %}?action=accept"
+            class="w-[250px] bg-primary text-white py-5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all hover:scale-105 text-center flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">verified</span> Accept Offer
+        </a>
+
+        <!-- Decline Button -->
+        <a href="{% url 'client:review_offer' post.pk %}?action=reject"
+            class="w-[250px] bg-slate-600 text-white py-5 rounded-xl font-black text-xs uppercase tracking-widest shadow-md transition-all hover:scale-105 hover:bg-slate-700 text-center flex items-center justify-center">
+            Decline / Re-evaluate
+        </a>
+        {% endif %}
+
+        {% if post.vendor_declined_reevaluation %}
+        <!-- Request Return Button -->
+        <a href="{% url 'client:request_return' post.pk %}"
+            class="w-[250px] bg-slate-600 text-white py-5 rounded-xl font-extrabold text-xs uppercase tracking-widest shadow-md transition-all hover:scale-105 hover:bg-slate-700 text-center flex items-center justify-center">
+            Request Return
+        </a>
+
+        <a href="{% url 'client:accept_last_offer' post.pk %}"
+            class="w-[250px] bg-primary text-white py-5 rounded-xl font-extrabold text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all hover:scale-105 flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">assignment_return</span> Accept Last Offer
+        </a>
+
+        <!-- Transfer Button -->
+        {% if can_transfer and nearby_vendors_exist %}
+        <a href="{% url 'client:transfer_to_vendor' post.pk %}"
+            class="w-[250px] bg-slate-600 text-white py-5 rounded-xl font-extrabold text-xs uppercase tracking-widest shadow-md transition-all hover:scale-105 hover:bg-slate-700 flex items-center justify-center gap-2 text-center">
+            Transfer to New Vendor
+        </a>
+        {% endif %}
+        {% endif %}
     </div>
 
-    
-    {% endif %}
+    <div class="custom-spacer" style="min-height: 72px;"></div>
 
-   
-
-    <!-- ══════════════════════════════════════════════════════════════════════════
-         TRANSACTION HISTORY BY VENDOR
-         Shows complete history separated by each vendor who handled this item
-         ══════════════════════════════════════════════════════════════════════════ -->
-    {% if vendor_history %}
-    <div class="space-y-4">
-        <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary">history</span>
-            Complete Transaction History
-        </h3>
-        
-        {% for vh in vendor_history %}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border-2 
-            {% if vh.is_current %}border-primary{% elif vh.final_status == 'transferred' %}border-purple-300{% else %}border-slate-200{% endif %} 
-            overflow-hidden">
-            
-            <!-- Vendor Header -->
-            <div class="px-5 py-3 flex items-center justify-between
-                {% if vh.is_current %}bg-primary/10{% elif vh.final_status == 'transferred' %}bg-purple-50 dark:bg-purple-900/20{% else %}bg-slate-50 dark:bg-slate-900{% endif %}">
-                <div class="flex items-center gap-3">
-                    <div class="size-10 rounded-full flex items-center justify-center
-                        {% if vh.is_current %}bg-primary text-white{% elif vh.final_status == 'transferred' %}bg-purple-500 text-white{% else %}bg-slate-400 text-white{% endif %}">
-                        <span class="text-sm font-bold">V{{ vh.order }}</span>
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900 dark:text-white">{{ vh.vendor.get_full_name }}</p>
-                        <p class="text-xs text-slate-500">{{ vh.vendor.email }}</p>
-                    </div>
+    <!-- ── 4. VENDOR TRANSACTION LOG ── -->
+    <div class="js-collapsible mb-12 overflow-hidden premium-card border-none">
+        <button
+            class="w-full p-6 sm:p-8 flex items-center justify-between focus:outline-none group bg-white dark:bg-slate-800 dark:hover:bg-slate-800/80 transition-all"
+            onclick="this.parentElement.classList.toggle('collapsible-active')">
+            <div class="flex items-center gap-4">
+                <div
+                    class="size-11 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center border border-green-100 dark:border-green-900/30 shadow-sm overflow-hidden">
+                    <span class="material-symbols-outlined text-green-600">history</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    {% if vh.is_current %}
-                    <span class="px-3 py-1 bg-primary text-white text-xs font-bold rounded-full">Current Vendor</span>
-                    {% elif vh.final_status == 'transferred' %}
-                    <span class="px-3 py-1 bg-purple-500 text-white text-xs font-bold rounded-full">Transferred</span>
-                    {% elif vh.final_status == 'completed' %}
-                    <span class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">Completed</span>
-                    {% elif vh.final_status == 'returned' %}
-                    <span class="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full">Returned</span>
-                    {% endif %}
+                <div class="text-left">
+                    <h3 class="text-[14px] font-extrabold text-slate-700 dark:text-white uppercase tracking-[0.06em] [word-spacing:0.3em]">VENDOR EVALUATION HISTORY</h3>
+                    <p class="text-[11px] font-bold text-slate-400 tracking-widest">Full history of Offers & Evaluations</p>
                 </div>
             </div>
-            
-            <!-- Vendor Stats -->
-            <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-700 grid grid-cols-3 gap-4 text-center">
-                <div>
-                    <p class="text-2xl font-bold text-primary">{{ vh.total_offers }}</p>
-                    <p class="text-xs text-slate-500">Total Offers</p>
-                </div>
-                <div>
-                    <p class="text-2xl font-bold text-red-500">{{ vh.rejected_offers }}</p>
-                    <p class="text-xs text-slate-500">Rejected</p>
-                </div>
-                <div>
-                    {% if vh.accepted_offer %}
-                    <p class="text-2xl font-bold text-green-600">₹{{ vh.accepted_offer.vendor_final_value }}</p>
-                    <p class="text-xs text-slate-500">Final Value</p>
+            <span class="material-symbols-outlined text-slate-400 arrow-icon text-3xl">expand_more</span>
+        </button>
+
+        <div class="collapsible-content">
+            <div
+                class="p-6 sm:p-8 pt-4 bg-slate-50 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-700/50">
+                <div class="space-y-1">
+                    {% if vendor_history %}
+                    {% for vh in vendor_history %}
+                    <div class="relative">
+                        <div class="flex flex-col gap-4 py-3 relative">
+                            <div class="absolute left-4 top-0 bottom-0 w-[1px] dashed-line opacity-50"></div>
+
+                            <!-- Vendor Header (Clickable Trigger) -->
+                            <div
+                                class="flex items-center justify-between bg-white dark:bg-slate-800/80 p-4 rounded-xl border border-slate-100 dark:border-slate-800 relative z-10 shadow-sm cursor-pointer hover:border-green-200 transition-all group"
+                                onclick="const vDetails = this.nextElementSibling; vDetails.classList.toggle('hidden'); const vIcon = this.querySelector('.unfold-icon'); vIcon.textContent = vDetails.classList.contains('hidden') ? 'unfold_more' : 'unfold_less';">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="size-16 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm">
+                                        <span class="material-symbols-outlined text-3xl text-green-600">person</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-[14px] font-extrabold text-slate-700 dark:text-white">{{ vh.vendor.get_full_name }}</h4>
+                                        <span
+                                            class="text-[10px] font-extrabold tracking-widest uppercase px-3 py-1 rounded bg-green-50 text-green-600 border border-green-100">Vendor
+                                            {{ vh.order }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span class="status-badge bg-slate-50 dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-700 text-[8px]">{{ vh.final_status|upper }}</span>
+                                    <span class="material-symbols-outlined text-slate-300 group-hover:text-green-500 transition-colors unfold-icon">unfold_more</span>
+                                </div>
+                            </div>
+
+                            <!-- Timeline (Collapsible Content) - Closed by default -->
+                            <div class="hidden transition-all duration-300">
+                                <div class="relative pl-10 space-y-8 pt-8">
+                                    {% for eval in vh.evaluations %}
+                                    <div class="relative">
+                                        <div
+                                            class="absolute -left-[28.5px] top-1.5 size-2.5 rounded-full bg-primary/40 border-2 border-white dark:border-slate-900 shadow-sm">
+                                        </div>
+                                        <div class="space-y-4">
+                                            <div
+                                                class="bg-white dark:bg-slate-800/30 p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-lg w-3/5">
+                                                <div class="flex items-center justify-between mb-3">
+                                                    <p
+                                                        class="text-[9px] font-black text-green-600 uppercase tracking-widest">
+                                                        Evaluation Offer {{ forloop.counter }}</p>
+                                                    <p class="text-[9px] font-bold text-slate-400">{{ eval.evaluated_at|date:"M d, H:i" }}</p>
+                                                </div>
+                                                <div class="flex items-center gap-4 mb-3">
+                                                    <p class="text-[16px] font-extrabold text-slate-700 dark:text-white">₹{{ eval.vendor_final_value|default:"0" }}</p>
+                                                    <span
+                                                        class="text-[9px] font-extrabold px-2 py-0.5 rounded bg-green-50 text-green-600 uppercase border border-green-100">{{ eval.evaluation_type|title }}</span>
+                                                </div>
+                                                <p
+                                                    class="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed ">
+                                                    "{{ eval.vendor_remarks|default:"The unit has been inspected and appraised based on current market conditions." }}"</p>
+                                            </div>
+
+                                            {% if eval.client_choice or eval.rejected_by_client or vh.final_status == 'completed' and forloop.last %}
+                                            <div class="flex flex-col items-end pr-4">
+                                                <div
+                                                    class="p-5 rounded-xl border w-3/5 self-end relative shadow-lg {% if eval.client_choice == 'accepted' or vh.final_status == 'completed' and forloop.last %} bg-green-50/50 dark:bg-green-900/10 border-green-100/50 {% elif eval.client_choice == 'return' or eval.client_choice == 'transfer' %} bg-amber-50/50 dark:bg-amber-900/10 border-amber-100/50 {% else %} bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-100/50 {% endif %}">
+                                                    <div class="flex items-center gap-3 mb-2 justify-end">
+                                                        <span
+                                                            class="status-badge text-[9px] font-extrabold tracking-widest uppercase {% if eval.client_choice == 'accepted' or vh.final_status == 'completed' and forloop.last %} bg-green-100 text-green-600 {% elif eval.client_choice == 'return' or eval.client_choice == 'transfer' %} bg-amber-100 text-amber-600 {% else %} bg-indigo-100 text-indigo-600 {% endif %}">{% if eval.client_choice %}{{ eval.get_client_choice_display }}{% elif vh.final_status == 'completed' and forloop.last %}Accepted Offer{% else %}Re-evaluation Requested{% endif %}</span>
+                                                        <span
+                                                            class="material-symbols-outlined text-xs {% if eval.client_choice == 'accepted' or vh.final_status == 'completed' and forloop.last %} text-green-400 {% elif eval.client_choice == 'return' or eval.client_choice == 'transfer' %} text-amber-400 {% else %} text-indigo-400 {% endif %}">{% if eval.client_choice == 'accepted' or vh.final_status == 'completed' and forloop.last %}check_circle{% elif eval.client_choice == 'return' %}assignment_return{% elif eval.client_choice == 'transfer' %}local_shipping{% else %}chat{% endif %}</span>
+                                                    </div>
+                                                    <div class="space-y-3">
+                                                        {% if eval.client_requested_value %}
+                                                        <div class="flex items-center justify-end gap-3">
+                                                            <span class="text-[9px] font-extrabold border border-indigo-200 bg-indigo-50/50 text-indigo-600 px-2 py-0.5 rounded tracking-tighter uppercase">Requested Price</span>
+                                                            <p class="text-sm font-extrabold text-indigo-900 dark:text-indigo-300">₹{{ eval.client_requested_value }}</p>
+                                                        </div>
+                                                        {% endif %}
+
+                                                        <p class="text-xs font-bold text-right leading-relaxed {% if eval.client_choice == 'accepted' or vh.final_status == 'completed' and forloop.last %} text-green-800 dark:text-green-300 {% elif eval.client_choice == 'return' or eval.client_choice == 'transfer' %} text-amber-800 dark:text-amber-300 {% else %} text-indigo-800 dark:text-indigo-300 {% endif %}">
+                                                            {% if eval.rejection_reason %}
+                                                                <span class="block text-[9px] text-indigo-400 uppercase tracking-widest mb-1">Client Remark</span>
+                                                                {{ eval.rejection_reason }}
+                                                            {% elif eval.client_choice == 'accepted' or vh.final_status == 'completed' and forloop.last %}
+                                                                I accept this offer. Proceed with recycling.
+                                                            {% elif eval.client_choice == 'return' %}
+                                                                I'd like my item back. Please initiate return pickup.
+                                                            {% elif eval.client_choice == 'transfer' %}
+                                                                I want to try another recycler for this item.
+                                                            {% else %}
+                                                                I am requesting a re-evaluation of this price.
+                                                            {% endif %}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if not forloop.last %}
+                        <div class="flex flex-col items-center justify-center py-10 relative">
+                            <div class="absolute left-1/2 top-0 bottom-0 w-[1px] dashed-line opacity-30"></div>
+                            <div
+                                class="z-20 bg-indigo-50 dark:bg-indigo-950 px-6 py-2 rounded-full border border-indigo-200 dark:border-indigo-800 text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-3 shadow-md">
+                                <span class="material-symbols-outlined text-sm">arrow_upward</span> Item
+                                Transferred to New Vendor
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
                     {% else %}
-                    <p class="text-2xl font-bold text-slate-400">—</p>
-                    <p class="text-xs text-slate-500">No Final</p>
+                    <div class="py-16 text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Awaiting assessment
+                            logs...</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Collector Info -->
-            {% if vh.delivery_collector %}
-            <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3 bg-blue-50/50 dark:bg-blue-900/10">
-                <span class="material-symbols-outlined text-blue-500">local_shipping</span>
-                <div>
-                    <p class="text-xs text-slate-500">Delivered by</p>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ vh.delivery_collector.get_full_name }}</p>
+        </div>
+    </div>
+
+    <!-- ── 5. COLLECTOR SHIPMENT LOG ── -->
+    <div class="js-collapsible mb-24 overflow-hidden premium-card border-none">
+        <button
+            class="w-full p-6 sm:p-8 flex items-center justify-between focus:outline-none group bg-white dark:bg-slate-800 dark:hover:bg-slate-800/80 transition-all border-none"
+            onclick="this.parentElement.classList.toggle('collapsible-active')">
+            <div class="flex items-center gap-4">
+                <div
+                    class="size-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border border-amber-100 dark:border-amber-900/30 shadow-sm overflow-hidden">
+                    <span class="material-symbols-outlined text-amber-600">distance</span>
+                </div>
+                <div class="text-left">
+                    <h3 class="text-[14px] font-extrabold text-slate-700 dark:text-white uppercase tracking-[0.06em] [word-spacing:0.3em]">
+                        Collector Shipment History</h3>
+                    <p class="text-[11px] font-bold text-slate-400 tracking-widest uppercase">Collector and Tracking
+                    </p>
                 </div>
             </div>
-            {% endif %}
-            
-            <!-- Evaluation Timeline -->
-            <div class="px-5 py-4">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Offer Timeline</p>
-                <div class="space-y-3">
-                    {% for eval in vh.evaluations %}
-                    <div class="flex items-start gap-3 p-3 rounded-xl 
-                        {% if eval.rejected_by_client %}bg-red-50 dark:bg-red-900/10 border border-red-200{% else %}bg-green-50 dark:bg-green-900/10 border border-green-200{% endif %}">
-                        <div class="flex-shrink-0 size-8 rounded-full flex items-center justify-center
-                            {% if eval.rejected_by_client %}bg-red-500{% else %}bg-green-500{% endif %} text-white text-xs font-bold">
-                            #{{ forloop.counter }}
+            <span class="material-symbols-outlined text-slate-400 arrow-icon text-3xl">expand_more</span>
+        </button>
+
+        <div class="collapsible-content">
+            <div
+                class="p-6 sm:p-8 pt-6 bg-slate-50 dark:bg-slate-900/10 border-t border-slate-100 dark:border-slate-700/50 space-y-6">
+                {% if collector_history %}
+                {% for item in collector_history %}
+                <div class="group">
+                    <div class="flex items-center gap-4 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-amber-200 transition-all cursor-pointer"
+                        onclick="const cDetails = this.nextElementSibling; cDetails.classList.toggle('hidden'); const cIcon = this.querySelector('.unfold-icon'); cIcon.textContent = cDetails.classList.contains('hidden') ? 'unfold_more' : 'unfold_less';">
+                        <div
+                            class="size-11 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border border-amber-100 dark:border-amber-900/30 shadow-sm overflow-hidden shrink-0">
+                            <span class="material-symbols-outlined text-xl text-amber-600">person</span>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-2 mb-1">
-                                <span class="font-bold text-slate-900 dark:text-white">₹{{ eval.vendor_final_value|default:"0" }}</span>
-                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold
-                                    {% if eval.rejected_by_client %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
-                                    {% if eval.rejected_by_client %}Rejected{% else %}{% if vh.final_status == 'completed' %}Accepted{% else %}Pending{% endif %}{% endif %}
-                                </span>
+                            <div class="flex flex-wrap items-center gap-3 mb-1">
+                                <h5 class="text-[14px] font-extrabold text-slate-700 dark:text-white truncate">{{ item.collector.get_full_name }}</h5>
+                                <div class="flex gap-2">
+                                    <span
+                                        class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 tracking-tighter text-slate-500">Collector
+                                        {{ item.order }}</span>
+                                    <span
+                                        class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded {% if item.is_completed %}bg-green-50 text-green-600 border border-green-100{% else %}bg-slate-100 text-slate-500 border border-slate-200{% endif %}">{{ item.type }}</span>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-500">{{ eval.evaluated_at|date:"M d, Y H:i" }}</p>
-                            {% if eval.evaluation_type %}
-                            <p class="text-xs text-slate-600 mt-1"><strong>Type:</strong> {{ eval.evaluation_type|title }}</p>
-                            {% endif %}
-                            {% if eval.vendor_remarks %}
-                            <p class="text-xs text-slate-600 mt-1 line-clamp-2">{{ eval.vendor_remarks }}</p>
-                            {% endif %}
-                            {% if eval.rejection_reason %}
-                            <p class="text-xs text-red-600 mt-1"><strong>Your reason:</strong> {{ eval.rejection_reason }}</p>
-                            {% endif %}
+                            <div class="flex items-center gap-4">
+                                <p class="text-[11px] font-extrabold text-slate-700 leading-none">{{ item.collector.phone_number }}</p>
+                                
+                                <span class="text-[10px] text-slate-400">•</span>
+                                <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-tight">{{ item.date|date:"M d, Y · H:i" }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span
+                                class="text-[10px] font-extrabold uppercase tracking-widest block mb-1 {% if item.is_completed %}text-primary{% else %}text-amber-500{% endif %}">{{ item.status }}</span>
+                            <span class="material-symbols-outlined text-slate-300 text-sm unfold-icon">unfold_more</span>
                         </div>
                     </div>
-                    {% empty %}
-                    <p class="text-sm text-slate-400 italic">No offers made yet</p>
-                    {% endfor %}
+
+                    <div
+                        class="hidden mt-3 ml-4 pl-8 border-l-2 border-slate-200 dark:border-slate-800 space-y-5 py-4 bg-slate-50/50 dark:bg-slate-800/20 rounded-r-xl transition-all duration-300">
+                        <div>
+                            <h6
+                                class="text-[9px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                <span class="size-1.5 rounded-full bg-amber-400 shadow-sm shadow-amber-200"></span>
+                                {{ item.pickup_name|default:"Pickup From" }}
+                            </h6>
+                            <p class="text-xs text-slate-700 dark:text-slate-300 font-bold leading-relaxed px-1 mb-1">{{ item.pickup_address|default:"Location mapping pending..." }}</p>
+                            <div class="px-1 flex items-center gap-2">
+                                <span
+                                    class="bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded text-[8px] text-slate-500 font-extrabold border border-slate-100 dark:border-slate-800">LAT:
+                                    {{ item.pickup_lat|floatformat:4 }}</span>
+                                <span
+                                    class="bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded text-[8px] text-slate-500 font-extrabold border border-slate-100 dark:border-slate-800">LONG:
+                                    {{ item.pickup_long|floatformat:4 }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h6
+                                class="text-[9px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                <span class="size-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-200"></span>
+                                {{ item.delivery_name|default:"Deliver To" }}
+                            </h6>
+                            <p class="text-xs text-slate-700 dark:text-slate-300 font-bold leading-relaxed px-1 mb-1">{{ item.delivery_address|default:"Facility mapping pending..." }}</p>
+                            <div class="px-1 flex items-center gap-2">
+                                <span
+                                    class="bg-emerald-50 dark:bg-slate-900 px-2 py-0.5 rounded text-[8px] text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-100 dark:border-emerald-900/20">LAT:
+                                    {{ item.delivery_lat|floatformat:4 }}</span>
+                                <span
+                                    class="bg-emerald-50 dark:bg-slate-900 px-2 py-0.5 rounded text-[8px] text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-100 dark:border-emerald-900/20">LONG:
+                                    {{ item.delivery_long|floatformat:4 }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- ══ COLLECTOR INFO (when assigned) ══ -->
-    {% if post.collector and post.status in 'pickup_scheduled,in_transit' %}
-    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-        <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-            <span class="material-symbols-outlined text-base">local_shipping</span>Assigned Collector
-        </h3>
-        <div class="flex items-center gap-4">
-            <div class="size-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span class="material-symbols-outlined text-primary">person</span>
-            </div>
-            <div>
-                <p class="font-semibold text-slate-900 dark:text-white">{{ post.collector.get_full_name }}</p>
-                <p class="text-sm text-slate-500">{{ post.collector.phone_number }}</p>
+                {% endfor %}
+                {% else %}
+                <div class="py-12 text-center text-slate-400">
+                    <span class="material-symbols-outlined text-4xl mb-2 opacity-30">departure_board</span>
+                    <p class="text-xs font-black uppercase tracking-widest">No shipment recorded yet</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
-    {% endif %}
-
-    <!-- ══ CURRENT VENDOR INFO ══ -->
-    {% if post.vendor %}
-    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-        <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-            <span class="material-symbols-outlined text-base">storefront</span>Current Vendor
-        </h3>
-        <div class="flex items-center gap-4">
-            <div class="size-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <span class="material-symbols-outlined text-green-600">store</span>
-            </div>
-            <div>
-                <p class="font-semibold text-slate-900 dark:text-white">{{ post.vendor.get_full_name }}</p>
-                <p class="text-sm text-slate-500">{{ post.vendor.email }}</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
 </div>
+
+<script>
+    function toggleModal(id, show) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            if (show) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') toggleModal('reportModal', false);
+    });
+</script>
+
 {% endblock %}

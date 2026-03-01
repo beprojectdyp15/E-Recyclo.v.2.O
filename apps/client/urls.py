@@ -18,6 +18,7 @@ urlpatterns = [
     path('upload/<int:pk>/transfer-vendor/',  views.transfer_to_vendor,   name='transfer_to_vendor'),
     path('upload/<int:pk>/certificate/',      views.download_certificate, name='download_certificate'),
     path('wallet/',                           views.wallet,               name='wallet'),
+    path('wallet/download/',                  views.download_statement,   name='download_statement'),
     path('collection-centers/',              views.collection_centers,   name='collection_centers'),
     path('bulk-pickup/',                      views.bulk_pickup,          name='bulk_pickup'),
 ]
