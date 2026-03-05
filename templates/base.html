@@ -369,7 +369,10 @@
             <div class="relative group">
                 <div class="flex items-center gap-3 pl-3 pr-1.5 py-1 rounded-2xl transition-all cursor-pointer">
                     <div class="hidden md:block text-right">
-                        <p class="text-[13px] font-bold text-slate-600 dark:text-slate-400 leading-none whitespace-nowrap uppercase [word-spacing:0.1em]">{{ user.get_full_name }}</p>
+                        <p class="text-[13px] font-bold text-slate-600 dark:text-slate-400 leading-none whitespace-nowrap uppercase [word-spacing:0.1em] mt-3">{{ user.get_full_name }}</p>
+                        <span class="text-[10px] font-black text-primary uppercase relative -top-[5px] -left-[2px]">
+                            {% if user.is_client %}Client{% elif user.is_vendor %}Vendor{% elif user.is_collector %}Collector{% elif user.is_admin or user.is_superuser %}Admin{% else %}User{% endif %}
+                        </span>
                     </div>
                     <div class="size-11 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-black text-sm border border-primary/20 transition-colors duration-300 overflow-hidden">
                         {% if user.is_vendor and user.vendor_profile.profile_photo and 'default' not in user.vendor_profile.profile_photo.url %}

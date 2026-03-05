@@ -118,24 +118,24 @@
             </div>
 
             <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
-                <div class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s != 'pending' %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                <div class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s != 'pending' or not is_current_vendor %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
                     <span class="material-symbols-outlined text-base">assignment_turned_in</span>
                 </div>
-                <span class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s != 'pending' %}text-primary{% else %}text-slate-400{% endif %}">Accepted</span>
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s != 'pending' or not is_current_vendor %}text-primary{% else %}text-slate-400{% endif %}">Accepted</span>
             </div>
 
             <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
-                <div class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s == 'in_transit' or s == 'collected' or s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                <div class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s == 'in_transit' or s == 'collected' or s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or not is_current_vendor %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
                     <span class="material-symbols-outlined text-base">local_shipping</span>
                 </div>
-                <span class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s == 'in_transit' or s == 'collected' or s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' %}text-primary{% else %}text-slate-400{% endif %}">In Transit</span>
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s == 'in_transit' or s == 'collected' or s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or not is_current_vendor %}text-primary{% else %}text-slate-400{% endif %}">In Transit</span>
             </div>
 
             <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
-                <div class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or post.rejection_count %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
+                <div class="size-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white dark:border-slate-800 {% if s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or post.rejection_count or total_offers > 0 %}bg-primary text-white shadow-[0_5px_15px_-5px_rgba(23,207,23,0.5)]{% else %}bg-slate-200 dark:bg-slate-700 text-slate-400{% endif %}">
                     <span class="material-symbols-outlined text-base">fact_check</span>
                 </div>
-                <span class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or post.rejection_count %}text-primary{% else %}text-slate-400{% endif %}">Evaluation</span>
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-center {% if s == 'under_review' or s == 'completed' or s == 'return_requested' or s == 'return_pickup_scheduled' or s == 'return_in_transit' or s == 'returned_to_client' or post.rejection_count or total_offers > 0 %}text-primary{% else %}text-slate-400{% endif %}">Evaluation</span>
             </div>
 
             <div class="relative z-10 flex flex-col items-center gap-3 w-32 shrink-0">
@@ -294,7 +294,11 @@
             </h4>
             <div class="flex items-center gap-5">
                 <div class="size-14 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden text-blue-600">
-                    <span class="material-symbols-outlined text-3xl">person</span>
+                    {% if post.user.client_profile.profile_photo %}
+                        <img src="{{ post.user.client_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <span class="material-symbols-outlined text-3xl">person</span>
+                    {% endif %}
                 </div>
                 <div class="min-w-0">
                     <p class="text-[16px] font-extrabold text-slate-700 dark:text-white truncate">{{ post.user.get_full_name }}</p>
@@ -321,7 +325,13 @@
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-5 min-w-0">
                     <div class="size-14 flex-shrink-0 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden text-amber-600">
-                        <span class="material-symbols-outlined text-3xl">electric_moped</span>
+                        {% with c=post.return_collector|default:post.collector %}
+                            {% if c.collector_profile.profile_photo %}
+                                <img src="{{ c.collector_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <span class="material-symbols-outlined text-3xl">person</span>
+                            {% endif %}
+                        {% endwith %}
                     </div>
                     <div class="min-w-0">
                         {% with c=post.return_collector|default:post.collector %}
@@ -335,10 +345,24 @@
                     </div>
                 </div>
 
-                {% if post.delivery_otp and post.status == 'in_transit' %}
+                {% if post.delivery_otp and post.status == 'in_transit' and is_current_vendor %}
                 <div class="flex-shrink-0 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-lg flex flex-col items-center">
                     <span class="text-[8px] font-black text-emerald-600/60 uppercase tracking-widest leading-none mb-1">Delivery OTP</span>
                     <span class="text-sm font-black text-emerald-600 tracking-widest leading-none">{{ post.delivery_otp }}</span>
+                </div>
+                {% endif %}
+
+                {% if post.pickup_otp and post.status == 'pickup_scheduled' and transaction_status == 'transferred' %}
+                <div class="flex-shrink-0 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-lg flex flex-col items-center">
+                    <span class="text-[8px] font-black text-emerald-600/60 uppercase tracking-widest leading-none mb-1">Pickup OTP</span>
+                    <span class="text-sm font-black text-emerald-600 tracking-widest leading-none">{{ post.pickup_otp }}</span>
+                </div>
+                {% endif %}
+
+                {% if post.return_pickup_otp and post.status == 'return_pickup_scheduled' and is_current_vendor %}
+                <div class="flex-shrink-0 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-lg flex flex-col items-center">
+                    <span class="text-[8px] font-black text-emerald-600/60 uppercase tracking-widest leading-none mb-1">Return OTP</span>
+                    <span class="text-sm font-black text-emerald-600 tracking-widest leading-none">{{ post.return_pickup_otp }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -366,7 +390,7 @@
 
     <!-- ── EVALUATION ACTIONS (VENDOR ONLY) ── -->
     <div class="flex flex-wrap gap-6 mb-20 justify-center items-center mt-10">
-        {% if is_current_vendor %}
+        {% if is_current_vendor and transaction_status == 'active' %}
             {% if post.status == 'collected' and not post.vendor_declined_reevaluation %}
                 <div class="flex flex-col sm:flex-row gap-6 items-center">
                     {% if total_offers > 0 %}
@@ -417,7 +441,11 @@
                                 {% if vh.can_view_evaluations %}onclick="const vDetails = this.nextElementSibling; vDetails.classList.toggle('hidden');"{% endif %}>
                                 <div class="flex items-center gap-4">
                                     <div class="size-16 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden text-slate-400 {% if vh.is_this_vendor %}text-primary{% endif %}">
-                                        <span class="material-symbols-outlined text-3xl">storefront</span>
+                                        {% if vh.vendor.vendor_profile.profile_photo %}
+                                            <img src="{{ vh.vendor.vendor_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <span class="material-symbols-outlined text-3xl">storefront</span>
+                                        {% endif %}
                                     </div>
                                     <div>
                                         <h4 class="text-[14px] font-extrabold text-slate-700 dark:text-white">{{ vh.vendor.get_full_name }} {% if vh.is_this_vendor %}(YOU){% endif %}</h4>
@@ -582,8 +610,12 @@
                 <div class="group">
                     <div class="flex items-center gap-4 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm cursor-pointer hover:border-amber-200 transition-all"
                         onclick="const cDetails = this.nextElementSibling; cDetails.classList.toggle('hidden');">
-                        <div class="size-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-sm shrink-0">
-                            <span class="material-symbols-outlined text-xl text-slate-400">electric_moped</span>
+                        <div class="size-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-sm shrink-0 overflow-hidden text-slate-400">
+                            {% if item.collector.collector_profile.profile_photo %}
+                                <img src="{{ item.collector.collector_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <span class="material-symbols-outlined text-xl">electric_moped</span>
+                            {% endif %}
                         </div>
                         <div class="flex-1">
                             <div class="flex flex-wrap items-center gap-2 mb-1">

@@ -7,7 +7,7 @@
 {% if is_return %}
     {% if step == 'pickup' %}Enter vendor's access token to initiate return transit{% else %}Enter client's handover token to confirm arrival{% endif %}
 {% else %}
-    {% if step == 'pickup' %}Enter {{ otp_holder|default:"client" }}'s access token to confirm possession{% else %}Enter {{ otp_holder|default:"vendor" }}'s handover token to complete mission{% endif %}
+    {% if step == 'pickup' %}Enter {{ otp_holder|default:"client" }}'s access token to confirm possession{% else %}Enter {{ otp_holder|default:"vendor" }}'s handover token to complete pickup task{% endif %}
 {% endif %}
 {% endblock %}
 
@@ -168,7 +168,7 @@
 
     <div class="flex items-center justify-center">
         <a href="{% url 'collector:my_pickups' %}" class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">
-            <span class="material-symbols-outlined text-[16px]">arrow_back</span> Return to Command Center
+            <span class="material-symbols-outlined text-[16px]">arrow_back</span> Return to Dashboard
         </a>
     </div>
 

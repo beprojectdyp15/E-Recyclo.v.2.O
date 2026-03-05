@@ -797,7 +797,10 @@ def item_detail(request, pk):
         if s in ['assigned', 'accepted']:
             status_msg = "Client requested transfer, looking for nearby collector."
         elif s == 'pickup_scheduled':
-            status_msg = "Pickup is scheduled. Exchange OTP along with item for transfer."
+            if post.collector:
+                status_msg = "Pickup is scheduled. Exchange OTP along with item for transfer."
+            else:
+                status_msg = "New vendor has accepted your transfer and now looking for collector."
         elif s == 'in_transit':
             status_msg = "Collector is in-transit to transfer your item to new vendor."
         elif s in ['collected', 'under_review', 'completed', 'returned_to_client']:
@@ -814,11 +817,10 @@ def item_detail(request, pk):
             status_msg = "Assignment confirmed. A logistics partner is being matched for pickup." if not is_transfer_proc else "Assignment confirmed. Arranging a collector to pick up the item from the previous vendor."
         elif s == 'pickup_scheduled':
             if post.collector:
-                col_name = post.collector.get_full_name()
                 if is_transfer_proc:
-                    status_msg = f"Transfer scheduled. Collector {col_name} is en-route to pick up the item from the previous vendor's facility."
+                    status_msg = "Transfer scheduled. The assigned collector is en-route to pick up the item from the previous vendor's facility."
                 else:
-                    status_msg = f"Pickup scheduled. Collector {col_name} is en-route to the client address."
+                    status_msg = "Pickup scheduled. The assigned collector is en-route to the client address."
             else:
                 status_msg = "Recycling request accepted. Searching for a nearby collector to initiate pickup."
         elif s == 'in_transit': 

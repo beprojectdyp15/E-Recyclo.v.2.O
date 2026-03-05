@@ -78,6 +78,9 @@ class CollectorPickup(models.Model):
         default='pending'
     )
     
+    # Duration tracking
+    trip_start_at = models.DateTimeField(null=True, blank=True, help_text="When collector clicked 'Start Trip'")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -88,6 +91,30 @@ class CollectorPickup(models.Model):
     
     def __str__(self):
         return f"{self.collector.email} - {self.photo_post.title} ({self.status})"
+    
+    def get_total_duration(self):
+        """Calculate total trip duration as a human-readable string"""
+        if self.trip_start_at and self.completed_at:
+            diff = self.completed_at - self.trip_start_at
+            total_mins = round(diff.total_seconds() / 60)
+            if total_mins < 1:
+                return "< 1 min"
+            elif total_mins < 60:
+                return f"{total_mins} min"
+            else:
+                hours = total_mins // 60
+                mins = total_mins % 60
+                if mins == 0:
+                    return f"{hours}h"
+                return f"{hours}h {mins}m"
+        return "—"
+
+    def get_duration_minutes(self):
+        """Get raw duration in minutes for calculations"""
+        if self.trip_start_at and self.completed_at:
+            diff = self.completed_at - self.trip_start_at
+            return round(diff.total_seconds() / 60)
+        return 0
     
     def calculate_payment(self, distance_km=0):
         """Calculate total payment based on distance"""

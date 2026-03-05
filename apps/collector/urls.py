@@ -16,6 +16,7 @@ urlpatterns = [
     path('verify-pickup-otp/<int:pk>/',       views.verify_pickup_otp,    name='verify_pickup_otp'),
     path('verify-delivery-otp/<int:pk>/',     views.verify_delivery_otp,  name='verify_delivery_otp'),
     path('pickup/<int:pk>/',                  views.pickup_detail,        name='pickup_detail'),
+    path('start-trip/<int:pk>/',              views.start_trip,           name='start_trip'),
     path('earnings/',                         views.earnings,             name='earnings'),
 ]
 

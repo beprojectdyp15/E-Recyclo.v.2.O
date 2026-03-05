@@ -3,6 +3,7 @@ Collector views for E-RECYCLO
 OTP-based pickup + delivery verification flow with 5km radius and vehicle matching.
 """
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
@@ -154,7 +155,9 @@ def available_pickups(request):
         # Check if this is a vendor-to-vendor transfer
         is_vendor_transfer = item.vendor_remarks and item.vendor_remarks.startswith('TRANSFER_FROM_VENDOR:')
         previous_vendor = None
-        
+        from_location = item.address
+        dist = 0.0
+
         if is_vendor_transfer:
             # Extract previous vendor ID and get their location
             try:
@@ -165,28 +168,71 @@ def available_pickups(request):
                 prev_vp = previous_vendor.vendor_profile
                 dist = calculate_distance(prev_vp.latitude, prev_vp.longitude, collector_lat, collector_lon)
                 from_location = f"{previous_vendor.get_full_name()}'s facility"
+                from_lat, from_lon = prev_vp.latitude, prev_vp.longitude
             except:
                 # Fallback to client location
                 dist = calculate_distance(item.latitude, item.longitude, collector_lat, collector_lon)
                 from_location = item.address
+                from_lat, from_lon = item.latitude, item.longitude
                 is_vendor_transfer = False
         else:
             # Regular pickup from client
             dist = calculate_distance(item.latitude, item.longitude, collector_lat, collector_lon)
             from_location = item.address
+            from_lat, from_lon = item.latitude, item.longitude
         
+        # Only process if within 5km radius
         if dist <= 5:
+            # Destination coordinates (Vendor)
+            to_lat, to_lon = None, None
+            if item.vendor:
+                to_lat, to_lon = item.vendor.vendor_profile.latitude, item.vendor.vendor_profile.longitude
+
+            # Capacity check
             item_size = item.item_size or 'medium'
             can_handle = item_size in VEHICLE_CAPACITY.get(vehicle_type, ['small', 'medium'])
             
+            # Distance for earnings (Source to Destination)
+            if is_vendor_transfer:
+                try:
+                    distance_km = calculate_distance(from_lat, from_lon, to_lat, to_lon)
+                except:
+                    distance_km = 5.0
+            else:
+                try:
+                    distance_km = calculate_distance(from_lat, from_lon, to_lat, to_lon)
+                except:
+                    distance_km = 5.0
+
+            # Standardized Earnings Calculation
+            base_fee = Decimal('39.00')
+            per_km_rate = Decimal('8.00')
+            distance_fee = (Decimal(str(distance_km)) * per_km_rate).quantize(Decimal('0.01'))
+            
+            handling_fee = {
+                'smartphone': Decimal('20.00'),
+                'laptop': Decimal('30.00'),
+                'monitor': Decimal('50.00'),
+                'appliance': Decimal('60.00'),
+                'battery': Decimal('15.00'),
+                'other': Decimal('25.00'),
+            }.get(item.ai_category, Decimal('25.00'))
+            
+            total_payout = base_fee + distance_fee + handling_fee
+
             nearby_pickups.append({
                 'item': item,
                 'distance': round(dist, 2),
                 'can_handle': can_handle,
                 'pickup_type': 'vendor_transfer' if is_vendor_transfer else 'regular',
                 'from_location': from_location,
+                'from_lat': from_lat,
+                'from_lon': from_lon,
                 'to_location': f"{item.vendor.get_full_name()}'s facility" if item.vendor else 'Vendor',
+                'to_lat': to_lat,
+                'to_lon': to_lon,
                 'previous_vendor': previous_vendor,
+                'total_payout': round(total_payout, 2),
                 'reason': None if can_handle else f"Requires larger vehicle (item is {item.get_item_size_display() if item.item_size else 'medium-sized'})"
             })
     
@@ -205,13 +251,40 @@ def available_pickups(request):
             item_size = item.item_size or 'medium'
             can_handle = item_size in VEHICLE_CAPACITY.get(vehicle_type, ['small', 'medium'])
             
+            # Calculate distance for earnings (Vendor → Client)
+            try:
+                distance_km = calculate_distance(vendor_lat, vendor_lon, item.latitude, item.longitude)
+            except:
+                distance_km = 5.0
+
+            # Standardized Earnings Calculation (Matches accept_pickup logic)
+            base_fee = Decimal('39.00')
+            per_km_rate = Decimal('8.00')
+            distance_fee = (Decimal(str(distance_km)) * per_km_rate).quantize(Decimal('0.01'))
+            
+            handling_fee = {
+                'smartphone': Decimal('20.00'),
+                'laptop': Decimal('30.00'),
+                'monitor': Decimal('50.00'),
+                'appliance': Decimal('60.00'),
+                'battery': Decimal('15.00'),
+                'other': Decimal('25.00'),
+            }.get(item.ai_category, Decimal('25.00'))
+            
+            total_payout = base_fee + distance_fee + handling_fee
+
             nearby_pickups.append({
                 'item': item,
                 'distance': round(dist, 2),
                 'can_handle': can_handle,
                 'pickup_type': 'return',  # Vendor → Client
                 'from_location': f"{item.vendor.get_full_name()}'s facility" if item.vendor else 'Vendor',
+                'from_lat': vendor_lat,
+                'from_lon': vendor_lon,
                 'to_location': item.address,
+                'to_lat': item.latitude,
+                'to_lon': item.longitude,
+                'total_payout': round(total_payout, 2),
                 'reason': None if can_handle else f"Requires larger vehicle (item is {item.get_item_size_display() if item.item_size else 'medium-sized'})"
             })
     
@@ -467,6 +540,8 @@ def verify_pickup_otp(request, pk):
         messages.error(request, 'This pickup is no longer in the correct state.')
         return redirect('collector:my_pickups')
 
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     error = None
     if request.method == 'POST':
         entered = request.POST.get('otp', '').strip()
@@ -493,11 +568,18 @@ def verify_pickup_otp(request, pk):
                 pickup.status = 'in_progress'
                 pickup.save()
                 
+                if is_ajax:
+                    msg = 'Pickup from vendor verified! Item is now in transit.' if is_return else 'Pickup verified! Item is now in transit.'
+                    return JsonResponse({'success': True, 'message': msg})
+                
                 if is_return:
                     messages.success(request, '✅ Pickup from vendor verified! Item is now in transit. Head to the client.')
                 else:
                     messages.success(request, '✅ Pickup verified! Item is now in transit. Head to the vendor.')
                 return redirect('collector:my_pickups')
+
+        if is_ajax and error:
+            return JsonResponse({'success': False, 'error': error})
 
     return render(request, 'collector/verify_otp.html', {
         'pickup': pickup,
@@ -531,6 +613,8 @@ def verify_delivery_otp(request, pk):
     if not is_return and not is_regular:
         messages.error(request, 'Complete the Pickup OTP step first.')
         return redirect('collector:my_pickups')
+
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     error = None
     if request.method == 'POST':
@@ -576,11 +660,18 @@ def verify_delivery_otp(request, pk):
                 except Exception:
                     pass
 
+                if is_ajax:
+                    msg = f'Item returned to client! ₹{pickup.total_payment} credited.' if is_return else f'Delivery confirmed! ₹{pickup.total_payment} credited.'
+                    return JsonResponse({'success': True, 'message': msg})
+
                 if is_return:
                     messages.success(request, f'✅ Item returned to client! ₹{pickup.total_payment} credited to your wallet.')
                 else:
                     messages.success(request, f'✅ Delivery confirmed! ₹{pickup.total_payment} credited to your wallet.')
                 return redirect('collector:my_pickups')
+
+        if is_ajax and error:
+            return JsonResponse({'success': False, 'error': error})
 
     return render(request, 'collector/verify_otp.html', {
         'pickup': pickup,
@@ -619,7 +710,27 @@ def pickup_detail(request, pk):
         return redirect('home')
     
     pickup = get_object_or_404(CollectorPickup, pk=pk, collector=request.user)
-    return render(request, 'collector/pickup_detail.html', {'pickup': pickup})
+    is_return_pickup = pickup.photo_post.status in ['return_pickup_scheduled', 'return_in_transit', 'return_requested']
+    handling_fee = pickup.total_payment - pickup.base_fee - pickup.distance_fee
+    
+    return render(request, 'collector/pickup_detail.html', {
+        'pickup': pickup,
+        'item': pickup.photo_post,
+        'is_return_pickup': is_return_pickup,
+        'handling_fee': handling_fee
+    })
+
+
+@login_required
+def start_trip(request, pk):
+    if request.method == 'POST':
+        pickup = get_object_or_404(CollectorPickup, pk=pk, collector=request.user)
+        if pickup.status in ['assigned', 'accepted'] and not pickup.trip_start_at:
+            pickup.trip_start_at = timezone.now()
+            pickup.save()
+            messages.success(request, '🚀 Trip Started! Head to the pickup location.')
+        return redirect('collector:pickup_detail', pk=pk)
+    return redirect('collector:my_pickups')
 
 
 # ── EARNINGS ──────────────────────────────────────────────────────────────────

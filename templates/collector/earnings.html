@@ -83,7 +83,7 @@
         <div class="premium-card p-8">
             <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Service Velocity</p>
             <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ earnings.total_pickups }}</h3>
-            <p class="text-[11px] font-bold text-slate-400 mt-1">Missions Accomplished</p>
+            <p class="text-[11px] font-bold text-slate-400 mt-1">Pickups Completed</p>
             <div class="mt-6 flex items-center justify-between">
                 <span class="stat-badge bg-blue-50 dark:bg-blue-900/20 text-blue-600">Active Map</span>
                 <span class="material-symbols-outlined text-blue-500 font-black text-lg">electric_moped</span>
@@ -141,7 +141,7 @@
                 <div class="flex items-center justify-between mb-8">
                     <div>
                         <h3 class="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Recent Fulfillment Summary</h3>
-                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Transaction logs of completed missions</p>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Transaction logs of completed pickups</p>
                     </div>
                     <a href="{% url 'collector:my_pickups' %}?status=completed" class="text-[10px] font-black text-primary uppercase tracking-[0.2em] hover:underline transition-all">View All History</a>
                 </div>
@@ -179,7 +179,7 @@
                     <div class="size-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-6">
                         <span class="material-symbols-outlined text-slate-300">finance_chip</span>
                     </div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Launch mission to generate revenue</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Start pickups to generate revenue</p>
                 </div>
                 {% endif %}
             </div>

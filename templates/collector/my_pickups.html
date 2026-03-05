@@ -3,7 +3,7 @@
 
 {% block title %}My Assignments - eRecyclo{% endblock %}
 {% block page_title %}Active Queue{% endblock %}
-{% block page_subtitle %}Track and execute your assigned e-waste pick-up missions{% endblock %}
+{% block page_subtitle %}Track and execute your assigned e-waste pick-up tasks{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -101,7 +101,7 @@
                         <!-- Order Badge -->
                         <div class="absolute top-4 left-4">
                             <span class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[8px] font-black px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg uppercase tracking-widest">
-                                Mission #{{ pickup.pk }}
+                                Pickup #{{ pickup.pk }}
                             </span>
                         </div>
                     </div>
@@ -163,22 +163,10 @@
                         </div>
 
                         <div class="flex items-center gap-2">
-                             {% if pickup.status == 'accepted' or pickup.status == 'assigned' %}
-                             <a href="{% url 'collector:verify_pickup_otp' pickup.pk %}" 
-                                class="shrink-0 py-3 px-6 rounded-xl bg-primary text-white text-[9px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[16px]">pin_invoke</span> Pickup OTP
-                             </a>
-                             {% elif pickup.status == 'in_progress' %}
-                             <a href="{% url 'collector:verify_delivery_otp' pickup.pk %}" 
-                                class="shrink-0 py-3 px-6 rounded-xl bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[16px]">pin_invoke</span> Delivery OTP
-                             </a>
-                             {% else %}
                              <a href="{% url 'collector:pickup_detail' pickup.pk %}" 
-                                class="shrink-0 py-3 px-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg">
-                                Details
+                                class="shrink-0 py-3 px-8 rounded-xl {% if pickup.status in 'assigned accepted in_progress' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg{% endif %} text-[9px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all">
+                                Details & Tracking
                              </a>
-                             {% endif %}
                         </div>
                     </div>
                 </div>
@@ -238,10 +226,10 @@
              <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-700">order_approve</span>
         </div>
         <h4 class="text-xl font-black text-slate-800 dark:text-white mb-3">Queue is clear</h4>
-        <p class="text-[13px] text-slate-400 font-bold max-w-sm leading-relaxed mb-10">You have no active missions in your queue. Explore the map to find nearby pickup opportunities.</p>
+        <p class="text-[13px] text-slate-400 font-bold max-w-sm leading-relaxed mb-10">You have no active pickups in your queue. Explore the map to find nearby pickup opportunities.</p>
         <a href="{% url 'collector:available_pickups' %}"
            class="bg-primary text-white px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95">
-            Mission Map
+            Pickup Map
         </a>
     </div>
     {% endif %}

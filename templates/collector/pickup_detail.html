@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block title %}Pickup Details - eRecyclo{% endblock %}
-{% block page_title %}Mission Briefing{% endblock %}
-{% block page_subtitle %}In-depth overview of your current logistics assignment{% endblock %}
+{% block page_title %}Trip Details{% endblock %}
+{% block page_subtitle %}Execute and track your current trip in real-time{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -27,160 +27,699 @@
         border-radius: 1.5rem;
     }
 
+    .premium-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: translateY(-2px);
+    }
+
     .dark .premium-card {
         background: #1e293b;
         border-color: rgba(255, 255, 255, 0.05);
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
     }
-
-    .status-badge {
-        font-size: 8px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        padding: 6px 14px;
+    
+    .glass-pill {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
         border-radius: 9999px;
-        display: inline-flex;
+    }
+    
+    .dark .glass-pill {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* OTP Modal Styles */
+    .otp-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: none;
         align-items: center;
-        gap: 6px;
-        backdrop-filter: blur(4px);
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        padding: 1rem;
+    }
+    .otp-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+    .otp-modal {
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.06);
+        border-radius: 2rem;
+        box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25);
+        max-width: 440px;
+        width: 100%;
+        transform: scale(0.92) translateY(20px);
+        opacity: 0;
+        transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        overflow: hidden;
+    }
+    .otp-overlay.active .otp-modal {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+    .dark .otp-modal {
+        background: #1e293b;
+        border-color: rgba(255,255,255,0.08);
+    }
+    .otp-input-box {
+        width: 3rem;
+        height: 4rem;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 900;
+        border-radius: 1rem;
+        border: 2px solid rgba(0,0,0,0.06);
+        background: #f8fafc;
+        color: #0f172a;
+        outline: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .otp-input-box:focus {
+        border-color: var(--primary, #10b981);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        transform: translateY(-3px);
+        background: #fff;
+    }
+    .dark .otp-input-box {
+        background: #0f172a;
+        border-color: rgba(255,255,255,0.1);
+        color: #fff;
+    }
+    .dark .otp-input-box:focus {
+        background: #1e293b;
+    }
+    .otp-error-msg {
+        display: none;
+        animation: shake 0.4s ease;
+    }
+    .otp-error-msg.visible { display: flex; }
+    .otp-success-msg {
+        display: none;
+        animation: fadeInUp 0.4s ease;
+    }
+    .otp-success-msg.visible { display: flex; }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-6px); }
+        40%, 80% { transform: translateX(6px); }
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .submit-btn-loading {
+        pointer-events: none;
+        opacity: 0.7;
     }
 </style>
 {% endblock %}
 
 {% block page_content %}
-<div class="max-w-5xl mx-auto space-y-10 pb-24 px-4 sm:px-6">
+<div class="max-w-7xl mx-auto space-y-10 pb-24 px-4 sm:px-6">
 
-    <!-- ── MAIN ASSIGNMENT CARD ── -->
-    <div class="premium-card overflow-hidden">
-        <div class="md:flex">
-            <!-- Asset Visualization -->
-            <div class="md:w-1/2 p-4">
-                <div class="aspect-square rounded-[1.2rem] overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-inner group">
-                    <img src="{{ pickup.photo_post.photo.url }}" alt="{{ pickup.photo_post.title }}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+    <!-- ── TRIP OVERVIEW HEADER ── -->
+    <div class="relative rounded-[2rem] p-8 md:p-10 overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl mb-10 group">
+        <!-- Background Accents -->
+        <div class="absolute -right-20 -top-20 w-72 h-72 bg-primary/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary/30 transition-colors duration-700"></div>
+        <div class="absolute -left-10 -bottom-10 w-56 h-56 bg-blue-500/20 rounded-full blur-[60px] pointer-events-none group-hover:bg-blue-500/30 transition-colors duration-700"></div>
+        
+        <!-- Texture overlay -->
+        <div class="absolute inset-0 bg-[url('{% static 'images/noise.png' %}')] opacity-5 mix-blend-overlay"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="space-y-4">
+                <div class="inline-flex items-center gap-3 bg-white/10 border border-white/20 backdrop-blur-md px-4 py-2 rounded-full shadow-inner">
+                    <span class="material-symbols-outlined text-primary text-[16px]">routing</span>
+                    <p class="text-[10px] font-black text-white uppercase tracking-[0.2em]">{{ pickup.get_status_display }} Mission</p>
                 </div>
-                
-                <!-- Timeline Info -->
-                <div class="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-4">
-                    <div class="flex items-center justify-between">
-                         <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Commissioned</p>
-                         <p class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ pickup.created_at|date:"M d, Y · H:i" }}</p>
+                <div>
+                     <h2 class="text-3xl font-black text-white tracking-tight mb-2">Live Trip Dashboard</h2>
+                     <div class="flex flex-wrap items-center gap-4">
+                         <div class="flex items-center gap-2">
+                             <span class="material-symbols-outlined text-slate-400 text-[14px]">timer</span>
+                             <span class="text-[11px] font-bold text-slate-300 uppercase tracking-widest">
+                                 {% if pickup.status == 'completed' %}
+                                 Completed in {{ pickup.get_total_duration }}
+                                 {% elif pickup.trip_start_at %}
+                                 Mission Active
+                                 {% else %}
+                                 Awaiting Start
+                                 {% endif %}
+                             </span>
+                         </div>
+                         <div class="flex items-center gap-2 border-l border-slate-700 pl-4">
+                             <span class="material-symbols-outlined text-slate-400 text-[14px]">receipt_long</span>
+                             <span class="text-[11px] font-bold text-slate-300 uppercase tracking-widest">TRIP ID #{{ pickup.pk }}</span>
+                         </div>
                     </div>
-                    {% if pickup.completed_at %}
-                    <div class="flex items-center justify-between">
-                         <p class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Fulfilled</p>
-                         <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{ pickup.completed_at|date:"M d, Y · H:i" }}</p>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
+            
+            <div class="size-20 md:size-24 rounded-[1.5rem] bg-slate-800/80 backdrop-blur-md flex items-center justify-center border border-slate-700/50 shrink-0 shadow-lg group-hover:scale-105 transition-transform">
+                 <span class="material-symbols-outlined text-4xl md:text-5xl {% if pickup.status == 'completed' %}text-emerald-400{% elif pickup.status == 'in_progress' %}text-amber-400{% else %}text-primary{% endif %}">
+                     {% if pickup.status == 'completed' %}task_alt{% elif pickup.status == 'in_progress' %}local_shipping{% else %}navigation{% endif %}
+                 </span>
+            </div>
+        </div>
+    </div>
 
-            <!-- Content Details -->
-            <div class="md:w-1/2 p-8 flex flex-col">
-                <div class="flex items-start justify-between mb-8">
-                    <div>
-                        <h2 class="text-2xl font-black text-slate-800 dark:text-white leading-tight mb-2">{{ pickup.photo_post.title }}</h2>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mission #{{ pickup.pk }} · {{ pickup.photo_post.get_ai_category_display }}</p>
-                    </div>
-                    <span class="status-badge {% if pickup.status == 'completed' %}bg-emerald-50 text-emerald-600 border border-emerald-100{% elif pickup.status == 'in_progress' %}bg-orange-50 text-orange-600 border border-orange-100{% else %}bg-amber-50 text-amber-600 border border-amber-100{% endif %}">
-                        {{ pickup.get_status_display }}
-                    </span>
-                </div>
-
-                <!-- Logistics Matrix -->
-                <div class="space-y-8 flex-grow">
-                    <!-- Client Info -->
-                    <div>
-                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Origin / Client</h4>
-                        <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
-                            <div class="size-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100 dark:border-slate-700">
-                                <span class="material-symbols-outlined">person</span>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-sm font-black text-slate-700 dark:text-white">{{ pickup.photo_post.user.get_full_name }}</p>
-                                <p class="text-[11px] font-bold text-slate-500">{{ pickup.photo_post.user.phone_number }}</p>
-                            </div>
-                            <a href="tel:{{ pickup.photo_post.user.phone_number }}" class="ml-auto size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all">
-                                <span class="material-symbols-outlined text-[18px]">call</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Pickup Location -->
-                    <div>
-                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Pickup Point</h4>
-                        <div class="p-4 rounded-2xl bg-emerald-50/30 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 relative">
-                            <p class="text-[13px] font-bold text-slate-700 dark:text-slate-200 leading-relaxed pr-12">{{ pickup.photo_post.address }}</p>
-                            <a href="https://www.google.com/maps?q={{ pickup.photo_post.latitude }},{{ pickup.photo_post.longitude }}" target="_blank" 
-                               class="absolute top-4 right-4 size-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95">
-                                <span class="material-symbols-outlined text-[18px]">directions</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Financial Briefing -->
-                    <div class="pt-8 border-t border-slate-100 dark:border-slate-800">
-                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Financial Briefing</h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Base + Distance</p>
-                                <p class="text-sm font-black text-slate-700 dark:text-white">₹{{ pickup.base_fee|add:pickup.distance_fee }}</p>
-                            </div>
-                            <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40">
-                                <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Total Payout</p>
-                                <p class="text-lg font-black text-emerald-600">₹{{ pickup.total_payment }}</p>
-                            </div>
-                        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        
+        <!-- Left Column: Active Phase & Info -->
+        <div class="lg:col-span-2 space-y-10">
+            
+            <!-- STAGE 1 & STAGE 2 COMBINED PROGRESS -->
+            <div class="premium-card {% if pickup.status == 'completed' %}p-6{% else %}p-6 sm:p-10{% endif %}">
+                {% if pickup.status == 'completed' %}
+                <!-- COMPLETED: Compact summary -->
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-3">
+                        <span class="material-symbols-outlined text-emerald-500">task_alt</span> Trip Complete
+                    </h3>
+                    <div class="glass-pill bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 border-emerald-100 dark:border-emerald-800/50 flex items-center gap-2 shadow-sm">
+                        <span class="material-symbols-outlined text-[14px] text-emerald-600">schedule</span>
+                        <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{{ pickup.get_total_duration }}</span>
                     </div>
                 </div>
 
-                <!-- Global Actions -->
-                <div class="mt-10 flex gap-4">
-                    <a href="{% url 'collector:my_pickups' %}" 
-                       class="flex-1 py-4 px-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-center">
-                        Back to Queue
-                    </a>
-                    {% if pickup.status != 'completed' %}
-                        {% if pickup.status == 'in_progress' %}
-                        <a href="{% url 'collector:verify_delivery_otp' pickup.pk %}" 
-                           class="flex-[2] py-4 px-2 rounded-xl bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-center">
-                            Verify Delivery
-                        </a>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <!-- Pickup Stop (compact) -->
+                    <div class="flex-1 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                        <div class="size-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[16px] text-primary">{% if is_return_pickup %}business{% else %}person{% endif %}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] font-black text-primary uppercase tracking-widest">Picked Up</p>
+                            <p class="text-[12px] font-black text-slate-700 dark:text-slate-200 truncate">{% if is_return_pickup %}{{ item.vendor.vendor_profile.company_name }}{% else %}{{ item.user.get_full_name }}{% endif %}</p>
+                        </div>
+                        <span class="material-symbols-outlined text-emerald-500 text-[18px] ml-auto shrink-0">check_circle</span>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="hidden sm:flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-300 dark:text-slate-600">arrow_forward</span>
+                    </div>
+
+                    <!-- Delivery Stop (compact) -->
+                    <div class="flex-1 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                        <div class="size-9 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[16px] text-emerald-500">{% if is_return_pickup %}person{% else %}business{% endif %}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Delivered</p>
+                            <p class="text-[12px] font-black text-slate-700 dark:text-slate-200 truncate">{% if is_return_pickup %}{{ item.user.get_full_name }}{% else %}{{ item.vendor.vendor_profile.company_name }}{% endif %}</p>
+                        </div>
+                        <span class="material-symbols-outlined text-emerald-500 text-[18px] ml-auto shrink-0">done_all</span>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- ACTIVE / PENDING: Full timeline -->
+                <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest mb-10 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary">route</span> Service Trajectory
+                </h3>
+
+                <div class="relative space-y-12 before:absolute before:inset-0 before:ml-[1.15rem] before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-primary before:via-amber-500 before:to-emerald-500">
+                    
+                    <!-- STOP 1: PICKUP -->
+                    <div class="relative flex flex-col sm:flex-row items-start gap-6">
+                        <div class="size-10 rounded-full bg-white dark:bg-slate-900 border-[3px] border-primary flex items-center justify-center shadow-sm shrink-0 z-10 transition-transform hover:scale-110 relative">
+                            <span class="material-symbols-outlined text-[18px] text-primary">{% if is_return_pickup %}business{% else %}person{% endif %}</span>
+                        </div>
+                        <div class="flex-1 bg-slate-50 dark:bg-slate-900/40 p-6 sm:p-8 rounded-2xl border {% if pickup.status != 'completed' and pickup.status != 'in_progress' %}border-primary ring-1 ring-primary/20 shadow-lg{% else %}border-slate-100 dark:border-slate-800 opacity-60 hover:opacity-100{% endif %} transition-all w-full">
+                            
+                            <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <span class="text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-1 block">Stop 1: Pickup Location</span>
+                                    <h4 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">
+                                        {% if is_return_pickup %}
+                                            {{ item.vendor.vendor_profile.company_name }}
+                                        {% else %}
+                                            {{ item.user.get_full_name }}
+                                        {% endif %}
+                                    </h4>
+                                    <p class="text-[11px] font-bold text-slate-500 mt-1">
+                                        {% if is_return_pickup %}
+                                            Rep: {{ item.vendor.get_full_name }} | {{ item.vendor.phone_number }}
+                                        {% else %}
+                                            Client | {{ item.user.phone_number }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% if pickup.status == 'in_progress' or pickup.status == 'completed' %}
+                                <div class="glass-pill bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 border-emerald-100 dark:border-emerald-800/50 flex items-center gap-1.5 shadow-sm">
+                                    <span class="material-symbols-outlined text-[14px] text-emerald-600">check_circle</span>
+                                    <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Picked Up</span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="flex items-start gap-3 mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-sm">
+                                <div class="size-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0"><span class="material-symbols-outlined text-[16px]">location_on</span></div>
+                                <p class="text-[13px] font-bold text-slate-600 dark:text-slate-300 leading-relaxed mt-1">
+                                    {% if is_return_pickup %}{{ item.vendor.vendor_profile.business_address }}{% else %}{{ item.address }}{% endif %}
+                                </p>
+                            </div>
+
+                            {% if pickup.status != 'in_progress' and pickup.status != 'completed' %}
+                            <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <a href="https://www.google.com/maps?q={% if is_return_pickup %}{{ item.vendor.vendor_profile.latitude }},{{ item.vendor.vendor_profile.longitude }}{% else %}{{ item.latitude }},{{ item.longitude }}{% endif %}" target="_blank" 
+                                   class="py-4 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all flex-1 text-center shadow-md">
+                                    <span class="material-symbols-outlined text-[18px]">navigation</span> Get Directions
+                                </a>
+                                
+                                {% if pickup.trip_start_at %}
+                                <button type="button" onclick="openOtpModal('pickup')"
+                                   class="py-4 px-6 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/30 flex-1 text-center cursor-pointer">
+                                    <span class="material-symbols-outlined text-[18px]">pin_invoke</span> Enter OTP & Take Item
+                                </button>
+                                {% else %}
+                                <form method="POST" action="{% url 'collector:start_trip' pickup.pk %}" class="flex-1 w-full">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full py-4 px-6 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/30 text-center">
+                                        <span class="material-symbols-outlined text-[18px]">door_open</span> Reached Location?
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- STOP 2: DROPOFF -->
+                    <div class="relative flex flex-col sm:flex-row items-start gap-6">
+                        <div class="size-10 rounded-full bg-white dark:bg-slate-900 border-[3px] {% if pickup.status == 'in_progress' %}border-amber-500{% elif pickup.status == 'completed' %}border-emerald-500{% else %}border-slate-200 dark:border-slate-700{% endif %} flex items-center justify-center shadow-sm shrink-0 z-10 transition-transform hover:scale-110">
+                            <span class="material-symbols-outlined text-[18px] {% if pickup.status == 'in_progress' %}text-amber-500{% elif pickup.status == 'completed' %}text-emerald-500{% else %}text-slate-300 dark:text-slate-600{% endif %}">{% if is_return_pickup %}person{% else %}business{% endif %}</span>
+                        </div>
+                        <div class="flex-1 bg-slate-50 dark:bg-slate-900/40 p-6 sm:p-8 rounded-2xl border {% if pickup.status == 'in_progress' %}border-amber-500 ring-1 ring-amber-500/20 shadow-lg{% else %}border-slate-100 dark:border-slate-800 opacity-60 hover:opacity-100{% endif %} transition-all w-full">
+                            
+                            <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <span class="text-[9px] font-black {% if pickup.status == 'in_progress' %}text-amber-500{% elif pickup.status == 'completed' %}text-emerald-500{% else %}text-slate-400{% endif %} uppercase tracking-[0.2em] mb-1 block">Stop 2: Delivery Location</span>
+                                    <h4 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">
+                                        {% if is_return_pickup %}
+                                            {{ item.user.get_full_name }}
+                                        {% else %}
+                                            {{ item.vendor.vendor_profile.company_name }}
+                                        {% endif %}
+                                    </h4>
+                                    <p class="text-[11px] font-bold text-slate-500 mt-1">
+                                        {% if is_return_pickup %}
+                                            Client | {{ item.user.phone_number }}
+                                        {% else %}
+                                            Rep: {{ item.vendor.get_full_name }} | {{ item.vendor.phone_number }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% if pickup.status == 'completed' %}
+                                <div class="glass-pill bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 border-emerald-100 dark:border-emerald-800/50 flex items-center gap-1.5 shadow-sm">
+                                    <span class="material-symbols-outlined text-[14px] text-emerald-600">done_all</span>
+                                    <span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Delivered</span>
+                                </div>
+                                {% elif pickup.status == 'in_progress' %}
+                                <div class="glass-pill bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 border-amber-100 dark:border-amber-800/50 flex items-center gap-1.5 shadow-sm">
+                                    <span class="material-symbols-outlined text-[14px] text-amber-600">directions_car</span>
+                                    <span class="text-[9px] font-black text-amber-600 uppercase tracking-widest">En Route</span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="flex items-start gap-3 mb-8 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-sm">
+                                <div class="size-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0"><span class="material-symbols-outlined text-[16px]">location_on</span></div>
+                                <p class="text-[13px] font-bold text-slate-600 dark:text-slate-300 leading-relaxed mt-1">
+                                    {% if is_return_pickup %}{{ item.address }}{% else %}{{ item.vendor.vendor_profile.business_address }}{% endif %}
+                                </p>
+                            </div>
+
+                            {% if pickup.status == 'in_progress' %}
+                            <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <a href="https://www.google.com/maps?q={% if is_return_pickup %}{{ item.latitude }},{{ item.longitude }}{% else %}{{ item.vendor.vendor_profile.latitude }},{{ item.vendor.vendor_profile.longitude }}{% endif %}" target="_blank" 
+                                   class="py-4 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all flex-1 text-center shadow-md">
+                                    <span class="material-symbols-outlined text-[18px]">navigation</span> Get Directions
+                                </a>
+                                
+                                <button type="button" onclick="openOtpModal('delivery')"
+                                   class="py-4 px-6 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-amber-500/30 flex-1 text-center cursor-pointer">
+                                    <span class="material-symbols-outlined text-[18px]">task_alt</span> End Trip & Complete
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Asset Specifications -->
+            <div class="premium-card p-8">
+                <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest mb-8">Resource Overview</h3>
+                <div class="flex flex-col sm:flex-row gap-8">
+                    <div class="sm:w-32 aspect-square rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0 shadow-inner">
+                        {% if item.photo %}
+                        <img src="{{ item.photo.url }}" class="w-full h-full object-cover transition-transform hover:scale-110 duration-700">
                         {% else %}
-                        <a href="{% url 'collector:verify_pickup_otp' pickup.pk %}" 
-                           class="flex-[2] py-4 px-2 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-center">
-                            Verify Pickup
-                        </a>
+                        <div class="w-full h-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-3xl text-slate-300">devices</span>
+                        </div>
                         {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                         <h4 class="text-xl font-black text-slate-800 dark:text-white mb-2">{{ item.title }}</h4>
+                         <p class="text-[13px] font-bold text-slate-400 mb-6">{{ item.description|default:"No technical description provided." }}</p>
+                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                             <div class="px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Stock Volume</p>
+                                 <p class="text-sm font-black text-slate-700 dark:text-slate-200">{{ item.quantity }} Unit{{ item.quantity|pluralize }}</p>
+                             </div>
+                             <div class="px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Est. Weight</p>
+                                 <p class="text-sm font-black text-slate-700 dark:text-slate-200">
+                                    {% if item.item_size == 'small' %}Less than 5 kg{% elif item.estimated_weight %}{{ item.get_estimated_weight_display }}{% else %}N/A{% endif %}
+                                 </p>
+                             </div>
+                             <div class="px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Dimensions</p>
+                                 <p class="text-sm font-black text-slate-700 dark:text-slate-200">{{ item.get_item_size_display|default:"Standard" }}</p>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proof of delivery -->
+            {% if pickup.proof_photo or pickup.notes %}
+            <div class="premium-card p-8">
+                <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest mb-8">Delivery Artifacts</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {% if pickup.proof_photo %}
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Fulfilment Proof</h4>
+                        <div class="rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <img src="{{ pickup.proof_photo.url }}" alt="Proof" class="w-full h-auto">
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if pickup.notes %}
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Logistics Notes</h4>
+                        <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 text-[13px] font-bold text-slate-600 dark:text-slate-300 italic h-full">
+                            "{{ pickup.notes }}"
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
+            {% endif %}
 
-    <!-- ── ADDITIONAL PROOF (Secondary Card) ── -->
-    {% if pickup.proof_photo or pickup.notes %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {% if pickup.proof_photo %}
-        <div class="premium-card p-6">
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Fulfilment Proof</h4>
-            <div class="rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800">
-                <img src="{{ pickup.proof_photo.url }}" alt="Proof" class="w-full h-auto">
+        </div>
+
+        <!-- Right Column: Final Price Breakdown -->
+        <div class="space-y-10">
+            <div class="premium-card p-8 sticky top-8">
+                 <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest mb-8">Price Breakdown</h3>
+                 
+                 <div class="space-y-6">
+                     <div class="flex items-center justify-between">
+                         <div>
+                             <p class="text-xs font-black text-slate-700 dark:text-white">Base Service Fee</p>
+                             <p class="text-[10px] font-bold text-slate-400">Fixed rate</p>
+                         </div>
+                         <p class="text-sm font-black text-slate-700 dark:text-white">₹{{ pickup.base_fee }}</p>
+                     </div>
+                     <div class="flex items-center justify-between">
+                         <div>
+                             <p class="text-xs font-black text-slate-700 dark:text-white">Transit Mileage</p>
+                             <p class="text-[10px] font-bold text-slate-400">Distance traveled</p>
+                         </div>
+                         <p class="text-sm font-black text-slate-700 dark:text-white">₹{{ pickup.distance_fee }}</p>
+                     </div>
+                     <div class="flex items-center justify-between">
+                         <div>
+                             <p class="text-xs font-black text-slate-700 dark:text-white">Item Handling</p>
+                             <p class="text-[10px] font-bold text-slate-400">Based on item type</p>
+                         </div>
+                         <p class="text-sm font-black text-slate-700 dark:text-white">₹{{ handling_fee|floatformat:2 }}</p>
+                     </div>
+                     
+                     <div class="pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between mt-2">
+                         <div>
+                             <p class="text-sm font-black text-emerald-600 uppercase tracking-widest text-left">Total Earnings</p>
+                             {% if pickup.status == 'completed' %}
+                             <p class="text-[10px] font-bold text-emerald-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span> Credited</p>
+                             {% endif %}
+                         </div>
+                         <p class="text-3xl font-black text-emerald-600">₹{{ pickup.total_payment }}</p>
+                     </div>
+                 </div>
+                 
+                 <div class="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+                     <a href="{% url 'collector:my_pickups' %}" class="block w-full py-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center">
+                         Back to Queue Tracking
+                     </a>
+                 </div>
             </div>
         </div>
-        {% endif %}
-
-        {% if pickup.notes %}
-        <div class="premium-card p-6 bg-slate-50 dark:bg-slate-900/30">
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Mission Notes</h4>
-            <div class="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 text-[13px] font-bold text-slate-600 dark:text-slate-300 italic">
-                "{{ pickup.notes }}"
-            </div>
-        </div>
-        {% endif %}
     </div>
-    {% endif %}
-
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ══  PICKUP OTP MODAL  ════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="pickupOtpOverlay" class="otp-overlay" onclick="if(event.target===this) closeOtpModal('pickup')">
+    <div class="otp-modal">
+        <!-- Header -->
+        <div class="relative p-8 pb-0">
+            <button onclick="closeOtpModal('pickup')" class="absolute top-4 right-4 size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+            <div class="text-center">
+                <div class="size-16 rounded-[1.2rem] bg-primary/10 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                    <span class="material-symbols-outlined text-4xl text-primary">key</span>
+                </div>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">Pickup Verification</h3>
+                <p class="text-[12px] font-bold text-slate-400 mt-2">Ask the {% if is_return_pickup %}vendor{% else %}client{% endif %} for their 6-digit pickup code</p>
+            </div>
+        </div>
+
+        <!-- Error / Success -->
+        <div class="px-8 pt-4">
+            <div id="pickupOtpError" class="otp-error-msg items-center gap-3 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 mb-4">
+                <span class="material-symbols-outlined text-red-500 text-[18px]">error</span>
+                <p id="pickupOtpErrorText" class="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest"></p>
+            </div>
+            <div id="pickupOtpSuccess" class="otp-success-msg items-center gap-3 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 mb-4">
+                <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
+                <p id="pickupOtpSuccessText" class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest"></p>
+            </div>
+        </div>
+
+        <!-- OTP Input -->
+        <div class="p-8 pt-4">
+            <div class="flex justify-center gap-3 mb-8" id="pickupOtpBoxes">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+            </div>
+
+            <button id="pickupOtpSubmit" onclick="submitOtp('pickup')" class="w-full py-4 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/30 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                <span class="material-symbols-outlined text-[18px]">verified_user</span> Verify & Take Item
+            </button>
+
+            <div class="mt-6 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-900/10 flex items-start gap-3">
+                <span class="material-symbols-outlined text-blue-500 text-[16px] mt-0.5">info</span>
+                <p class="text-[10px] font-bold text-slate-500 leading-relaxed">This OTP ensures secure handover. The {% if is_return_pickup %}vendor{% else %}client{% endif %} can find it in their dashboard or notifications.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ══  DELIVERY OTP MODAL  ══════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="deliveryOtpOverlay" class="otp-overlay" onclick="if(event.target===this) closeOtpModal('delivery')">
+    <div class="otp-modal">
+        <!-- Header -->
+        <div class="relative p-8 pb-0">
+            <button onclick="closeOtpModal('delivery')" class="absolute top-4 right-4 size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+            <div class="text-center">
+                <div class="size-16 rounded-[1.2rem] bg-amber-500/10 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                    <span class="material-symbols-outlined text-4xl text-amber-500">handshake</span>
+                </div>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">Delivery Verification</h3>
+                <p class="text-[12px] font-bold text-slate-400 mt-2">Ask the {% if is_return_pickup %}client{% else %}vendor{% endif %} for their 6-digit delivery code</p>
+            </div>
+        </div>
+
+        <!-- Error / Success -->
+        <div class="px-8 pt-4">
+            <div id="deliveryOtpError" class="otp-error-msg items-center gap-3 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 mb-4">
+                <span class="material-symbols-outlined text-red-500 text-[18px]">error</span>
+                <p id="deliveryOtpErrorText" class="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest"></p>
+            </div>
+            <div id="deliveryOtpSuccess" class="otp-success-msg items-center gap-3 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 mb-4">
+                <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
+                <p id="deliveryOtpSuccessText" class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest"></p>
+            </div>
+        </div>
+
+        <!-- OTP Input -->
+        <div class="p-8 pt-4">
+            <div class="flex justify-center gap-3 mb-8" id="deliveryOtpBoxes">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-input-box" autocomplete="off">
+            </div>
+
+            <button id="deliveryOtpSubmit" onclick="submitOtp('delivery')" class="w-full py-4 rounded-2xl bg-amber-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-amber-500/30 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                <span class="material-symbols-outlined text-[18px]">verified_user</span> Verify & Complete Delivery
+            </button>
+
+            <div class="mt-6 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-900/10 flex items-start gap-3">
+                <span class="material-symbols-outlined text-blue-500 text-[16px] mt-0.5">info</span>
+                <p class="text-[10px] font-bold text-slate-500 leading-relaxed">This OTP ensures secure handover. The {% if is_return_pickup %}client{% else %}vendor{% endif %} can find it in their dashboard or notifications.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const PICKUP_OTP_URL  = '{% url "collector:verify_pickup_otp" pickup.pk %}';
+const DELIVERY_OTP_URL = '{% url "collector:verify_delivery_otp" pickup.pk %}';
+
+function getElements(type) {
+    return {
+        overlay:    document.getElementById(type + 'OtpOverlay'),
+        boxes:      document.getElementById(type + 'OtpBoxes').querySelectorAll('.otp-input-box'),
+        submitBtn:  document.getElementById(type + 'OtpSubmit'),
+        errorDiv:   document.getElementById(type + 'OtpError'),
+        errorText:  document.getElementById(type + 'OtpErrorText'),
+        successDiv: document.getElementById(type + 'OtpSuccess'),
+        successText:document.getElementById(type + 'OtpSuccessText'),
+    };
+}
+
+function setupBoxNavigation(boxes) {
+    boxes.forEach((box, i) => {
+        box.addEventListener('input', e => {
+            e.target.value = e.target.value.replace(/\D/, '');
+            if (e.target.value && i < 5) boxes[i + 1].focus();
+        });
+        box.addEventListener('keydown', e => {
+            if (e.key === 'Backspace' && !e.target.value && i > 0) boxes[i - 1].focus();
+        });
+        box.addEventListener('paste', e => {
+            e.preventDefault();
+            const d = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+            d.split('').forEach((c, j) => { if (boxes[j]) boxes[j].value = c; });
+            const next = [...boxes].findIndex(b => !b.value);
+            (next >= 0 ? boxes[next] : boxes[5]).focus();
+        });
+    });
+}
+
+// Setup navigation for both modals
+setupBoxNavigation(getElements('pickup').boxes);
+setupBoxNavigation(getElements('delivery').boxes);
+
+function openOtpModal(type) {
+    const el = getElements(type);
+    el.errorDiv.classList.remove('visible');
+    el.successDiv.classList.remove('visible');
+    el.boxes.forEach(b => { b.value = ''; b.disabled = false; });
+    el.submitBtn.classList.remove('submit-btn-loading');
+    el.overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => el.boxes[0].focus(), 350);
+}
+
+function closeOtpModal(type) {
+    const el = getElements(type);
+    el.overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+async function submitOtp(type) {
+    const el = getElements(type);
+    const otp = [...el.boxes].map(b => b.value).join('');
+
+    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+        el.errorDiv.classList.add('visible');
+        el.errorText.textContent = 'Please enter all 6 digits.';
+        return;
+    }
+
+    el.errorDiv.classList.remove('visible');
+    el.successDiv.classList.remove('visible');
+    el.submitBtn.classList.add('submit-btn-loading');
+    el.submitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span> Verifying...';
+
+    const url = type === 'pickup' ? PICKUP_OTP_URL : DELIVERY_OTP_URL;
+
+    try {
+        const formData = new FormData();
+        formData.append('otp', otp);
+        formData.append('csrfmiddlewaretoken', CSRF);
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData,
+        });
+
+        const data = await resp.json();
+
+        if (data.success) {
+            el.successDiv.classList.add('visible');
+            el.successText.textContent = data.message;
+            el.boxes.forEach(b => b.disabled = true);
+            el.submitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check_circle</span> Verified!';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            el.errorDiv.classList.add('visible');
+            el.errorText.textContent = data.error || 'Verification failed.';
+            el.submitBtn.classList.remove('submit-btn-loading');
+            el.submitBtn.innerHTML = type === 'pickup'
+                ? '<span class="material-symbols-outlined text-[18px]">verified_user</span> Verify & Take Item'
+                : '<span class="material-symbols-outlined text-[18px]">verified_user</span> Verify & Complete Delivery';
+            el.boxes.forEach(b => b.value = '');
+            el.boxes[0].focus();
+        }
+    } catch (err) {
+        el.errorDiv.classList.add('visible');
+        el.errorText.textContent = 'Network error. Please try again.';
+        el.submitBtn.classList.remove('submit-btn-loading');
+        el.submitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">verified_user</span> Try Again';
+    }
+}
+
+// Close on Escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeOtpModal('pickup');
+        closeOtpModal('delivery');
+    }
+});
+</script>
 {% endblock %}

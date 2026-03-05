@@ -255,7 +255,7 @@
                             </a>
 
                             <!-- Evaluation/Re-evaluation Action -->
-                            {% if item.status == 'collected' and not item.vendor_declined_reevaluation %}
+                            {% if item.status == 'collected' and not item.vendor_declined_reevaluation and not item.is_transferred %}
                                 <a href="{% url 'vendor:evaluate_item' item.pk %}" 
                                    class="shrink-0 py-3 px-6 sm:px-8 rounded-xl bg-primary text-white text-[9px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
                                     {% if item.has_evaluated_by_me %}Re-evaluate{% else %}Evaluate{% endif %}
