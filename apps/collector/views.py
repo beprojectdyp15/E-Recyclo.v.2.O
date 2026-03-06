@@ -119,6 +119,12 @@ def available_pickups(request):
     if not request.user.is_collector:
         messages.error(request, 'Access denied.')
         return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to view available pickups.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_collector_profile')}?unapproved_redirect=true")
     
     # Get collector's location and vehicle type
     try:
@@ -484,6 +490,12 @@ def my_pickups(request):
     if not request.user.is_collector:
         messages.error(request, 'Access denied.')
         return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to manage your pickups.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_collector_profile')}?unapproved_redirect=true")
     
     status_filter = request.GET.get('status', '')
     qs = CollectorPickup.objects.filter(collector=request.user).select_related(
@@ -748,6 +760,12 @@ def earnings(request):
     if not request.user.is_collector:
         messages.error(request, 'Access denied.')
         return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to view your earnings.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_collector_profile')}?unapproved_redirect=true")
     
     # Financial data from central Wallet model (source of truth)
     wallet = request.user.wallet
@@ -785,9 +803,15 @@ def earnings(request):
 
 @login_required
 def download_statement(request):
-    """Generate and stream a professional PDF bank-grade wallet statement for collectors."""
-    from apps.payments.models import Transaction
-    from datetime import timedelta
+    if not request.user.is_collector:
+        messages.error(request, 'Access denied.')
+        return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to download statements.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_collector_profile')}?unapproved_redirect=true")
     
     period = request.GET.get('period', 'all')
     try:

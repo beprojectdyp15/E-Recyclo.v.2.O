@@ -419,6 +419,36 @@ class CollectorProfileForm(forms.ModelForm):
             raise ValidationError("Invalid vehicle number format. Use format: MH12AB1234")
         
         return vehicle_number
+
+    def clean_aadhaar_number(self):
+        aadhaar = self.cleaned_data.get('aadhaar_number', '').strip()
+        if aadhaar:
+            import re
+            # 12 digits, doesn't start with 0 or 1
+            pattern = re.compile(r'^[2-9]{1}[0-9]{11}$')
+            if not pattern.match(aadhaar):
+                raise ValidationError("Invalid Aadhaar format. Must be 12 digits and cannot start with 0 or 1.")
+        return aadhaar
+
+    def clean_license_number(self):
+        license_num = self.cleaned_data.get('license_number', '').upper().strip()
+        if license_num:
+            import re
+            # DL number format varies slightly but usually 15-16 alphanumeric
+            pattern = re.compile(r'^[A-Z]{2}[0-9/]{2,15}$')
+            if not pattern.match(license_num):
+                raise ValidationError("Invalid Driving License format. e.g., MH01 20200012345")
+        return license_num
+
+    def clean_vehicle_rc_number(self):
+        rc_num = self.cleaned_data.get('vehicle_rc_number', '').upper().strip()
+        if rc_num:
+            import re
+            # RC number is often same as vehicle number but can be different for some units
+            pattern = re.compile(r'^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,6}[0-9]{4}$')
+            if not pattern.match(rc_num):
+                raise ValidationError("Invalid Vehicle RC format. e.g., MH12AB1234")
+        return rc_num
     
     def clean_date_of_birth(self):
         """Validate age (must be 18+) - optional for draft"""

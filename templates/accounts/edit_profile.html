@@ -192,7 +192,6 @@
         gap: 8px !important;
         padding: 0 !important;
         height: auto !important;
-        position: static !important;
         width: auto !important;
     }
 
@@ -219,7 +218,7 @@
     /* Month Menu Style */
     .flatpickr-month-menu {
         position: absolute;
-        top: 30px;
+        top: 38px;
         left: 50%;
         transform: translateX(-50%) translateY(10px);
         background-color: #ffffff !important;
@@ -290,7 +289,7 @@
     /* Year Menu Style */
     .flatpickr-year-menu {
         position: absolute;
-        top: 30px;
+        top: 38px;
         left: 50%;
         transform: translateX(-50%) translateY(10px);
         background-color: #ffffff !important;
@@ -404,13 +403,10 @@
                         <span id="selectedGenderText">Select Gender</span>
                         <span class="material-symbols-outlined text-slate-400">expand_more</span>
                     </div>
-                    <div class="sel-options" id="vehicleOptions">
-                        <div class="sel-option" data-value="bike">BIKE / MOTORCYCLE</div>
-                        <div class="sel-option" data-value="scooter">SCOOTER</div>
-                        <div class="sel-option" data-value="auto">AUTO RICKSHAW</div>
-                        <div class="sel-option" data-value="van">VAN / SMALL TRUCK</div>
-                        <div class="sel-option" data-value="tempo">TEMPO / THREE WHEELER</div>
-                        <div class="sel-option" data-value="pickup">PICKUP TRUCK</div>
+                    <div class="sel-options" id="genderOptions">
+                        <div class="sel-option" data-value="Male">MALE</div>
+                        <div class="sel-option" data-value="Female">FEMALE</div>
+                        <div class="sel-option" data-value="Other">OTHER</div>
                     </div>
                 </div>
                 <div>
@@ -510,7 +506,7 @@
         altInput: true,
         altFormat: "F j, Y",
         animate: true,
-        disableMobile: "true",
+        disableMobile: true,
         monthSelectorType: "static", // Custom month switcher logic
         onReady: function(selectedDates, dateStr, instance) {
             instance.calendarContainer.classList.add('animate-in', 'fade-in', 'zoom-in-95', 'duration-200');
@@ -542,7 +538,8 @@
             // 2. Toggle Logic
             curMonth.onclick = (e) => {
                 e.stopPropagation();
-                // Close other instances if any, though here only one
+                const yMenu = instance.calendarContainer.querySelector('.flatpickr-year-menu');
+                if (yMenu) yMenu.classList.remove('show');
                 menu.classList.toggle('show');
             };
 

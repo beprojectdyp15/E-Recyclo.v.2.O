@@ -37,12 +37,12 @@ class ProfileCompletionMiddleware:
                     
                     # Define restricted URL patterns
                     restricted_paths = [
-                        '/vendor/accept-request/',
-                        '/vendor/reject-request/',
-                        '/vendor/generate-report/',
-                        '/vendor/payments/',
+                        '/vendor/accept/',
+                        '/vendor/reject/',
+                        '/vendor/reports/',
+                        '/vendor/payment/',
                         '/collector/accept-pickup/',
-                        '/collector/complete-pickup/',
+                        '/collector/complete/',
                         '/collector/earnings/',
                         '/wallet/withdraw/',
                         '/payments/request-withdrawal/',
@@ -62,29 +62,29 @@ class ProfileCompletionMiddleware:
                                 'Please complete your profile to access this feature.'
                             )
                             if request.user.is_vendor:
-                                return redirect('accounts:complete_vendor_profile')
+                                return redirect('/accounts/complete-vendor-profile/?unapproved_redirect=true')
                             else:
-                                return redirect('accounts:complete_collector_profile')
+                                return redirect('/accounts/complete-collector-profile/?unapproved_redirect=true')
                         
                         elif profile_completion.approval_status == 'pending':
                             messages.info(
                                 request,
-                                'Your profile is under admin review. This feature will be available after approval (usually within 24-48 hours).'
+                                'Your profile is under admin review.'
                             )
                             if request.user.is_vendor:
-                                return redirect('vendor:dashboard')
+                                return redirect('/accounts/complete-vendor-profile/?unapproved_redirect=true')
                             else:
-                                return redirect('collector:dashboard')
+                                return redirect('/accounts/complete-collector-profile/?unapproved_redirect=true')
                         
                         elif profile_completion.approval_status == 'rejected':
                             messages.error(
                                 request,
-                                f'Your profile was rejected. Reason: {profile_completion.admin_remarks}. Please update your profile and resubmit.'
+                                f'Your profile was rejected. Reason: {profile_completion.admin_remarks or "Incomplete profile details"}. Please update your profile and resubmit.'
                             )
                             if request.user.is_vendor:
-                                return redirect('accounts:complete_vendor_profile')
+                                return redirect('/accounts/complete-vendor-profile/?unapproved_redirect=true')
                             else:
-                                return redirect('accounts:complete_collector_profile')
+                                return redirect('/accounts/complete-collector-profile/?unapproved_redirect=true')
                 
                 except Exception as e:
                     # Don't break the request if something goes wrong

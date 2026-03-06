@@ -662,10 +662,11 @@ class VendorDetails(models.Model):
         help_text="Aadhaar card document (PDF or image, max 5MB)"
     )
     
-    # E-Waste Authorization (Choose 1 of 3)
+    # E-Waste Authorization (Choose 1)
     EWASTE_AUTH_CHOICES = [
-        ('cpcb', 'CPCB Recycler Registration'),
-        ('spcb', 'SPCB Consent to Operate (CTO)'),
+        ('spcb', 'SPCB Authorization'),
+        ('cpcb', 'CPCB EPR Registration'),
+        ('cto', 'Consent to Operate (CTO)'),
         ('hazardous', 'Hazardous Waste Authorization'),
     ]
     ewaste_auth_type = models.CharField(

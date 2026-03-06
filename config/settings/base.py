@@ -207,6 +207,10 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Strict'
 
+# Security Headers
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+SILENCED_SYSTEM_CHECKS = ['security.W019'] # We intentionally use SAMEORIGIN for document previews
+
 # Password hashers
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',

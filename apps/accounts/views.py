@@ -36,8 +36,14 @@ def home_view(request):
         if request.user.is_client:
             return redirect('client:dashboard')
         elif request.user.is_vendor:
+            profile_completion = getattr(request.user, 'profile_completion', None)
+            if profile_completion and profile_completion.approval_status not in ['approved', 'pending']:
+                return redirect('accounts:complete_vendor_profile')
             return redirect('vendor:dashboard')
         elif request.user.is_collector:
+            profile_completion = getattr(request.user, 'profile_completion', None)
+            if profile_completion and profile_completion.approval_status not in ['approved', 'pending']:
+                return redirect('accounts:complete_collector_profile')
             return redirect('collector:dashboard')
         elif request.user.is_admin or request.user.is_superuser:
             return redirect('admin:index')
@@ -279,8 +285,16 @@ def login_view(request):
                 elif user.is_client:
                     return redirect('client:dashboard')
                 elif user.is_vendor:
+                    profile_completion = getattr(user, 'profile_completion', None)
+                    if profile_completion and profile_completion.approval_status not in ['approved', 'pending']:
+                        messages.info(request, 'Please complete your business profile for approval.')
+                        return redirect('accounts:complete_vendor_profile')
                     return redirect('vendor:dashboard')
                 elif user.is_collector:
+                    profile_completion = getattr(user, 'profile_completion', None)
+                    if profile_completion and profile_completion.approval_status not in ['approved', 'pending']:
+                        messages.info(request, 'Please complete your profile for approval.')
+                        return redirect('accounts:complete_collector_profile')
                     return redirect('collector:dashboard')
                 else:
                     return redirect('home')
@@ -325,11 +339,19 @@ def complete_vendor_profile(request):
         return redirect('vendor:dashboard')
     
     if profile_completion.approval_status == 'pending' and request.method == 'POST':
-        messages.warning(request, 'Your profile is under review. Please wait for admin decision.')
-        return redirect('vendor:dashboard')
+        action = request.POST.get('action')
+        if action != 'save_draft':
+            messages.warning(request, 'Your profile is under review. Please wait for admin decision.')
+            return redirect('vendor:dashboard')
     
     if request.method == 'POST':
+        action = request.POST.get('action')
         form = VendorProfileForm(request.POST, request.FILES, instance=vendor_profile)
+        
+        # If saving draft, temporarily bypass required fields
+        if action == 'save_draft':
+            for field in form.fields.values():
+                field.required = False
         
         if form.is_valid():
             try:
@@ -348,7 +370,7 @@ def complete_vendor_profile(request):
                 vendor_profile.refresh_from_db()
                 completion_percentage = profile_completion.calculate_completion()
                 
-                if completion_percentage == 100:
+                if action == 'submit' and completion_percentage == 100:
                     profile_completion.profile_submitted = True
                     profile_completion.approval_status = 'pending'
                     profile_completion.submitted_at = timezone.now()
@@ -356,7 +378,10 @@ def complete_vendor_profile(request):
                     messages.success(request, '✓ Profile submitted for verification! We will review it shortly.')
                     return redirect('vendor:dashboard')
                 else:
-                    messages.success(request, f'Progress saved! {completion_percentage}% complete.')
+                    if action == 'save_draft':
+                        messages.success(request, '✓ Progress saved as draft! Your data is secure.')
+                    else:
+                        messages.success(request, f'✓ Progress saved! {completion_percentage}% complete.')
                 
                 # Re-init form with fresh data
                 form = VendorProfileForm(instance=vendor_profile)
@@ -407,12 +432,20 @@ def complete_collector_profile(request):
         return redirect('collector:dashboard')
     
     if profile_completion.approval_status == 'pending' and request.method == 'POST':
-        messages.warning(request, 'Your profile is under review. Please wait for admin decision.')
-        return redirect('collector:dashboard')
+        action = request.POST.get('action')
+        if action != 'save_draft':
+            messages.warning(request, 'Your profile is under review. Please wait for admin decision.')
+            return redirect('collector:dashboard')
     
     if request.method == 'POST':
+        action = request.POST.get('action')
         form = CollectorProfileForm(request.POST, request.FILES, instance=collector_profile)
         
+        # If saving draft, temporarily bypass required fields
+        if action == 'save_draft':
+            for field in form.fields.values():
+                field.required = False
+
         if form.is_valid():
             try:
                 form.save()  # This saves to the database
@@ -424,7 +457,7 @@ def complete_collector_profile(request):
                 # Update profile completion
                 completion_percentage = profile_completion.calculate_completion()
                 
-                if completion_percentage == 100:
+                if action == 'submit' and completion_percentage == 100:
                     profile_completion.profile_submitted = True
                     profile_completion.approval_status = 'pending'
                     profile_completion.submitted_at = timezone.now()
@@ -439,8 +472,10 @@ def complete_collector_profile(request):
                     messages.success(request, '✓ Profile resubmitted successfully! Admin will review it soon.')
                     return redirect('collector:dashboard')
                 else:
-                    missing_count = len(profile_completion.missing_fields)
-                    messages.success(request, f'Progress saved! {completion_percentage}% complete. Files uploaded successfully!')
+                    if action == 'save_draft':
+                        messages.success(request, '✓ Progress saved as draft! Your data is secure.')
+                    else:
+                        messages.success(request, f'✓ Progress saved! {completion_percentage}% complete. Files uploaded successfully!')
             except Exception as e:
                 messages.error(request, f'Error saving profile: {str(e)}')
         else:
@@ -464,21 +499,31 @@ def complete_collector_profile(request):
 # PROFILE VIEW
 # ============================================
 
+@login_required
 def profile_view(request):
     """View user profile - redirects vendors/collectors to complete profile page"""
     user = request.user
     
     # Redirect vendors/collectors if profile is not fully vetted
     profile_completion = getattr(user, 'profile_completion', None)
-    is_vetted = profile_completion and profile_completion.approval_status in ['approved', 'pending']
+    is_vetted = profile_completion and profile_completion.approval_status == 'approved'
+    is_pending = profile_completion and profile_completion.approval_status == 'pending'
 
-    if user.is_vendor and not is_vetted:
-        return redirect('accounts:complete_vendor_profile')
+    if user.is_vendor:
+        if not (is_vetted or is_pending):
+            return redirect('accounts:complete_vendor_profile')
+        if is_vetted:
+            # Verified vendors see the corporate registry view
+            return render(request, 'accounts/vendor_profile.html', {
+                'user': user,
+                'page_title': 'Vendor Profile Registry'
+            })
     
-    elif user.is_collector and not is_vetted:
-        return redirect('accounts:complete_collector_profile')
+    elif user.is_collector:
+        if not (is_vetted or is_pending):
+            return redirect('accounts:complete_collector_profile')
     
-    # Clients use the basic profile view
+    # Standard profile view for others (Clients, Collectors, Pending Users)
     context = {
         'user': user,
         'page_title': 'My Profile - E-RECYCLO'

@@ -160,6 +160,12 @@ def pending_requests(request):
     if not request.user.is_vendor:
         messages.error(request, 'Access denied.')
         return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to view pending requests.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_vendor_profile')}?unapproved_redirect=true")
     
     try:
         vp = request.user.vendor_profile
@@ -484,6 +490,12 @@ def accepted_items(request):
     if not request.user.is_vendor:
         messages.error(request, 'Access denied.')
         return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to manage accepted items.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_vendor_profile')}?unapproved_redirect=true")
     
     tab = request.GET.get('tab', 'all')
     
@@ -885,6 +897,12 @@ def payment(request):
     if not request.user.is_vendor:
         messages.error(request, 'Access denied.')
         return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to access the payment wallet.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_vendor_profile')}?unapproved_redirect=true")
     
     from apps.payments.models import Transaction, Wallet
     from django.core.paginator import Paginator
@@ -922,6 +940,16 @@ def payment(request):
 
 @login_required
 def download_statement(request):
+    if not request.user.is_vendor:
+        messages.error(request, 'Access denied.')
+        return redirect('home')
+        
+    pc = request.user.profile_completion
+    if pc.approval_status != 'approved':
+        messages.error(request, 'Your profile must be approved to download statements.')
+        from django.urls import reverse
+        return redirect(f"{reverse('accounts:complete_vendor_profile')}?unapproved_redirect=true")
+    
     """Generate and stream a professional PDF bank-grade wallet statement for vendors."""
     from apps.payments.models import Transaction
     from datetime import timedelta

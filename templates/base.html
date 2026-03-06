@@ -123,9 +123,6 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
         }
 
-        .premium-shadow-right {
-            /* Handled by #sidebar */
-        }
 
         @keyframes slideIn { from { opacity:0; transform:translateX(100%); } to { opacity:1; transform:translateX(0); } }
         .toast-item { animation: slideIn 0.3s ease; }
@@ -157,6 +154,14 @@
         select:hover { border-color: #17cf17; background-color: #f0fdf4; }
         .dark select:hover { border-color: #17cf17; background-color: #14251b; }
         select:focus { outline: none; border-color: #17cf17; box-shadow: 0 0 0 3px rgba(23, 207, 23, 0.1); }
+
+        /* Global Input Focus Lockdown */
+        input:focus, textarea:focus, select:focus {
+            outline: none !important;
+            border-color: #17cf17 !important;
+            box-shadow: 0 0 0 4px rgba(23, 207, 23, 0.1) !important;
+            --tw-ring-color: transparent !important; /* Tailwind ring kill */
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -272,62 +277,15 @@
             <div class="mt-4">
                 <div class="mx-5 border-b border-slate-300 dark:border-slate-800/50 mb-4 mt-[17px]" style="min-width: 13px;"></div>
                 
-                {% if user.is_vendor %}
-                    <a href="{% url 'accounts:complete_vendor_profile' %}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 rounded-2xl transition-all {% if request.resolver_match.url_name == 'complete_vendor_profile' %}active{% endif %}">
-                        <span class="material-symbols-outlined text-[22px]">settings</span><span class="nav-text text-sm font-semibold">Settings</span>
-                    </a>
-                {% elif user.is_collector %}
-                    <a href="{% url 'accounts:complete_collector_profile' %}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 rounded-2xl transition-all {% if request.resolver_match.url_name == 'complete_collector_profile' %}active{% endif %}">
-                        <span class="material-symbols-outlined text-[22px]">settings</span><span class="nav-text text-sm font-semibold">Settings</span>
-                    </a>
-                {% else %}
-                    <a href="{% url 'accounts:profile' %}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 rounded-2xl transition-all {% if request.resolver_match.url_name in 'profile,edit_profile' %}active{% endif %}">
-                        <span class="material-symbols-outlined text-[22px]">settings</span><span class="nav-text text-sm font-semibold">Settings</span>
-                    </a>
-                {% endif %}
+                <a href="{% url 'accounts:profile' %}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 rounded-2xl transition-all {% if request.resolver_match.url_name in 'profile,edit_profile,complete_vendor_profile,complete_collector_profile' %}active{% endif %}">
+                    <span class="material-symbols-outlined text-[22px]">settings</span><span class="nav-text text-sm font-semibold">Settings</span>
+                </a>
             </div>
         </nav>
     </div>
 
-    <!-- SIDEBAR FOOTER (PROFILE) -->
-    <div class="p-5 pt-0">
-        {% if user.is_authenticated and not user.is_client %}
-        <div class="profile-section bg-white/40 dark:bg-slate-800/20 backdrop-blur-md rounded-[2rem] p-4 border border-white/40 dark:border-slate-700/30 shadow-sm relative overflow-hidden group">
-            <div class="flex items-center gap-3.5 relative z-10">
-                <div class="size-11 rounded-2xl flex items-center justify-center font-black text-sm flex-shrink-0 shadow-lg shadow-primary/20 transition-transform group-hover:scale-105 overflow-hidden bg-primary text-white">
-                    {% if user.is_client and user.client_profile.profile_photo %}
-                        <img src="{{ user.client_profile.profile_photo.url }}" class="w-full h-full object-cover sidebar-avatar" alt="User">
-                    {% elif user.is_vendor and user.vendor_profile.profile_photo %}
-                        <img src="{{ user.vendor_profile.profile_photo.url }}" class="w-full h-full object-cover sidebar-avatar" alt="User">
-                    {% elif user.is_collector and user.collector_profile.profile_photo %}
-                        <img src="{{ user.collector_profile.profile_photo.url }}" class="w-full h-full object-cover sidebar-avatar" alt="User">
-                    {% else %}
-                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                    {% endif %}
-                </div>
-                <div class="min-w-0">
-                    <p class="text-[13px] font-black text-slate-800 dark:text-white truncate">{{ user.get_full_name }}</p>
-                    <p class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">{{ user.get_role|default:"User"|upper }}</p>
-                </div>
-            </div>
-            
-            {% if user.is_vendor or user.is_collector %}
-            {% with pct=user.profile_completion.completion_percentage %}
-            <div class="mt-4">
-                <div class="mx-4 border-b border-slate-200/60 dark:border-slate-700/40 opacity-70 mb-3"></div>
-                <div class="flex justify-between text-[9px] mb-1.5 px-0.5">
-                    <span class="text-slate-400 font-bold uppercase tracking-tighter">Profile Mastery</span>
-                    <span class="font-black text-primary">{{ pct }}%</span>
-                </div>
-                <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full bg-primary transition-all duration-1000 shadow-[0_0_8px_rgba(23,207,23,0.4)]" style="width:{{ pct }}%"></div>
-                </div>
-            </div>
-            {% endwith %}
-            {% endif %}
-        </div>
-        {% endif %}
-        
+    <!-- SIDEBAR FOOTER (PROFILE) REMOVED AS REQUESTED -->
+    <div class="px-5 pb-5">
         <div class="mt-3">
             <div class="mx-3 border-b border-slate-300 dark:border-slate-800/50 mb-4" style="min-width: 13px;"></div>
             <a href="{% url 'accounts:logout' %}" class="nav-link flex items-center gap-3.5 pl-6 pr-3.5 py-3 rounded-2xl text-red-500 hover:text-red-600 transition-all font-semibold">
@@ -407,24 +365,33 @@
         </div>
     </header>
 
-    <!-- TOASTS -->
+    <!-- PREMIUM TOAST NOTIFICATIONS (Aura System) -->
+    <div id="toast-container" class="fixed top-8 right-8 flex flex-col gap-4 z-[9999] pointer-events-none">
     {% if messages %}
-    <div class="fixed top-4 right-4 flex flex-col gap-2 z-50 pointer-events-none">
         {% for message in messages %}
-        <div class="toast-item pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium min-w-[280px] max-w-sm
-            {% if message.tags == 'success' %}bg-white dark:bg-slate-800 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300
-            {% elif message.tags == 'error' %}bg-white dark:bg-slate-800 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300
-            {% elif message.tags == 'warning' %}bg-white dark:bg-slate-800 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300
-            {% else %}bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300{% endif %}">
-            <span class="material-symbols-outlined text-xl flex-shrink-0 {% if message.tags == 'success' %}text-green-500{% elif message.tags == 'error' %}text-red-500{% elif message.tags == 'warning' %}text-amber-500{% else %}text-blue-500{% endif %}">
-                {% if message.tags == 'success' %}check_circle{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}
-            </span>
-            <span class="flex-1">{{ message }}</span>
-            <button onclick="this.closest('.toast-item').remove()" class="text-slate-400 hover:text-slate-600 ml-1"><span class="material-symbols-outlined" style="font-size:16px">close</span></button>
+        <div class="toast-item pointer-events-auto flex items-center gap-4 p-1.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5)] border border-white/40 dark:border-white/5 min-w-[280px] max-w-sm animate-in slide-in-from-right-10 duration-500">
+            <div class="size-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner
+                {% if message.tags == 'success' %}bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20
+                {% elif message.tags == 'error' %}bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/20
+                {% elif message.tags == 'warning' %}bg-amber-500/10 text-amber-500 ring-1 dark:ring-amber-500/20
+                {% else %}bg-blue-500/10 text-blue-500 ring-1 ring-blue-500/20{% endif %}">
+                <span class="material-symbols-outlined text-[20px] font-variation-settings-'FILL'-1">
+                    {% if message.tags == 'success' %}verified{% elif message.tags == 'error' %}gpp_maybe{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}
+                </span>
+            </div>
+            <div class="flex-1 py-1">
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-50 mb-0.5">
+                    {% if message.tags == 'success' %}Success Dispatch{% elif message.tags == 'error' %}Security Alert{% elif message.tags == 'warning' %}System Warning{% else %}Information{% endif %}
+                </p>
+                <p class="text-[12px] font-bold text-slate-700 dark:text-slate-200 leading-tight">{{ message }}</p>
+            </div>
+            <button onclick="dismissToast(this.closest('.toast-item'))" class="size-8 mr-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 transition-all">
+                <span class="material-symbols-outlined text-[16px]">close</span>
+            </button>
         </div>
         {% endfor %}
-    </div>
     {% endif %}
+    </div>
 
     <!-- PAGE CONTENT -->
     <div class="flex-1 p-6">
@@ -443,6 +410,44 @@
 </div>
 
 <script>
+function dismissToast(el) {
+    el.style.transform = 'translateX(100%)';
+    el.style.opacity = '0';
+    el.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    setTimeout(() => el.remove(), 500);
+}
+
+function showToast(message, type = 'error') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    const configs = {
+        success: { icon: 'verified', bg: 'emerald', label: 'Success Dispatch' },
+        error: { icon: 'gpp_maybe', bg: 'rose', label: 'Security Alert' },
+        warning: { icon: 'warning', bg: 'amber', label: 'System Warning' },
+        info: { icon: 'info', bg: 'blue', label: 'Information' }
+    };
+    const c = configs[type] || configs.info;
+
+    toast.className = `toast-item pointer-events-auto flex items-center gap-4 p-1.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5)] border border-white/40 dark:border-white/5 min-w-[280px] max-w-sm animate-in slide-in-from-right-10 duration-500`;
+    toast.innerHTML = `
+        <div class="size-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner bg-${c.bg}-500/10 text-${c.bg}-500 ring-1 ring-${c.bg}-500/20">
+            <span class="material-symbols-outlined text-[20px] font-variation-settings-'FILL'-1">${c.icon}</span>
+        </div>
+        <div class="flex-1 py-1">
+            <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-50 mb-0.5">${c.label}</p>
+            <p class="text-[12px] font-bold text-slate-700 dark:text-slate-200 leading-tight">${message}</p>
+        </div>
+        <button onclick="dismissToast(this.closest('.toast-item'))" class="size-8 mr-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 transition-all">
+            <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+    `;
+    
+    container.appendChild(toast);
+    setTimeout(() => dismissToast(toast), 6000);
+}
+
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const toggleIcon = document.querySelector('.toggle-icon');
@@ -534,6 +539,42 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<!-- Profile Approval Warning Modal -->
+<div id="approvalWarningModal" class="hidden fixed inset-0 z-[9999] items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+    <div class="relative max-w-sm w-full bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-rose-100 dark:border-rose-900/30 transform animate-in zoom-in-95 duration-300 text-center">
+        <div class="mx-auto size-16 rounded-3xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500 mb-6 shadow-inner ring-1 ring-rose-100 dark:ring-rose-500/20">
+            <span class="material-symbols-outlined text-3xl">gpp_maybe</span>
+        </div>
+        
+        <h3 class="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight mb-2">Access Restricted</h3>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
+            Your profile is incomplete or pending administrator approval. Please complete all required steps to unlock full platform access.
+        </p>
+        
+        <button onclick="document.getElementById('approvalWarningModal').classList.add('hidden')" class="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-slate-900/20 dark:shadow-white/20">
+            Acknowledge
+        </button>
+    </div>
+</div>
+
+<script>
+    // System check for approval warnings (Triggered via URL param from the restricted views)
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('unapproved_redirect') === 'true') {
+            const warningModal = document.getElementById('approvalWarningModal');
+            if (warningModal) {
+                warningModal.classList.remove('hidden');
+                warningModal.classList.add('flex');
+            }
+            
+            // Clean up URL without reloading
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({path: newUrl}, '', newUrl);
+        }
+    });
+</script>
 
 {% block extra_js %}{% endblock %}
 </body>
