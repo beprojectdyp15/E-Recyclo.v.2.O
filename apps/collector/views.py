@@ -2,8 +2,10 @@
 Collector views for E-RECYCLO
 OTP-based pickup + delivery verification flow with 5km radius and vehicle matching.
 """
+import io
+from django.core.paginator import Paginator
+from django.http import JsonResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
@@ -656,7 +658,14 @@ def verify_delivery_otp(request, pk):
                     e.add_earning(pickup.total_payment)
                 
                 try:
-                    request.user.wallet.credit(pickup.total_payment, f"Pickup delivered: {post.title}")
+                    # 'Receiver Pays' Logic:
+                    # If return -> Client pays. Otherwise -> Vendor pays.
+                    payer = post.user if is_return else post.vendor
+                    if payer:
+                        payer.wallet.debit(pickup.total_payment, f"Logistics Fee for {post.title}", photo_post=post)
+                    
+                    # Credit Collector
+                    request.user.wallet.credit(pickup.total_payment, f"{post.title}", photo_post=post)
                 except Exception:
                     pass
 
@@ -740,27 +749,184 @@ def earnings(request):
         messages.error(request, 'Access denied.')
         return redirect('home')
     
-    earnings_obj, _ = CollectorEarnings.objects.get_or_create(collector=request.user)
+    # Financial data from central Wallet model (source of truth)
+    wallet = request.user.wallet
+    total_earned = wallet.total_earned
+    total_withdrawn = wallet.total_withdrawn
     
-    completed_pickups = CollectorPickup.objects.filter(
-        collector=request.user,
-        status='completed'
-    ).select_related('photo_post').order_by('-completed_at')[:20]
+    # Get all transactions for history
+    transactions_list = wallet.transactions.all().select_related('photo_post', 'photo_post__user', 'photo_post__vendor').order_by('-created_at')
+    
+    # Pagination: 5 transactions per page
+    paginator = Paginator(transactions_list, 5)
+    page_number = request.GET.get('page')
+    transactions = paginator.get_page(page_number)
     
     current_year = timezone.now().year
-    monthly_earnings = []
-    for month in range(1, 13):
-        total = CollectorPickup.objects.filter(
-            collector=request.user,
-            status='completed',
-            completed_at__year=current_year,
-            completed_at__month=month
-        ).aggregate(total=Sum('total_payment'))['total'] or Decimal('0.00')
-        monthly_earnings.append({'month': month, 'total': total})
+    
+    # Service stats
+    from apps.collector.models import CollectorPickup
+    pickups_count = CollectorPickup.objects.filter(collector=request.user, status='completed').count()
+    avg_payout = (total_earned / pickups_count) if pickups_count > 0 else Decimal('0.00')
+    
+    earnings_obj, _ = CollectorEarnings.objects.get_or_create(collector=request.user)
     
     return render(request, 'collector/earnings.html', {
-        'earnings': earnings_obj,
-        'completed_pickups': completed_pickups,
-        'monthly_earnings': monthly_earnings,
+        'wallet': wallet,
+        'earnings': earnings_obj, # Still passed for other collector-specific stats if needed
+        'transactions': transactions,
+        'total_earned': total_earned,
+        'total_withdrawn': total_withdrawn,
+        'avg_payout': avg_payout,
         'current_year': current_year,
+        'completed_pickups_count': pickups_count,
     })
+
+
+@login_required
+def download_statement(request):
+    """Generate and stream a professional PDF bank-grade wallet statement for collectors."""
+    from apps.payments.models import Transaction
+    from datetime import timedelta
+    
+    period = request.GET.get('period', 'all')
+    try:
+        user_wallet = request.user.wallet
+    except:
+        messages.error(request, 'Wallet not found.')
+        return redirect('collector:earnings')
+        
+    transactions = Transaction.objects.filter(wallet=user_wallet).order_by('-created_at')
+
+    # Apply filters
+    now = timezone.now()
+    date_display = period.upper()
+    
+    if period == 'week':
+        transactions = transactions.filter(created_at__gte=now - timedelta(days=7))
+    elif period == 'month':
+        transactions = transactions.filter(created_at__gte=now - timedelta(days=30))
+    elif period == 'custom':
+        start_str = request.GET.get('start_date')
+        end_str = request.GET.get('end_date')
+        if start_str and end_str:
+            try:
+                from datetime import datetime
+                start_date = timezone.make_aware(datetime.strptime(start_str, '%Y-%m-%d'))
+                end_date = timezone.make_aware(datetime.strptime(end_str, '%Y-%m-%d')).replace(hour=23, minute=59, second=59)
+                transactions = transactions.filter(created_at__range=(start_date, end_date))
+                date_display = f"{start_str} TO {end_str}"
+            except Exception:
+                pass
+
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+        from reportlab.lib.styles import ParagraphStyle
+        from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+
+        buf = io.BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.5*cm, rightMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+        PRIMARY = colors.HexColor('#17cf17')
+        DARK = colors.HexColor('#1e293b')
+        GRAY = colors.HexColor('#64748b')
+        LIGHT_BG = colors.HexColor('#f8fafc')
+
+        def get_style(name, **kwargs):
+            style_kwargs = {'fontName': 'Helvetica', 'fontSize': 10}
+            style_kwargs.update(kwargs)
+            return ParagraphStyle(name, **style_kwargs)
+
+        story = []
+        
+        # --- LETTERHEAD ---
+        story.append(Paragraph('<font color="#17cf17"><b>E-RECYCLO</b></font>', get_style('brand', fontSize=28, alignment=TA_LEFT)))
+        story.append(Paragraph('Collector Digital Wallet & Service Earnings', get_style('tag', fontSize=9, textColor=GRAY)))
+        story.append(Spacer(1, 0.2*cm))
+        story.append(HRFlowable(width='100%', thickness=2, color=PRIMARY, spaceAfter=10))
+        
+        # --- STATEMENT HEADER ---
+        story.append(Paragraph('COLLECTOR EARNINGS STATEMENT', get_style('title', fontSize=16, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=10)))
+        
+        # --- CUSTOMER & ACCOUNT INFO ---
+        info_data = [
+            [Paragraph(f'<b>Name:</b> {request.user.get_full_name() or request.user.email}', get_style('info')), 
+             Paragraph(f'<b>Statement Period:</b> {date_display}', get_style('info'))],
+            [Paragraph(f'<b>Collector ID:</b> #{request.user.pk}', get_style('info')), 
+             Paragraph(f'<b>Generation Date:</b> {now.strftime("%d %b, %Y")}', get_style('info'))],
+            [Paragraph(f'<b>Wallet Status:</b> ACTIVE', get_style('info')), 
+             Paragraph(f'<b>Current Balance:</b> Rs. {user_wallet.balance}', get_style('info', fontName='Helvetica-Bold', textColor=PRIMARY))]
+        ]
+        info_table = Table(info_data, colWidths=[9*cm, 9*cm])
+        info_table.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ]))
+        story.append(info_table)
+        story.append(Spacer(1, 0.8*cm))
+        
+        # --- TRANSACTION TABLE ---
+        story.append(Paragraph('TRANSACTION LOGS', get_style('logtitle', fontSize=11, fontName='Helvetica-Bold', textColor=PRIMARY, spaceAfter=6)))
+        
+        headers = [
+            Paragraph('<b>DATE</b>', get_style('th', textColor=colors.white)),
+            Paragraph('<b>DESCRIPTION</b>', get_style('th', textColor=colors.white)),
+            Paragraph('<b>TYPE</b>', get_style('th', textColor=colors.white)),
+            Paragraph('<b>AMOUNT</b>', get_style('th', textColor=colors.white, alignment=TA_RIGHT)),
+            Paragraph('<b>BALANCE</b>', get_style('th', textColor=colors.white, alignment=TA_RIGHT))
+        ]
+        
+        table_data = [headers]
+        for txn in transactions:
+            # Clean up description to show product name only
+            desc = txn.description
+            if txn.photo_post:
+                desc = txn.photo_post.title
+            else:
+                # Fallback cleaning
+                for prefix in ["Product Value: ", "Trip Payout: ", "Pickup delivered: ", "Offer accepted: "]:
+                    desc = desc.replace(prefix, "")
+
+            row = [
+                txn.created_at.strftime('%d/%m/%y'),
+                Paragraph(desc[:50], get_style('td', fontSize=9)),
+                txn.transaction_type.upper(),
+                Paragraph(f'{"-" if txn.transaction_type == "debit" else "+"} Rs. {txn.amount}', 
+                         get_style('td', fontSize=9, alignment=TA_RIGHT, textColor=colors.red if txn.transaction_type == 'debit' else colors.black)),
+                Paragraph(f'Rs. {txn.balance_after}', get_style('td', fontSize=9, alignment=TA_RIGHT))
+            ]
+            table_data.append(row)
+            
+        if not transactions.exists():
+            table_data.append(['', Paragraph('No transactions found for this period', get_style('td', alignment=TA_CENTER)), '', '', ''])
+
+        t = Table(table_data, colWidths=[2.5*cm, 7.5*cm, 2*cm, 3*cm, 3*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), DARK),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+            ('TOPPADDING', (0,0), (-1,-1), 8),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, LIGHT_BG]),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.lightgrey),
+        ]))
+        story.append(t)
+        
+        # --- FOOTER ---
+        story.append(Spacer(1, 2*cm))
+        story.append(HRFlowable(width='100%', thickness=1, color=colors.lightgrey, spaceAfter=6))
+        story.append(Paragraph('This is a computer-generated statement and does not require a physical signature.', 
+                             get_style('ft', fontSize=8, alignment=TA_CENTER, textColor=GRAY)))
+        story.append(Paragraph('E-RECYCLO Platform | Collector Services Division', 
+                             get_style('ft', fontSize=8, alignment=TA_CENTER, textColor=GRAY)))
+
+        doc.build(story); buf.seek(0)
+        return FileResponse(buf, as_attachment=True, filename=f'erecyclo_collector_statement_{period}_{now.strftime("%Y%m%d")}.pdf')
+
+    except Exception as e:
+        messages.error(request, f'Could not generate statement: {str(e)}')
+        return redirect('collector:earnings')

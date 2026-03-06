@@ -281,6 +281,24 @@ class PhotoPost(models.Model):
     def get_final_value(self):
         """Get final value (vendor value if set, else AI estimate)"""
         return self.vendor_final_value or self.ai_estimated_value or Decimal('0.00')
+
+    def get_smart_weight_display(self):
+        """
+        Return weight display string.
+        Uses estimated_weight if set, otherwise derives from item_size.
+        """
+        if self.estimated_weight:
+            return self.get_estimated_weight_display()
+        # Derive from item_size
+        size_to_weight = {
+            'small': 'Under 5 kg',
+            'medium': '5 – 20 kg',
+            'large': '20 – 50 kg',
+            'very_large': '50+ kg',
+        }
+        if self.item_size:
+            return size_to_weight.get(self.item_size, 'N/A')
+        return 'N/A'
     
     def get_status_badge_class(self):
         """Get CSS class for status badge"""

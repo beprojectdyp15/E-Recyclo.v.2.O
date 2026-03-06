@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Available Pickups - eRecyclo{% endblock %}
-{% block page_title %}Network Reach{% endblock %}
+{% block page_title %}Available Pickups{% endblock %}
 {% block page_subtitle %}Explore e-waste assignments within your 5km operational radius{% endblock %}
 
 {% block extra_css %}
@@ -193,11 +193,7 @@
                             <div class="flex-1 border-l border-slate-50 dark:border-slate-800/50 pl-4">
                                 <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Est. Weight</p>
                                 <p class="text-[10px] font-black text-slate-700 dark:text-slate-200">
-                                    {% if req.item.item_size == 'small' %}
-                                        Less than 5 kg
-                                    {% else %}
-                                        {{ req.item.get_estimated_weight_display|default:"N/A" }}
-                                    {% endif %}
+                                    {{ req.item.get_smart_weight_display }}
                                 </p>
                             </div>
                         </div>
@@ -207,7 +203,7 @@
                         <div class="flex-1 min-w-0">
                             <p class="text-[8px] text-slate-400 font-extrabold uppercase tracking-widest mb-1 truncate">Final Payout</p>
                             <div class="flex items-baseline gap-1">
-                                <span class="text-lg font-black text-emerald-600">₹{{ req.total_payout }}</span>
+                                <span class="text-lg font-black text-primary">₹{{ req.total_payout }}</span>
                                 <span class="text-[9px] font-bold text-slate-400 italic">Total</span>
                             </div>
                         </div>

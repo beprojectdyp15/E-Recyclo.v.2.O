@@ -29,3 +29,16 @@ def percentage(value, total):
         return round((float(value) / float(total)) * 100, 1)
     except (ValueError, ZeroDivisionError, TypeError):
         return 0
+@register.filter
+def split(value, arg):
+    """
+    Splits the string by arg and returns the list.
+    """
+    return value.split(arg)
+
+@register.filter
+def trim(value):
+    """
+    Strips whitespace from the string.
+    """
+    return value.strip()

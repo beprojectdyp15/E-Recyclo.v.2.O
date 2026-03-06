@@ -18,6 +18,7 @@ urlpatterns = [
     path('pickup/<int:pk>/',                  views.pickup_detail,        name='pickup_detail'),
     path('start-trip/<int:pk>/',              views.start_trip,           name='start_trip'),
     path('earnings/',                         views.earnings,             name='earnings'),
+    path('earnings/download/',                views.download_statement,   name='download_statement'),
 ]
 
 

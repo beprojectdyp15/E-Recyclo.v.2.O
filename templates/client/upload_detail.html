@@ -570,11 +570,7 @@
                                 <div class="flex items-center gap-4">
                                     <div
                                         class="size-16 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm overflow-hidden text-green-600">
-                                        {% if vh.vendor.vendor_profile.profile_photo %}
-                                            <img src="{{ vh.vendor.vendor_profile.profile_photo.url }}" class="w-full h-full object-cover">
-                                        {% else %}
-                                            <span class="material-symbols-outlined text-3xl">person</span>
-                                        {% endif %}
+                                        <span class="material-symbols-outlined text-3xl">storefront</span>
                                     </div>
                                     <div>
                                         <h4 class="text-[14px] font-extrabold text-slate-700 dark:text-white">{{ vh.vendor.get_full_name }}</h4>
@@ -711,11 +707,7 @@
                         onclick="const cDetails = this.nextElementSibling; cDetails.classList.toggle('hidden'); const cIcon = this.querySelector('.unfold-icon'); cIcon.textContent = cDetails.classList.contains('hidden') ? 'unfold_more' : 'unfold_less';">
                         <div
                             class="size-11 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border border-amber-100 dark:border-amber-900/30 shadow-sm overflow-hidden shrink-0 text-amber-600">
-                            {% if item.collector.collector_profile.profile_photo %}
-                                <img src="{{ item.collector.collector_profile.profile_photo.url }}" class="w-full h-full object-cover">
-                            {% else %}
-                                <span class="material-symbols-outlined text-xl">person</span>
-                            {% endif %}
+                            <span class="material-symbols-outlined text-xl">electric_moped</span>
                         </div>
                         <div class="flex-[1.5] min-w-0">
                             <div class="flex flex-wrap items-center gap-3 mb-1">

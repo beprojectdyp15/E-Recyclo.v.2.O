@@ -33,44 +33,34 @@
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
     }
 
-    .route-gradient {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    }
 </style>
 {% endblock %}
 
 {% block page_content %}
 <div class="max-w-5xl mx-auto space-y-10 pb-24 px-4 sm:px-6">
 
-    <!-- ── MISSION OVERVIEW HEADER ── -->
-    <div class="premium-card route-gradient p-8 text-white border-none overflow-hidden relative group">
-        <div class="absolute -right-20 -top-20 size-80 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform"></div>
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div class="space-y-4">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-emerald-100">local_shipping</span>
-                    <p class="text-[11px] font-black uppercase tracking-[0.2em] opacity-80">Pickup Payout</p>
-                </div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-xl font-bold opacity-60">₹</span>
-                    <h3 class="text-5xl font-black tracking-tight">{{ total_earnings }}</h3>
-                </div>
-                <div class="flex flex-wrap items-center gap-6 pt-2">
-                     <div class="flex items-center gap-2">
-                         <span class="material-symbols-outlined text-[18px] opacity-70">route</span>
-                         <span class="text-[11px] font-black uppercase tracking-widest">{{ distance_km }} KM Route</span>
-                     </div>
-                     <div class="flex items-center gap-2">
-                         <span class="material-symbols-outlined text-[18px] opacity-70">schedule</span>
-                         <span class="text-[11px] font-black uppercase tracking-widest">~{{ estimated_time }} Min Transit</span>
-                     </div>
-                </div>
+    <!-- ── PICKUP OVERVIEW ── -->
+    <div class="premium-card p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div class="flex items-center gap-5">
+            <div class="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-sm border border-primary/20">
+                <span class="material-symbols-outlined text-3xl">local_shipping</span>
             </div>
-            
-            <div class="size-24 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20 shrink-0">
-                 <span class="material-symbols-outlined text-5xl">verified</span>
+            <div>
+                <h2 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">{{ item.title }}</h2>
+                <div class="flex flex-wrap items-center gap-3 mt-2">
+                    <span class="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        <span class="material-symbols-outlined text-[12px]">route</span> {{ distance_km }} km
+                    </span>
+                    <span class="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        <span class="material-symbols-outlined text-[12px]">schedule</span> ~{{ estimated_time }} min
+                    </span>
+                    <span class="text-[9px] font-black text-primary uppercase tracking-widest">Payout: ₹{{ total_earnings }}</span>
+                </div>
             </div>
         </div>
+        <a href="{% url 'collector:available_pickups' %}" class="shrink-0 py-3 px-5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[14px]">arrow_back</span> Back
+        </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -172,7 +162,7 @@
                              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                                  <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Est. Weight</p>
                                  <p class="text-xs font-black text-slate-700 dark:text-slate-200">
-                                    {% if item.item_size == 'small' %}Less than 5 kg{% else %}{{ item.get_estimated_weight_display|default:"N/A" }}{% endif %}
+                                    {{ item.get_smart_weight_display }}
                                  </p>
                              </div>
                              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
@@ -188,7 +178,7 @@
         <!-- Economic Breakdown (Right Column) -->
         <div class="space-y-10">
             <div class="premium-card p-8">
-                 <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest mb-8">Yield Analysis</h3>
+                 <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest mb-8">Price Breakdown</h3>
                  
                  <div class="space-y-6">
                      <div class="flex items-center justify-between">
@@ -214,8 +204,8 @@
                      </div>
                      
                      <div class="pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                         <p class="text-sm font-black text-emerald-600 uppercase tracking-widest">Gross Earning</p>
-                         <p class="text-2xl font-black text-emerald-600">₹{{ total_earnings }}</p>
+                         <p class="text-sm font-black text-primary uppercase tracking-widest">Gross Earning</p>
+                         <p class="text-2xl font-black text-primary">₹{{ total_earnings }}</p>
                      </div>
                  </div>
             </div>

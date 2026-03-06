@@ -17,4 +17,6 @@ urlpatterns = [
     path('decline-reevaluation/<int:pk>/',  views.decline_reevaluation, name='decline_reevaluation'),
     path('item/<int:pk>/',                  views.item_detail,          name='item_detail'),
     path('reports/',                        views.reports,              name='reports'),
+    path('payment/',                        views.payment,              name='payment'),
+    path('payment/download/',               views.download_statement,   name='download_statement'),
 ]

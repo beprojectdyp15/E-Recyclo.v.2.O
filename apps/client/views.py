@@ -633,8 +633,8 @@ def wallet(request):
     # Get wallet
     try:
         wallet = request.user.wallet
-        # Get all transactions ordered by recent first
-        transactions_list = wallet.transactions.all().order_by('-created_at')
+        # Get all transactions ordered by recent first with related post for images
+        transactions_list = wallet.transactions.all().select_related('photo_post', 'photo_post__vendor', 'photo_post__vendor__vendor_profile').order_by('-created_at')
         
         # Implement Pagination: 5 transactions per page
         paginator = Paginator(transactions_list, 5)
@@ -782,7 +782,10 @@ def review_offer(request, pk):
             wallet_credited = False
             if post.vendor_final_value and post.vendor_final_value > 0:
                 try:
-                    post.user.wallet.credit(post.vendor_final_value, f"Offer accepted: {post.title}")
+                    post.user.wallet.credit(post.vendor_final_value, f"{post.title}", photo_post=post)
+                    # Also debit the vendor
+                    if post.vendor:
+                        post.vendor.wallet.debit(post.vendor_final_value, f"Product Payment to Client: {post.user.get_full_name()} for {post.title}", photo_post=post)
                     wallet_credited = True
                 except Exception:
                     pass
@@ -1108,9 +1111,18 @@ def download_statement(request):
         
         table_data = [headers]
         for txn in transactions:
+            # Clean up description to show product name only
+            desc = txn.description
+            if txn.photo_post:
+                desc = txn.photo_post.title
+            else:
+                # Fallback: remove common prefixes if photo_post link is broken or missing
+                for prefix in ["Product Value: ", "Trip Payout: ", "Pickup delivered: ", "Offer accepted: "]:
+                    desc = desc.replace(prefix, "")
+
             row = [
                 txn.created_at.strftime('%d/%m/%y'),
-                Paragraph(txn.description[:50], get_style('td', fontSize=9)),
+                Paragraph(desc[:50], get_style('td', fontSize=9)),
                 txn.transaction_type.upper(),
                 Paragraph(f'{"-" if txn.transaction_type == "debit" else "+"} Rs. {txn.amount}', 
                          get_style('td', fontSize=9, alignment=TA_RIGHT, textColor=colors.red if txn.transaction_type == 'debit' else colors.black)),
@@ -1193,7 +1205,10 @@ def accept_last_offer(request, pk):
         wallet_credited = False
         if post.vendor_final_value and post.vendor_final_value > 0:
             try:
-                post.user.wallet.credit(post.vendor_final_value, f"Offer accepted: {post.title}")
+                post.user.wallet.credit(post.vendor_final_value, f"{post.title}", photo_post=post)
+                # Also debit the vendor
+                if post.vendor:
+                    post.vendor.wallet.debit(post.vendor_final_value, f"Payment to client: {post.user.get_full_name()}", photo_post=post)
                 wallet_credited = True
             except Exception:
                 pass

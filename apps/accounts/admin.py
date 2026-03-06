@@ -126,13 +126,35 @@ class ProfileCompletionAdmin(admin.ModelAdmin):
     def approve_profiles(self, request, queryset):
         """Bulk approve profiles"""
         from django.utils import timezone
-        queryset.update(
-            approval_status='approved',
-            admin_reviewed=True,
-            admin_reviewed_by=request.user,
-            approved_at=timezone.now()
-        )
-        self.message_user(request, f"{queryset.count()} profile(s) approved successfully.")
+        from decimal import Decimal
+        
+        # Track credits given
+        credited_count = 0
+        
+        for profile in queryset:
+            if profile.approval_status != 'approved':
+                profile.approval_status = 'approved'
+                profile.admin_reviewed = True
+                profile.admin_reviewed_by = request.user
+                profile.approved_at = timezone.now()
+                profile.save()
+                
+                # Development logic: Give ₹3000 initial balance to vendors
+                if profile.user.is_vendor:
+                    try:
+                        wallet = profile.user.wallet
+                        # Only credit if balance is 0 or it's a new approval
+                        if wallet.total_earned == 0:
+                            wallet.credit(Decimal('3000.00'), "Initial development credit (free of cost)")
+                            credited_count += 1
+                    except Exception as e:
+                        self.message_user(request, f"Error crediting wallet for {profile.user.email}: {str(e)}", level='ERROR')
+        
+        success_msg = f"{queryset.count()} profile(s) approved successfully."
+        if credited_count > 0:
+            success_msg += f" {credited_count} vendor(s) received initiation credit (₹3000)."
+            
+        self.message_user(request, success_msg)
     approve_profiles.short_description = "Approve selected profiles"
     
     def reject_profiles(self, request, queryset):

@@ -49,7 +49,7 @@ class Wallet(models.Model):
     def __str__(self):
         return f"{self.user.email} - ₹{self.balance}"
     
-    def credit(self, amount, description=""):
+    def credit(self, amount, description="", photo_post=None):
         """Add money to wallet"""
         self.balance += amount
         self.total_earned += amount
@@ -60,10 +60,11 @@ class Wallet(models.Model):
             transaction_type='credit',
             amount=amount,
             description=description,
-            balance_after=self.balance
+            balance_after=self.balance,
+            photo_post=photo_post
         )
     
-    def debit(self, amount, description=""):
+    def debit(self, amount, description="", photo_post=None):
         """Deduct money from wallet"""
         if self.balance >= amount:
             self.balance -= amount
@@ -74,7 +75,8 @@ class Wallet(models.Model):
                 transaction_type='debit',
                 amount=amount,
                 description=description,
-                balance_after=self.balance
+                balance_after=self.balance,
+                photo_post=photo_post
             )
             return True
         return False
@@ -98,6 +100,15 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.CharField(max_length=200)
     balance_after = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Optional link to a product/post for product-specific transactions
+    photo_post = models.ForeignKey(
+        'client.PhotoPost',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transactions'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     
