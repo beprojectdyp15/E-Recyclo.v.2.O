@@ -424,6 +424,7 @@ class ProfileCompletion(models.Model):
                     ('company_name', vendor.company_name),
                     ('business_address', vendor.business_address),
                     ('contact_person', vendor.contact_person),
+                    ('alternate_phone', vendor.alternate_phone),
                     ('date_of_birth', vendor.date_of_birth),
                     ('latitude', vendor.latitude),
                     ('longitude', vendor.longitude),
@@ -439,7 +440,7 @@ class ProfileCompletion(models.Model):
                 
                 completed = sum(1 for _, value in required_fields if value)
                 total = len(required_fields)
-                percentage = int((completed / total) * 100)
+                percentage = int((completed / total) * 100) if total > 0 else 0
                 
                 # Update missing fields
                 missing = [name for name, value in required_fields if not value]
@@ -456,19 +457,26 @@ class ProfileCompletion(models.Model):
             try:
                 collector = user.collector_profile
                 required_fields = [
+                    ('gender', collector.gender),
                     ('date_of_birth', collector.date_of_birth),
+                    ('contact_person', collector.contact_person),
+                    ('alternate_phone', collector.alternate_phone),
                     ('address', collector.address),
+                    ('latitude', collector.latitude),
+                    ('longitude', collector.longitude),
                     ('vehicle_type', collector.vehicle_type),
                     ('vehicle_number', collector.vehicle_number),
+                    ('vehicle_rc_number', collector.vehicle_rc_number),
+                    ('aadhaar_number', collector.aadhaar_number),
+                    ('license_number', collector.license_number),
                     ('driving_license', collector.driving_license),
                     ('aadhaar_card', collector.aadhaar_card),
                     ('vehicle_rc', collector.vehicle_rc),
-                    ('profile_photo', collector.profile_photo),
                 ]
                 
                 completed = sum(1 for _, value in required_fields if value)
                 total = len(required_fields)
-                percentage = int((completed / total) * 100)
+                percentage = int((completed / total) * 100) if total > 0 else 0
                 
                 # Update missing fields
                 missing = [name for name, value in required_fields if not value]
@@ -756,10 +764,36 @@ class CollectorProfile(models.Model):
     )
     
     # Personal Information
+    GENDER_CHOICES = [
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('other', 'Other'),
+        ('prefer_not_to_say', 'Prefer not to say'),
+    ]
+    gender = models.CharField(
+        max_length=20,
+        choices=GENDER_CHOICES,
+        blank=True,
+        help_text="Collector's gender"
+    )
     date_of_birth = models.DateField(
         null=True,
         blank=True,
         help_text="Date of birth"
+    )
+    contact_person = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Full name of the collector"
+    )
+    alternate_phone = models.CharField(
+        max_length=15,
+        blank=True,
+        help_text="Primary contact number"
+    )
+    use_registration_details = models.BooleanField(
+        default=True,
+        help_text="Use details provided during registration (Name/Phone)"
     )
     address = models.TextField(
         blank=True,
@@ -787,14 +821,6 @@ class CollectorProfile(models.Model):
         help_text="Vehicle registration number (e.g., MH12AB1234)"
     )
     
-    # Profile Photo
-    profile_photo = models.ImageField(
-        upload_to='collector/profile_photos/',
-        blank=True,
-        null=True,
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])],
-        help_text="Profile photo (JPG/PNG, max 5MB)"
-    )
     
     # Required Documents
     driving_license = models.FileField(
@@ -829,6 +855,15 @@ class CollectorProfile(models.Model):
         null=True,
         blank=True,
         help_text="Collector base location longitude"
+    )
+    
+    # Profile Photo (Optional)
+    profile_photo = models.ImageField(
+        upload_to='collector_profiles/',
+        default='collector_profiles/default.png',
+        blank=True,
+        null=True,
+        help_text="Collector photo (optional)"
     )
     
     # Document ID Numbers (Manual Entry)
@@ -868,8 +903,7 @@ class CollectorProfile(models.Model):
         return all([
             self.driving_license,
             self.aadhaar_card,
-            self.vehicle_rc,
-            self.profile_photo
+            self.vehicle_rc
         ])
     
     def get_vehicle_display_name(self):
@@ -877,3 +911,38 @@ class CollectorProfile(models.Model):
         if self.vehicle_type and self.vehicle_number:
             return f"{self.get_vehicle_type_display()} - {self.vehicle_number}"
         return "Vehicle not registered"
+
+
+# ============================================
+# ADMIN PROFILE MODEL
+# ============================================
+
+class AdminProfile(models.Model):
+    """
+    Profile for admins and staff members
+    """
+    user = models.OneToOneField(
+        Account,
+        on_delete=models.CASCADE,
+        related_name='admin_profile',
+        help_text="Admin user account"
+    )
+    
+    profile_photo = models.ImageField(
+        upload_to='admin_profiles/',
+        default='admin_profiles/default.png',
+        blank=True,
+        null=True,
+        help_text="Admin photo"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'accounts_adminprofile'
+        verbose_name = 'Admin Profile'
+        verbose_name_plural = 'Admin Profiles'
+
+    def __str__(self):
+        return f"Admin Profile - {self.user.email}"

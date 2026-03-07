@@ -135,6 +135,8 @@
                         <img src="{{ user.vendor_profile.profile_photo.url }}" id="profileDisplay" class="avatar-img" alt="Profile">
                     {% elif user.is_collector and user.collector_profile.profile_photo %}
                         <img src="{{ user.collector_profile.profile_photo.url }}" id="profileDisplay" class="avatar-img" alt="Profile">
+                    {% elif user.admin_profile.profile_photo %}
+                        <img src="{{ user.admin_profile.profile_photo.url }}" id="profileDisplay" class="avatar-img" alt="Profile">
                     {% else %}
                         <img src="{% static 'img/default-avatar.png' %}" id="profileDisplay" class="avatar-img" alt="Profile">
                     {% endif %}
@@ -399,9 +401,9 @@
                 .then(data => {
                     if (data.success) {
                         profileDisplay.src = data.image_url;
-                        // Also update sidebar avatar if it exists
-                        const sidebarAvatar = document.querySelectorAll('.sidebar-avatar');
-                        sidebarAvatar.forEach(img => img.src = data.image_url);
+                        // Also update header avatars if they exist
+                        const headerAvatars = document.querySelectorAll('.header-profile-img');
+                        headerAvatars.forEach(img => img.src = data.image_url);
                         
                         closeCropper();
                         // Toast notification could be nice here

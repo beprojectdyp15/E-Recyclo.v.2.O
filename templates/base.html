@@ -54,7 +54,7 @@
         
         #sidebar { 
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            width: 280px;
+            width: 252px;
             background: rgba(255, 255, 255, 0.45);
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -170,7 +170,7 @@
 
 <!-- SIDEBAR -->
 <aside id="sidebar" class="collapsed flex flex-col justify-between flex-shrink-0 relative z-30">
-    <div class="px-3 py-[20px] overflow-y-auto flex-1 min-w-0">
+    <div class="px-3 py-[20px] overflow-y-auto flex-1 min-w-0 mt-[4px]">
         <div class="logo-wrapper flex items-center h-[45px] gap-3.5 mb-[24px] pl-4">
             <div class="bg-primary size-10 rounded-2xl flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-primary/30">
                 <span class="material-symbols-outlined text-xl">eco</span>
@@ -334,11 +334,13 @@
                     </div>
                     <div class="size-11 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-black text-sm border border-primary/20 transition-colors duration-300 overflow-hidden">
                         {% if user.is_vendor and user.vendor_profile.profile_photo and 'default' not in user.vendor_profile.profile_photo.url %}
-                            <img src="{{ user.vendor_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ user.vendor_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
                         {% elif user.is_collector and user.collector_profile.profile_photo and 'default' not in user.collector_profile.profile_photo.url %}
-                            <img src="{{ user.collector_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ user.collector_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
                         {% elif user.is_client and user.client_profile.profile_photo and 'default' not in user.client_profile.profile_photo.url %}
-                            <img src="{{ user.client_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                            <img src="{{ user.client_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
+                        {% elif user.admin_profile.profile_photo and 'default' not in user.admin_profile.profile_photo.url %}
+                            <img src="{{ user.admin_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
                         {% else %}
                             {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
                         {% endif %}
@@ -521,11 +523,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         <div class="aspect-square w-full rounded-[2rem] overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
             {% if user.is_vendor and user.vendor_profile.profile_photo and 'default' not in user.vendor_profile.profile_photo.url %}
-                <img src="{{ user.vendor_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                <img src="{{ user.vendor_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
             {% elif user.is_collector and user.collector_profile.profile_photo and 'default' not in user.collector_profile.profile_photo.url %}
-                <img src="{{ user.collector_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                <img src="{{ user.collector_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
             {% elif user.is_client and user.client_profile.profile_photo and 'default' not in user.client_profile.profile_photo.url %}
-                <img src="{{ user.client_profile.profile_photo.url }}" class="w-full h-full object-cover">
+                <img src="{{ user.client_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
+            {% elif user.admin_profile.profile_photo and 'default' not in user.admin_profile.profile_photo.url %}
+                <img src="{{ user.admin_profile.profile_photo.url }}" class="header-profile-img w-full h-full object-cover">
             {% else %}
                 <div class="size-full flex items-center justify-center bg-primary/10 text-primary text-6xl font-black italic">
                     {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}

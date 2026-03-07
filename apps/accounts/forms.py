@@ -7,7 +7,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-from .models import Account, VendorDetails, CollectorProfile, ClientProfile
+from .models import Account, VendorDetails, CollectorProfile, ClientProfile, AdminProfile
 from config.validators import validate_indian_phone
 
 
@@ -342,12 +342,17 @@ class CollectorProfileForm(forms.ModelForm):
     class Meta:
         model = CollectorProfile
         fields = [
+            'gender', 'contact_person', 'alternate_phone', 'use_registration_details', 
             'date_of_birth', 'address', 'vehicle_type', 'vehicle_number',
             'latitude', 'longitude',
-            'profile_photo', 'driving_license', 'aadhaar_card', 'vehicle_rc',
+            'driving_license', 'aadhaar_card', 'vehicle_rc',
             'aadhaar_number', 'license_number', 'vehicle_rc_number'
         ]
         widgets = {
+            'gender': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500',
+                'required': True
+            }),
             'date_of_birth': forms.DateInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500',
                 'type': 'date'
@@ -387,19 +392,20 @@ class CollectorProfileForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 font-mono',
                 'placeholder': 'e.g., MH12AB1234'
             }),
+            'use_registration_details': forms.CheckboxInput(attrs={
+                'id': 'use_registration_details'
+            }),
         }
         labels = {
             'date_of_birth': 'Date of Birth *',
             'address': 'Residential Address *',
             'vehicle_type': 'Vehicle Type *',
             'vehicle_number': 'Vehicle Registration Number *',
-            'profile_photo': 'Profile Photo *',
             'driving_license': 'Driving License *',
             'aadhaar_card': 'Aadhaar Card *',
             'vehicle_rc': 'Vehicle RC *',
         }
         help_texts = {
-            'profile_photo': 'Upload your photo (JPG/PNG, max 5MB)',
             'driving_license': 'Upload valid driving license (PDF/Image, max 5MB)',
             'aadhaar_card': 'Upload Aadhaar card (PDF/Image, max 5MB)',
             'vehicle_rc': 'Upload vehicle registration certificate (PDF/Image, max 5MB)',

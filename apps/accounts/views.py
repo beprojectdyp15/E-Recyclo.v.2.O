@@ -17,7 +17,10 @@ from django.contrib.auth.password_validation import validate_password
 import base64
 import uuid
 
-from .models import Account, EmailVerification, ProfileCompletion
+from .models import (
+    Account, EmailVerification, ProfileCompletion, 
+    ClientProfile, VendorDetails, CollectorProfile, AdminProfile
+)
 from .forms import (
     RegistrationForm, VendorProfileForm, CollectorProfileForm, ClientProfileForm
 )
@@ -313,7 +316,7 @@ def logout_view(request):
     """Logout user and redirect to home"""
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
-    return redirect('home')
+    return redirect('accounts:login')
 
 
 # ============================================
@@ -448,7 +451,16 @@ def complete_collector_profile(request):
 
         if form.is_valid():
             try:
-                form.save()  # This saves to the database
+                # Handle "Use Registration Details" logic
+                use_reg = form.cleaned_data.get('use_registration_details')
+                collector = form.save(commit=False)
+                
+                if use_reg:
+                    # Sync from Account basic info
+                    collector.contact_person = f"{request.user.first_name} {request.user.last_name}".strip()
+                    collector.alternate_phone = request.user.phone_number
+                
+                collector.save()  # This saves to the database
                 
                 # Refresh to get updated data
                 collector_profile.refresh_from_db()
@@ -490,6 +502,10 @@ def complete_collector_profile(request):
         'missing_fields': profile_completion.missing_fields,
         'page_title': 'Complete Collector Profile - E-RECYCLO',
         'profile_completion': profile_completion,  # Add this for rejection display
+        'reg_data': {
+            'name': f"{request.user.first_name} {request.user.last_name}".strip(),
+            'phone': request.user.phone_number
+        }
     }
     return render(request, 'accounts/complete_collector_profile.html', context)
 
@@ -544,6 +560,11 @@ def edit_profile_view(request):
     """Edit user profile"""
     user = request.user
     
+    # Redirect Vendors and Collectors to their specialized profile completion pages
+    if user.is_vendor:
+        return redirect('accounts:complete_vendor_profile')
+    elif user.is_collector:
+        return redirect('accounts:complete_collector_profile')
     if request.method == 'POST':
         # Update basic info
         user.first_name = request.POST.get('first_name', '').strip()
@@ -831,6 +852,8 @@ def update_profile_photo(request):
             profile_instance = user.vendor_profile
         elif user.is_collector:
             profile_instance = user.collector_profile
+        elif user.is_admin or user.is_staff or user.is_superuser:
+            profile_instance, created = AdminProfile.objects.get_or_create(user=user)
             
         if profile_instance:
             profile_instance.profile_photo = data

@@ -487,6 +487,7 @@
 {% block page_content %}
 <div class="max-w-7xl mx-auto space-y-8 pb-24 px-4 sm:px-6 mt-6">
     
+
     <!-- ── PROGRESS HEADER ── -->
     <div class="premium-card p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
         <div class="flex-1 space-y-2 text-center md:text-left">
@@ -555,13 +556,32 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Shop/Business Name *</label>
-                            <input type="text" name="company_name" id="id_company_name" value="{{ form.company_name.value|default:'' }}" class="input-premium" placeholder="Business Name">
+                            <input type="text" name="company_name" id="id_company_name" value="{{ form.company_name.value|default:'' }}" class="input-premium" placeholder="Business Name"
+                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
                         </div>
                         <div class="space-y-2">
                             <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Birth Date *</label>
                             <input type="text" name="date_of_birth" id="id_date_of_birth" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}" 
-                                   class="input-premium" placeholder="Select Date" readonly>
+                                   class="input-premium" placeholder="Select Date" readonly
+                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
                             <p id="dobError" class="text-[9px] font-bold text-red-500 uppercase px-1 hidden">Must be 18+ years old</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">GSTIN Number *</label>
+                            <input type="text" name="gstin_number" id="id_gstin_number_basic" value="{{ form.gstin_number.value|default:'' }}" class="input-premium" placeholder="22AAAAA0000A1Z5"
+                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">PAN Number *</label>
+                            <input type="text" name="pan_number" id="id_pan_number_basic" value="{{ form.pan_number.value|default:'' }}" class="input-premium" placeholder="ABCDE1234F"
+                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Aadhaar Number *</label>
+                            <input type="text" name="aadhaar_number" id="id_aadhaar_number_basic" value="{{ form.aadhaar_number.value|default:'' }}" class="input-premium" placeholder="4725 4145 4454"
+                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
                         </div>
                     </div>
                 </div>
@@ -582,7 +602,8 @@
                 <div class="space-y-6">
                     <div class="space-y-2">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Full Address *</label>
-                        <textarea name="business_address" class="input-premium !py-4 min-h-[100px] resize-none" placeholder="Enter complete address..." required>{{ form.business_address.value|default:'' }}</textarea>
+                        <textarea name="business_address" class="input-premium !py-4 min-h-[100px] resize-none" placeholder="Enter complete address..." required
+                                  {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>{{ form.business_address.value|default:'' }}</textarea>
                     </div>
 
                     <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-6">
@@ -641,7 +662,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-[2.5fr_1fr] gap-6 mt-8">
                             <div class="space-y-1">
                                 <label class="field-label">UID Number <span class="text-rose-500">*</span></label>
-                                <input type="text" name="aadhaar_number" maxlength="12" 
+                                <input type="text" name="aadhaar_number_doc" maxlength="12" 
                                        pattern="[2-9]{1}[0-9]{11}"
                                        oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                        value="{{ form.aadhaar_number.value|default:'' }}" 
@@ -670,7 +691,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-[2.5fr_1fr] gap-6 mt-8">
                             <div class="space-y-1">
                                 <label class="field-label">PAN Number <span class="text-rose-500">*</span></label>
-                                <input type="text" name="pan_number" id="id_pan_number" maxlength="10" 
+                                <input type="text" name="pan_number_doc" id="id_pan_number_doc" maxlength="10" 
                                        pattern="^[A-Z]{5}[0-9]{4}[A-Z]{1}$"
                                        oninput="let panV = this.value.toUpperCase(); 
                                                 if(panV.length <= 5) panV = panV.replace(/[^A-Z]/g, '');
@@ -682,8 +703,10 @@
                             </div>
                             <div class="space-y-1">
                                 <label class="field-label">Upload <span class="text-rose-500">*</span></label>
-                                <div class="upload-button {% if form.instance.pan_card %}secured{% endif %}" onclick="triggerFileInput('id_pan_card')">
-                                    <input type="file" name="pan_card" id="id_pan_card" class="hidden" onchange="handleFileChange(this, 'pan_status')">
+                                <div class="upload-button {% if form.instance.pan_card %}secured{% endif %}" 
+                                     {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="triggerFileInput('id_pan_card')"{% endif %}>
+                                    <input type="file" name="pan_card" id="id_pan_card" class="hidden" onchange="handleFileChange(this, 'pan_status')"
+                                           {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
                                     <span id="pan_status" class="uppercase">{% if form.instance.pan_card %}✓{% else %}Select{% endif %}</span>
                                 </div>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 leading-tight">PDF, JPG, PNG <br> Max 250KB</p>
@@ -703,7 +726,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-[2.5fr_1fr] gap-6 mt-8">
                             <div class="space-y-1">
                                 <label class="field-label">GSTIN <span class="text-rose-500">*</span></label>
-                                <input type="text" name="gstin_number" id="id_gstin_number" maxlength="15" 
+                                <input type="text" name="gstin_number_doc" id="id_gstin_number_doc" maxlength="15" 
                                        pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
                                        oninput="let gstV = this.value.toUpperCase();
                                                 if(gstV.length <= 2) gstV = gstV.replace(/[^0-9]/g, '');
@@ -715,8 +738,10 @@
                             </div>
                             <div class="space-y-1">
                                 <label class="field-label">Upload <span class="text-rose-500">*</span></label>
-                                <div class="upload-button {% if form.instance.gst_certificate %}secured{% endif %}" onclick="triggerFileInput('id_gst_certificate')">
-                                    <input type="file" name="gst_certificate" id="id_gst_certificate" class="hidden" onchange="handleFileChange(this, 'gst_status')">
+                                <div class="upload-button {% if form.instance.gst_certificate %}secured{% endif %}" 
+                                     {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="triggerFileInput('id_gst_certificate')"{% endif %}>
+                                    <input type="file" name="gst_certificate" id="id_gst_certificate" class="hidden" onchange="handleFileChange(this, 'gst_status')"
+                                           {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
                                     <span id="gst_status" class="uppercase">{% if form.instance.gst_certificate %}✓{% else %}Select{% endif %}</span>
                                 </div>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 leading-tight">PDF, JPG, PNG <br> Max 250KB</p>
@@ -735,27 +760,31 @@
 
                         <div class="mt-8 space-y-8">
                             <!-- Custom Dropdown Container -->
-                            <div class="custom-select-wrapper">
-                                <div class="custom-select-box" style="height: 53px;" onclick="toggleCustomSelect()">
+                            <div class="custom-select-wrapper relative">
+                                <div class="custom-select-box" style="height: 53px;" 
+                                    {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="toggleCustomSelect()"{% endif %}>
                                     <span class="material-symbols-outlined custom-select-icon">verified_user</span>
-                                    <span id="selected_auth_label" class="flex-1 uppercase text-[10px]">{% for val, label in form.fields.ewaste_auth_type.choices %}{% if form.ewaste_auth_type.value == val %}{{ label }}{% endif %}{% endfor %}</span>
+                                    <span id="selected_auth_label" class="flex-1 uppercase text-[10px]">
+                                        {% if form.ewaste_auth_type.value %}
+                                            {% for val, label in form.fields.ewaste_auth_type.choices %}{% if form.ewaste_auth_type.value == val %}{{ label }}{% endif %}{% endfor %}
+                                        {% else %}
+                                            Choose Category
+                                        {% endif %}
+                                    </span>
                                     <span class="material-symbols-outlined text-slate-400">expand_more</span>
                                 </div>
-                                
-                                <select name="ewaste_auth_type" id="id_ewaste_auth_type" class="hidden">
+                                <input type="hidden" name="ewaste_auth_type" id="id_ewaste_auth_type" value="{{ form.ewaste_auth_type.value|default:'' }}">
+                                <div id="custom_auth_menu" class="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl z-20 hidden max-h-60 overflow-y-auto no-scrollbar">
+                                    {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}
                                     {% for val, label in form.fields.ewaste_auth_type.choices %}
-                                    <option value="{{ val }}" {% if form.ewaste_auth_type.value == val %}selected{% endif %}>{{ label }}</option>
+                                        {% if val %}
+                                        <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-50 dark:border-slate-700 last:border-0 uppercase text-[10px] font-bold"
+                                            onclick="selectAuthType('{{ val }}', '{{ label }}')">
+                                            {{ label }}
+                                        </div>
+                                        {% endif %}
                                     {% endfor %}
-                                </select>
-
-                                <!-- Custom Dropdown Menu (Hidden by default) -->
-                                <div id="custom_auth_menu" class="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl z-20 hidden">
-                                    {% for val, label in form.fields.ewaste_auth_type.choices %}
-                                    <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border-b border-slate-50 dark:border-slate-700 last:border-0"
-                                         onclick="selectAuthType('{{ val }}', '{{ label }}')">
-                                        {{ label }}
-                                    </div>
-                                    {% endfor %}
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -765,12 +794,15 @@
                                     <input type="text" name="ewaste_auth_id" id="id_ewaste_auth_id" 
                                            oninput="updateAuthValidation()"
                                            value="{{ form.ewaste_auth_id.value|default:'' }}" 
-                                           class="input-module" placeholder="MH/EW/2024/XXX">
+                                           class="input-module" placeholder="MH/EW/2024/XXX"
+                                           {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
                                 </div>
                                 <div class="space-y-1">
                                     <label class="field-label">Upload <span class="text-rose-500">*</span></label>
-                                    <div class="upload-button {% if form.instance.ewaste_authorization %}secured{% endif %}" onclick="triggerFileInput('id_ewaste_authorization')">
-                                        <input type="file" name="ewaste_authorization" id="id_ewaste_authorization" class="hidden" onchange="handleFileChange(this, 'ewaste_status')">
+                                    <div class="upload-button {% if form.instance.ewaste_authorization %}secured{% endif %}" 
+                                         {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="triggerFileInput('id_ewaste_authorization')"{% endif %}>
+                                        <input type="file" name="ewaste_authorization" id="id_ewaste_authorization" class="hidden" onchange="handleFileChange(this, 'ewaste_status')"
+                                               {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
                                         <span id="ewaste_status" class="uppercase">{% if form.instance.ewaste_authorization %}✓{% else %}Select{% endif %}</span>
                                     </div>
                                     <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 leading-tight">PDF, JPG, PNG <br> Max 250KB</p>
@@ -781,6 +813,7 @@
                 </div>
             </div>
         </div>
+
 
         <!-- Submit Buttons -->
         <div id="form-actions-container" class="flex flex-col md:flex-row items-center justify-center gap-6 pt-10">
@@ -801,17 +834,31 @@
                     <p class="text-[10px] font-bold text-amber-500/80 uppercase tracking-widest text-center">Your credentials are currently in the regulatory vault for admin verification.</p>
                 </div>
             {% else %}
-                <button type="submit" name="action" value="save_draft" id="btn-save-draft" formnovalidate class="flex items-center gap-3 px-10 py-5 bg-slate-800 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] border border-slate-200/50 dark:border-slate-700">
-                    <span class="material-symbols-outlined text-lg text-slate-200">save</span>
-                    <span class="text-xs font-semibold text-white uppercase tracking-[0.2em]">Save Profile Progress</span>
-                </button>
+                <div class="flex flex-col items-center gap-8 w-full">
+                    {% if profile_completion.admin_remarks or profile_completion.rejection_reason %}
+                        <div class="flex flex-col items-center gap-4 py-8 px-12 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-3xl text-rose-600 w-full max-w-2xl mx-auto mb-8">
+                            <div class="size-16 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center mb-2">
+                                <span class="material-symbols-outlined text-3xl">gpp_maybe</span>
+                            </div>
+                            <h3 class="text-sm font-black uppercase tracking-[0.2em]">Profile Rejection Reason</h3>
+                            <p class="text-[10px] font-bold text-rose-500/80 uppercase tracking-widest text-center italic leading-relaxed">"{{ profile_completion.admin_remarks|default:profile_completion.rejection_reason }}"</p>
+                        </div>
+                    {% endif %}
 
-                <button type="submit" name="action" value="submit" id="btn-submit-main" class="group relative px-12 py-5 bg-primary text-white rounded-xl overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl shadow-emerald-200/50 dark:shadow-none">
-                    <div class="relative z-10 flex items-center gap-3">
-                        <span class="text-xs font-black uppercase tracking-[0.2em]">Submit for Approval</span>
-                        <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">send</span>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-6 w-full">
+                        <button type="submit" name="action" value="save_draft" id="btn-save-draft" formnovalidate class="flex items-center gap-3 px-10 py-5 bg-slate-800 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] border border-slate-200/50 dark:border-slate-700">
+                            <span class="material-symbols-outlined text-lg text-slate-200">save</span>
+                            <span class="text-xs font-semibold text-white uppercase tracking-[0.2em]">Save Profile Progress</span>
+                        </button>
+
+                        <button type="submit" name="action" value="submit" id="btn-submit-main" class="group relative px-12 py-5 bg-primary text-white rounded-xl overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl shadow-emerald-200/50 dark:shadow-none">
+                            <div class="relative z-10 flex items-center gap-3">
+                                <span class="text-xs font-black uppercase tracking-[0.2em]">Submit for Approval</span>
+                                <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">send</span>
+                            </div>
+                        </button>
                     </div>
-                </button>
+                </div>
             {% endif %}
         </div>
 
@@ -1026,7 +1073,8 @@
                 yearMenu.className = 'flatpickr-year-menu no-scrollbar';
                 
                 const currentYear = new Date().getFullYear();
-                for(let y = currentYear; y >= 1950; y--) {
+                const latestYear = currentYear - 18;
+                for(let y = latestYear; y >= 1950; y--) {
                     const yItem = document.createElement('div');
                     yItem.className = 'year-item' + (y === instance.currentYear ? ' active' : '');
                     yItem.innerText = y;
@@ -1134,6 +1182,15 @@
         } else {
             const action = e.submitter ? e.submitter.value : '';
             if (action === 'submit') {
+                // Check for 100% completion
+                const completionPercentage = parseInt("{{ completion_percentage }}");
+                if (completionPercentage < 100) {
+                    e.preventDefault();
+                    if(typeof showToast === 'function') showToast("❌ PROFILE MUST BE 100% COMPLETE BEFORE SUBMITTING", "error");
+                    else alert("PROFILE MUST BE 100% COMPLETE BEFORE SUBMITTING");
+                    return;
+                }
+
                 // Show submission message and hide buttons
                 const container = document.getElementById('form-actions-container');
                 const message = document.getElementById('submission-message');

@@ -178,7 +178,7 @@
         color: #1e293b;
         width: 100%;
         transition: all 0.3s;
-        height: 53px; /* Refined height */
+        height: 53px;
         display: flex;
         align-items: center;
     }
@@ -188,6 +188,21 @@
         border-color: #374151;
         color: #f3f4f6;
     }
+
+    .gender-item {
+        padding: 10px 12px;
+        font-size: 10px; /* Lessened by 2px from 8px */
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #64748b;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .gender-item:hover { background: #f0faf0; color: #17cf17; }
+    .dark .gender-item:hover { background: #0f172a; }
+    .gender-item.active { background: #17cf17; color: white; }
 
     /* Focus handled by global base.html */
 
@@ -486,23 +501,6 @@
 {% block page_content %}
 <div class="max-w-7xl mx-auto space-y-8 pb-24 px-4 sm:px-6 mt-6">
     
-    <!-- ── REJECTION NOTIFICATION ── -->
-    {% if profile_completion.approval_status == 'rejected' and profile_completion.rejection_reason %}
-    <div class="premium-card bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 p-8 mb-8">
-        <div class="flex items-start gap-6">
-            <div class="size-14 rounded-2xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 shrink-0">
-                <span class="material-symbols-outlined text-3xl">info</span>
-            </div>
-            <div class="flex-1">
-                <h3 class="text-lg font-black text-red-800 dark:text-red-200 uppercase tracking-tight">Credentials Rejected</h3>
-                <p class="text-xs font-bold text-red-700/70 dark:text-red-400/70 mt-1 uppercase tracking-widest">Action Required for Activation</p>
-                <div class="mt-6 p-5 bg-white dark:bg-slate-900/50 rounded-2xl border border-red-100 dark:border-red-900/20">
-                    <p class="text-[13px] font-bold text-slate-700 dark:text-slate-300 italic">"{{ profile_completion.rejection_reason }}"</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- ── PROGRESS HEADER ── -->
     <div class="premium-card p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
@@ -540,57 +538,98 @@
                         <span class="material-symbols-outlined">person</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Core Identity *</h3>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Personal details & residence</p>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Basic Details *</h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Primary Contact Info</p>
                     </div>
                 </div>
 
-                <div class="space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Birth Date *</label>
-                        <input type="text" name="date_of_birth" id="dob_picker" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}" 
-                               class="input-premium" placeholder="Select Date" readonly>
-                        {% if form.date_of_birth.errors %}<p class="text-[9px] font-bold text-red-500 uppercase px-1">{{ form.date_of_birth.errors.0 }}</p>{% endif %}
+                <div class="space-y-8">
+                    <!-- Contact Discovery Row -->
+                    <div id="contactSyncFields" class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-500">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Full Name *</label>
+                            <input type="text" name="contact_person" id="id_contact_person" value="{{ form.contact_person.value|default:'' }}" class="input-premium" placeholder="Your Name">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Mobile No. *</label>
+                            <input type="tel" name="alternate_phone" id="id_alternate_phone" value="{{ form.alternate_phone.value|default:'' }}" class="input-premium" placeholder="10-digit No">
+                        </div>
                     </div>
-                    
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Permanent Residence *</label>
-                        <textarea name="address" class="input-premium !py-4 min-h-[100px] resize-none" placeholder="Enter full postal address..." required>{{ form.address.value|default:'' }}</textarea>
-                        {% if form.address.errors %}<p class="text-[9px] font-bold text-red-500 uppercase px-1">{{ form.address.errors.0 }}</p>{% endif %}
+
+                    <!-- Sync Logic Toggle (Checkbox like vendor) -->
+                    <div class="flex items-center justify-center py-2">
+                        <label for="use_registration_details" class="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 px-10 rounded-2xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-100 transition-all shadow-sm group">
+                            <span class="text-[11px] font-black text-slate-500 group-hover:text-primary transition-colors uppercase tracking-widest leading-none">Same as registration?</span>
+                            <input type="checkbox" name="use_registration_details" id="use_registration_details" 
+                                   {% if form.use_registration_details.value %}checked{% endif %}
+                                   class="w-5 h-5 rounded border-2 border-slate-300 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer transition-all box-content">
+                        </label>
+                    </div>
+
+                    <!-- Identity Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Gender *</label>
+                            <div class="custom-select-wrapper">
+                                <div id="genderSelectBox" class="custom-select-box" style="height: 53px;" {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="toggleGenderSelect(event)"{% endif %}>
+                                    <span class="material-symbols-outlined custom-select-icon">{% if form.gender.value == 'female' %}female{% elif form.gender.value == 'other' %}transgender{% else %}male{% endif %}</span>
+                                    <span id="selected_gender_label" class="flex-1 uppercase text-[10px]">
+                                        {% if form.gender.value %}
+                                            {% for val, label in form.fields.gender.choices %}{% if form.gender.value == val %}{{ label }}{% endif %}{% endfor %}
+                                        {% else %}
+                                            Gender
+                                        {% endif %}
+                                    </span>
+                                    <span class="material-symbols-outlined text-slate-400">expand_more</span>
+                                </div>
+                                <select name="gender" id="id_gender" class="hidden">
+                                    {% for val, label in form.fields.gender.choices %}
+                                    <option value="{{ val }}" {% if form.gender.value == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="gender_menu" class="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl z-30 hidden max-h-60 overflow-y-auto no-scrollbar">
+                                    {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}
+                                    {% for val, label in form.fields.gender.choices %}
+                                        {% if val %}
+                                        <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer gender-item border-b border-slate-50 dark:border-slate-700 last:border-0"
+                                            onclick="selectGender('{{ val }}', '{{ label }}')">
+                                            {{ label }}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Birth Date *</label>
+                            <input type="text" name="date_of_birth" id="dob_picker" value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}" 
+                                   class="input-premium" placeholder="Select Date" readonly
+                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT: FLEET LOGISTICS -->
+            <!-- RIGHT: OPERATIONAL ADDRESS & FLEET -->
             <div class="premium-card p-8 space-y-8">
                 <div class="flex items-center gap-4">
                     <div class="section-icon bg-blue-500/10 text-blue-500">
-                        <span class="material-symbols-outlined">electric_moped</span>
+                        <span class="material-symbols-outlined">location_on</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Fleet Logistics *</h3>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Vehicle Specs & Operative Hub</p>
+                        <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Operational Address *</h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Primary Base & Logistic Hub</p>
                     </div>
                 </div>
 
                 <div class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Transport Class *</label>
-                            <select name="vehicle_type" class="input-premium appearance-none bg-no-repeat bg-[right_1rem_center]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22/%3E%3C/svg%3E')">
-                                {% for value, label in form.vehicle_type.field.choices %}
-                                    <option value="{{ value }}" {% if form.vehicle_type.value == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Registration ID *</label>
-                            <input type="text" name="vehicle_number" value="{{ form.vehicle_number.value|default:'' }}" class="input-premium" placeholder="e.g. MH-12-AB-1234" required>
-                            {% if form.vehicle_number.errors %}<p class="text-[9px] font-bold text-red-500 uppercase px-1">{{ form.vehicle_number.errors.0 }}</p>{% endif %}
-                        </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Full Address *</label>
+                        <textarea name="address" id="id_address" class="input-premium !py-4 min-h-[100px] resize-none" placeholder="Enter complete home/base address..." required {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>{{ form.address.value|default:'' }}</textarea>
                     </div>
 
-                    <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-6 mt-6">
+                    <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-6">
                         <div class="flex items-center justify-between">
                             <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Base Coordinates *</h4>
                             
@@ -633,32 +672,50 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    
-                    <!-- MODULE 00: PROFILE PHOTO -->
+ 
+                    <!-- MODULE 00: VEHICLE SPECIFICATIONS -->
                     <div class="module-card">
-                        <h2 class="module-title uppercase">Profile Photo <span class="text-rose-500">*</span></h2>
-                        <p class="module-desc">Facial Biomarker Identity</p>
-                        
-                        <div id="photo_preview_btn" class="view-badge {% if not form.instance.profile_photo %}hidden{% endif %}" onclick="previewDoc('{% if form.instance.profile_photo %}{{ form.instance.profile_photo.url }}{% endif %}', 'image'); event.stopPropagation();">
-                            <span class="material-symbols-outlined text-[20px]">visibility</span>
-                        </div>
+                        <h2 class="module-title uppercase">Vehicle Specifications <span class="text-rose-500">*</span></h2>
+                        <p class="module-desc">Fleet categorization & registration</p>
 
-                        <div class="flex items-center gap-6 mt-8">
-                            <div class="flex-1 space-y-1">
-                                <label class="field-label">Upload Picture <span class="text-rose-500">*</span></label>
-                                <div class="upload-button {% if form.instance.profile_photo %}secured{% endif %}" onclick="triggerFileInput('id_profile_photo')">
-                                    <input type="file" name="profile_photo" id="id_profile_photo" accept="image/jpeg,image/png,image/jpg" class="hidden" onchange="handlePhotoChange(this)">
-                                    <span id="photo_status" class="uppercase">{% if form.instance.profile_photo %}✓{% else %}Select{% endif %}</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Choose Vehicle *</label>
+                                <div class="custom-select-wrapper">
+                                    <div id="vehicleSelectBox" class="custom-select-box" style="height: 53px;" onclick="toggleVehicleSelect(event)">
+                                        <span class="material-symbols-outlined custom-select-icon">{% if form.vehicle_type.value == 'bike' %}motorcycle{% elif form.vehicle_type.value == 'scooter' %}moped{% elif form.vehicle_type.value == 'auto' %}commute{% elif form.vehicle_type.value == 'van' %}airport_shuttle{% elif form.vehicle_type.value == 'tempo' %}local_shipping{% elif form.vehicle_type.value == 'pickup' %}airport_shuttle{% else %}local_shipping{% endif %}</span>
+                                        <span id="selected_vehicle_label" class="flex-1 uppercase text-[10px]">
+                                            {% if form.vehicle_type.value %}
+                                                {% for val, label in form.fields.vehicle_type.choices %}{% if form.vehicle_type.value == val %}{{ label }}{% endif %}{% endfor %}
+                                            {% else %}
+                                                Vehicle...
+                                            {% endif %}
+                                        </span>
+                                        <span class="material-symbols-outlined text-slate-400">expand_more</span>
+                                    </div>
+                                    <select name="vehicle_type" id="id_vehicle_type" class="hidden">
+                                        <option value="" disabled {% if not form.vehicle_type.value %}selected{% endif %}>Vehicle...</option>
+                                        {% for value, label in form.fields.vehicle_type.choices %}
+                                            {% if value %}
+                                                <option value="{{ value }}" {% if form.vehicle_type.value == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    <div id="vehicle_menu" class="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl z-20 hidden max-h-60 overflow-y-auto no-scrollbar">
+                                        {% for val, label in form.fields.vehicle_type.choices %}
+                                            {% if val %}
+                                            <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border-b border-slate-50 dark:border-slate-700 last:border-0"
+                                                 onclick="selectVehicle('{{ val }}', '{{ label }}')">
+                                                {{ label }}
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
                                 </div>
-                                <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 leading-tight">JPG, PNG <br> Max 250KB</p>
                             </div>
-                            <div class="size-20 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden shrink-0 border-2 border-slate-200 dark:border-slate-700 flex flex-col justify-center items-center">
-                                {% if form.instance.profile_photo %}
-                                <img id="photo_thumb" src="{{ form.instance.profile_photo.url }}" class="w-full h-full object-cover">
-                                {% else %}
-                                <span id="photo_thumb_icon" class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-3xl">face</span>
-                                <img id="photo_thumb" src="" class="w-full h-full object-cover hidden">
-                                {% endif %}
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Registration ID *</label>
+                                <input type="text" name="vehicle_number" id="id_vehicle_number" value="{{ form.vehicle_number.value|default:'' }}" class="input-premium !h-[53px] !text-xs" placeholder="e.g. MH12AB1234">
                             </div>
                         </div>
                     </div>
@@ -675,16 +732,18 @@
                         <div class="grid grid-cols-1 sm:grid-cols-[2.5fr_1fr] gap-6 mt-8">
                             <div class="space-y-1">
                                 <label class="field-label">UID Number <span class="text-rose-500">*</span></label>
-                                <input type="text" name="aadhaar_number" maxlength="12" 
-                                       pattern="[2-9]{1}[0-9]{11}"
+                                <input type="text" name="aadhaar_number" id="id_aadhaar_number" maxlength="12" 
                                        oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                        value="{{ form.aadhaar_number.value|default:'' }}" 
-                                       class="input-module" placeholder="12-digit UID No">
+                                       class="input-module" placeholder="12-digit UID No"
+                                       {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
                             </div>
                             <div class="space-y-1">
                                 <label class="field-label">Upload <span class="text-rose-500">*</span></label>
-                                <div class="upload-button {% if form.instance.aadhaar_card %}secured{% endif %}" onclick="triggerFileInput('id_aadhaar_card')">
-                                    <input type="file" name="aadhaar_card" id="id_aadhaar_card" class="hidden" onchange="handleFileChange(this, 'aadhaar_status')">
+                                <div class="upload-button {% if form.instance.aadhaar_card %}secured{% endif %}"
+                                     {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="triggerFileInput('id_aadhaar_card')"{% endif %}>
+                                    <input type="file" name="aadhaar_card" id="id_aadhaar_card" class="hidden" onchange="handleFileChange(this, 'aadhaar_status')"
+                                       {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
                                     <span id="aadhaar_status" class="uppercase">{% if form.instance.aadhaar_card %}✓{% else %}Select{% endif %}</span>
                                 </div>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 leading-tight">PDF, JPG, PNG <br> Max 250KB</p>
@@ -707,12 +766,15 @@
                                 <input type="text" name="license_number" id="id_license_number" 
                                        oninput="this.value = this.value.toUpperCase();"
                                        value="{{ form.license_number.value|default:'' }}" 
-                                       class="input-module" placeholder="MH0120200012345">
+                                       class="input-module" placeholder="MH0120200012345"
+                                       {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
                             </div>
                             <div class="space-y-1">
                                 <label class="field-label">Upload <span class="text-rose-500">*</span></label>
-                                <div class="upload-button {% if form.instance.driving_license %}secured{% endif %}" onclick="triggerFileInput('id_driving_license')">
-                                    <input type="file" name="driving_license" id="id_driving_license" class="hidden" onchange="handleFileChange(this, 'license_status')">
+                                <div class="upload-button {% if form.instance.driving_license %}secured{% endif %}"
+                                     {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="triggerFileInput('id_driving_license')"{% endif %}>
+                                    <input type="file" name="driving_license" id="id_driving_license" class="hidden" onchange="handleFileChange(this, 'license_status')"
+                                       {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
                                     <span id="license_status" class="uppercase">{% if form.instance.driving_license %}✓{% else %}Select{% endif %}</span>
                                 </div>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 leading-tight">PDF, JPG, PNG <br> Max 250KB</p>
@@ -735,12 +797,15 @@
                                 <input type="text" name="vehicle_rc_number" id="id_vehicle_rc_number" 
                                        oninput="this.value = this.value.toUpperCase();"
                                        value="{{ form.vehicle_rc_number.value|default:'' }}" 
-                                       class="input-module" placeholder="MH12AB1234">
+                                       class="input-module" placeholder="MH12AB1234"
+                                       {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
                             </div>
                             <div class="space-y-1">
                                 <label class="field-label">Upload <span class="text-rose-500">*</span></label>
-                                <div class="upload-button {% if form.instance.vehicle_rc %}secured{% endif %}" onclick="triggerFileInput('id_vehicle_rc')">
-                                    <input type="file" name="vehicle_rc" id="id_vehicle_rc" class="hidden" onchange="handleFileChange(this, 'rc_status')">
+                                <div class="upload-button {% if form.instance.vehicle_rc %}secured{% endif %}"
+                                     {% if profile_completion.approval_status != 'approved' and profile_completion.approval_status != 'pending' %}onclick="triggerFileInput('id_vehicle_rc')"{% endif %}>
+                                    <input type="file" name="vehicle_rc" id="id_vehicle_rc" class="hidden" onchange="handleFileChange(this, 'rc_status')"
+                                       {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}disabled{% endif %}>
                                     <span id="rc_status" class="uppercase">{% if form.instance.vehicle_rc %}✓{% else %}Select{% endif %}</span>
                                 </div>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase mt-2 leading-tight">PDF, JPG, PNG <br> Max 250KB</p>
@@ -750,6 +815,7 @@
                 </div>
             </div>
         </div>
+
 
         <!-- Submit Buttons -->
         <div id="form-actions-container" class="flex flex-col md:flex-row items-center justify-center gap-6 pt-10">
@@ -770,14 +836,33 @@
                     <p class="text-[10px] font-bold text-amber-500/80 uppercase tracking-widest text-center">Your details are actively being reviewed by our administrative team.</p>
                 </div>
             {% else %}
-                <button type="button" id="btn-save-draft" class="px-8 py-4 rounded-xl bg-slate-900/5 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-slate-900/10 transition-all flex items-center justify-center gap-3">
-                    <span class="material-symbols-outlined text-lg">save</span> Save Progress
-                </button>
+                <div class="flex flex-col items-center gap-8 w-full">
+                    {% if profile_completion.admin_remarks or profile_completion.rejection_reason %}
+                        <div class="flex flex-col items-center gap-4 py-8 px-12 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-3xl text-rose-600 w-full max-w-2xl mx-auto mb-8">
+                            <div class="size-16 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center mb-2">
+                                <span class="material-symbols-outlined text-3xl">gpp_maybe</span>
+                            </div>
+                            <h3 class="text-sm font-black uppercase tracking-[0.2em]">Profile Rejection Reason</h3>
+                            <p class="text-[10px] font-bold text-rose-500/80 uppercase tracking-widest text-center italic leading-relaxed">"{{ profile_completion.admin_remarks|default:profile_completion.rejection_reason }}"</p>
+                        </div>
+                    {% endif %}
 
-                <button type="submit" id="btn-submit-main" class="px-12 py-4 rounded-xl bg-[#17cf17] hover:bg-[#14ba14] text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-[#17cf17]/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-3">
-                    <span class="material-symbols-outlined text-lg">shield_with_check</span>
-                    {% if profile_completion.approval_status == 'rejected' %}Resubmit Fast-Track{% else %}Authorize Verification{% endif %}
-                </button>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-6 w-full">
+                        <button type="submit" name="action" value="save_draft" id="btn-save-draft" formnovalidate class="flex items-center gap-3 px-10 py-5 bg-slate-800 dark:bg-slate-900/20 text-slate-700 dark:text-slate-300 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] border border-slate-200/50 dark:border-slate-700">
+                            <span class="material-symbols-outlined text-lg text-slate-200">save</span>
+                            <span class="text-xs font-semibold text-white uppercase tracking-[0.2em]">Save Profile Progress</span>
+                        </button>
+
+                        <button type="submit" name="action" value="submit" id="btn-submit-main" class="group relative px-12 py-5 bg-primary text-white rounded-xl overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl shadow-[#17cf17]/30 dark:shadow-none">
+                            <div class="relative z-10 flex items-center gap-3">
+                                <span class="text-xs font-black uppercase tracking-[0.2em]">
+                                    {% if profile_completion.approval_status == 'rejected' %}Resubmit Profile{% else %}Authorize Verification{% endif %}
+                                </span>
+                                <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">send</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
             {% endif %}
         </div>
         
@@ -786,10 +871,10 @@
         <!-- Animated Progress State -->
         <div id="submission-message" class="hidden flex-col items-center mt-10 p-8 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
             <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <span class="material-symbols-outlined text-3xl text-primary animate-bounce">rocket_launch</span>
+                <span class="material-symbols-outlined text-3xl text-primary">rocket_launch</span>
             </div>
-            <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Dispatching Payload</h3>
-            <p class="text-[10px] font-bold text-slate-400 uppercase mt-2 text-center max-w-sm">Securely encrypting and registering details in the authorization vault...</p>
+            <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">Profile Submitted - Pending Approval</h3>
+            <p class="text-[10px] font-bold text-slate-400 uppercase mt-2 text-center max-w-sm">Your profile is currently under review by our administrative team...</p>
         </div>
 
         <div class="flex justify-center mt-12">
@@ -825,20 +910,40 @@
     const actionsContainer = document.getElementById('form-actions-container');
     const submissionMessage = document.getElementById('submission-message');
     const actionInput = document.getElementById('form-action');
-    const saveDraftBtn = document.getElementById('btn-save-draft');
-    const submitMainBtn = document.getElementById('btn-submit-main');
-
-    if (saveDraftBtn) {
-        saveDraftBtn.addEventListener('click', function() {
-            actionInput.value = 'save_draft';
-            form.submit();
-        });
-    }
-
-    if (form && submitMainBtn) {
+    if (form) {
         form.addEventListener('submit', function(e) {
-            // Only show animation if it's a final submit
-            if (actionInput.value === 'submit') {
+            // Determine action from the clicked button or the hidden input
+            // If the user clicked a button with name="action", that takes precedence in a real form submit,
+            // but for AJAX/manual triggers we might need to sync it.
+            // Actually, with type="submit" buttons having name/value, we don't need additional JS to set the value 
+            // BUT we do need to detect it to show the submission message.
+            
+            const submitter = e.submitter;
+            const action = submitter ? submitter.value : 'submit';
+            
+            // Validate patterns
+            let allValid = true;
+            Object.keys(patterns).forEach(id => {
+                if(!validateField(id, patterns[id])) allValid = false;
+            });
+
+            if (!allValid) {
+                e.preventDefault();
+                if(typeof showToast === 'function') showToast("Please fix the highlighted errors.", "error");
+                const firstError = document.querySelector('.!border-red-500');
+                if(firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            if (action === 'submit') {
+                // Check for 100% completion
+                const completionPercentage = parseInt("{{ completion_percentage }}");
+                if (completionPercentage < 100) {
+                    e.preventDefault();
+                    if(typeof showToast === 'function') showToast("❌ PROFILE MUST BE 100% COMPLETE BEFORE AUTHORIZING", "error");
+                    return;
+                }
+
                 if(!form.checkValidity()) return; // Let browser show errors first
                 actionsContainer.classList.add('hidden');
                 submissionMessage.classList.remove('hidden');
@@ -939,48 +1044,7 @@
     }
     
     function handlePhotoChange(input) {
-        const statusSpan = document.getElementById('photo_status');
-        const buttonDiv = statusSpan.closest('.upload-button');
-        const thumb = document.getElementById('photo_thumb');
-        const icon = document.getElementById('photo_thumb_icon');
-        const previewBtn = document.getElementById('photo_preview_btn');
-        
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            
-            // Validate size
-            if (file.size > 250 * 1024) {
-                if(typeof showToast === 'function') showToast("Photo size exceeds 250KB limit.", "error");
-                input.value = '';
-                return;
-            }
-
-            statusSpan.innerHTML = '✓ STAGED';
-            buttonDiv.classList.add('active');
-            
-            const reader = new FileReader();
-            reader.onload = e => {
-                if(icon) icon.classList.add('hidden');
-                thumb.src = e.target.result;
-                thumb.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-            
-            if (previewBtn) {
-                const blobUrl = URL.createObjectURL(file);
-                previewBtn.classList.remove('hidden');
-                previewBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    previewDoc(blobUrl, 'image');
-                };
-            }
-        } else {
-            statusSpan.innerHTML = 'Select';
-            buttonDiv.classList.remove('active', 'secured');
-            if(icon) icon.classList.remove('hidden');
-            thumb.classList.add('hidden');
-            if (previewBtn) previewBtn.classList.add('hidden');
-        }
+        // Function removed as profile photo is no longer required
     }
 
     let locationEnabled = false;
@@ -989,7 +1053,7 @@
         if (locationEnabled) {
             fetchLocation();
         } else {
-            ['lat_display', 'lng_display', 'id_latitude', 'id_longitude'].forEach(id => {
+            ['lat_display', 'lng_display', 'latitude', 'longitude'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.value = '';
             });
@@ -997,8 +1061,8 @@
     }
 
     function fetchLocation() {
-        const latInput = document.getElementById('id_latitude');
-        const lngInput = document.getElementById('id_longitude');
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
         const latDisplay = document.getElementById('lat_display');
         const lngDisplay = document.getElementById('lng_display');
         const checkbox = document.getElementById('locationToggle');
@@ -1009,8 +1073,10 @@
             return;
         }
 
-        latDisplay.value = 'Locating...';
-        lngDisplay.value = 'Locating...';
+        latDisplay.placeholder = 'Locating...';
+        lngDisplay.placeholder = 'Locating...';
+        latDisplay.value = '';
+        lngDisplay.value = '';
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -1023,35 +1089,183 @@
                 if(typeof showToast === 'function') showToast("Base coordinates synchronized.", "success");
             },
             (error) => {
+                console.error("Location error:", error);
                 if(checkbox) checkbox.checked = false;
-                latDisplay.value = '';
-                lngDisplay.value = '';
+                latDisplay.placeholder = 'Failed';
+                lngDisplay.placeholder = 'Failed';
                 let msg = "Could not detect location.";
                 if (error.code === error.PERMISSION_DENIED) {
                     msg = "Location access denied. Please enable location permissions.";
+                } else if (error.code === error.TIMEOUT) {
+                    msg = "GPS Timeout - Please try again.";
                 }
                 if(typeof showToast === 'function') showToast(msg, "error");
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        if (document.getElementById('id_latitude').value && document.getElementById('id_longitude').value) {
-            document.getElementById('lat_display').value = document.getElementById('id_latitude').value;
-            document.getElementById('lng_display').value = document.getElementById('id_longitude').value;
+        const latVal = document.getElementById('latitude').value;
+        const lngVal = document.getElementById('longitude').value;
+        if (latVal && lngVal) {
+            document.getElementById('lat_display').value = latVal;
+            document.getElementById('lng_display').value = lngVal;
             const checkbox = document.getElementById('locationToggle');
             if(checkbox) checkbox.checked = true;
         }
+        toggleFields(); // Explicitly call on load
     });
 
-    // Premium Date Picker Initialization
+    // Logic for "Same as Registration" checkbox
+    const useRegDetails = document.getElementById('use_registration_details');
+    const contactSyncFields = document.getElementById('contactSyncFields');
+    const fieldMap = {
+        'id_contact_person': '{{ reg_data.name|escapejs }}',
+        'id_alternate_phone': '{{ reg_data.phone|escapejs }}'
+    };
+
+    function toggleFields() {
+        const nameEl = document.getElementById('id_contact_person');
+        const phoneEl = document.getElementById('id_alternate_phone');
+        
+        if (useRegDetails && useRegDetails.checked) {
+            if(contactSyncFields) {
+                contactSyncFields.classList.add('opacity-60');
+                contactSyncFields.classList.add('pointer-events-none');
+            }
+            if(nameEl) {
+                nameEl.value = fieldMap['id_contact_person'];
+                nameEl.readOnly = true;
+            }
+            if(phoneEl) {
+                phoneEl.value = fieldMap['id_alternate_phone'];
+                phoneEl.readOnly = true;
+            }
+        } else if(contactSyncFields) {
+            contactSyncFields.classList.remove('opacity-60');
+            contactSyncFields.classList.remove('pointer-events-none');
+            if(nameEl) nameEl.readOnly = false;
+            if(phoneEl) phoneEl.readOnly = false;
+        }
+    }
+
+    if(useRegDetails) useRegDetails.addEventListener('change', toggleFields);
+    
+    const patterns = {
+        'id_vehicle_number': 'CC00CC0000',
+        'id_vehicle_rc_number': 'CC00CC0000',
+        'id_license_number': 'CC0000000000000',
+        'id_aadhaar_number': '000000000000'
+    };
+
+    function applyMask(id, pattern) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', (e) => {
+            let val = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            let result = '';
+            for (let i = 0; i < val.length && i < pattern.length; i++) {
+                const char = val[i];
+                const type = pattern[i];
+                if (type === 'C') {
+                    if (/[A-Z]/.test(char)) result += char;
+                    else break;
+                } else if (type === '0') {
+                    if (/[0-9]/.test(char)) result += char;
+                    else break;
+                }
+            }
+            el.value = result;
+            // Clear error border on input
+            el.classList.remove('!border-red-500');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        toggleFields();
+        Object.keys(patterns).forEach(id => applyMask(id, patterns[id]));
+    });
+
+    // Custom Select Functions
+    function toggleGenderSelect(e) {
+        e.stopPropagation();
+        document.getElementById('vehicle_menu').classList.add('hidden');
+        const menu = document.getElementById('gender_menu');
+        menu.classList.toggle('hidden');
+    }
+
+    function toggleVehicleSelect(e) {
+        e.stopPropagation();
+        document.getElementById('gender_menu').classList.add('hidden');
+        const menu = document.getElementById('vehicle_menu');
+        menu.classList.toggle('hidden');
+    }
+
+    function selectGender(val, label) {
+        document.getElementById('id_gender').value = val;
+        document.getElementById('selected_gender_label').textContent = label;
+        document.getElementById('gender_menu').classList.add('hidden');
+        
+        const icon = document.querySelector('#genderSelectBox .custom-select-icon');
+        if (icon) {
+            if (val === 'male') icon.textContent = 'male';
+            else if (val === 'female') icon.textContent = 'female';
+            else if (val === 'other') icon.textContent = 'transgender';
+            else icon.textContent = 'person';
+        }
+    }
+
+    function selectVehicle(val, label) {
+        document.getElementById('id_vehicle_type').value = val;
+        document.getElementById('selected_vehicle_label').textContent = label;
+        document.getElementById('vehicle_menu').classList.add('hidden');
+        
+        const icon = document.querySelector('#vehicleSelectBox .custom-select-icon');
+        if (icon) {
+            const icons = {
+                'bike': 'motorcycle',
+                'scooter': 'moped',
+                'auto': 'commute',
+                'van': 'airport_shuttle',
+                'tempo': 'local_shipping',
+                'pickup': 'airport_shuttle'
+            };
+            icon.textContent = icons[val] || 'local_shipping';
+        }
+    }
+
+    function validateField(id, pattern) {
+        const el = document.getElementById(id);
+        if (!el) return true;
+        const val = el.value.trim();
+        if (val.length === 0) return true; // Draft mode allows empty
+        
+        const isValid = val.length === pattern.length;
+        if (!isValid) {
+            el.classList.add('!border-red-500');
+        } else {
+            el.classList.remove('!border-red-500');
+        }
+        return isValid;
+    }
+
+    // Close menus on outside click
+    window.addEventListener('click', () => {
+        const genderMenu = document.getElementById('gender_menu');
+        const vehicleMenu = document.getElementById('vehicle_menu');
+        if (genderMenu) genderMenu.classList.add('hidden');
+        if (vehicleMenu) vehicleMenu.classList.add('hidden');
+    });
+
+    // Initialize Flatpickr for DOB
     flatpickr("#dob_picker", {
         dateFormat: "Y-m-d",
         altInput: true,
         altFormat: "F j, Y",
         animate: true,
         disableMobile: true,
+        maxDate: new Date().setFullYear(new Date().getFullYear() - 18),
         monthSelectorType: "static", // Custom month switcher logic
         onReady: function(selectedDates, dateStr, instance) {
             instance.calendarContainer.classList.add('animate-in', 'fade-in', 'zoom-in-95', 'duration-200');
@@ -1109,7 +1323,8 @@
                 yearMenu.className = 'flatpickr-year-menu no-scrollbar';
                 
                 const currentYear = new Date().getFullYear();
-                for(let y = currentYear; y >= 1950; y--) {
+                const latestYear = currentYear - 18;
+                for(let y = latestYear; y >= 1950; y--) {
                     const yItem = document.createElement('div');
                     yItem.className = 'year-item' + (y === instance.currentYear ? ' active' : '');
                     yItem.innerText = y;

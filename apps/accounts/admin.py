@@ -6,13 +6,39 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Account, EmailVerification, ProfileCompletion,
-    ClientProfile, VendorDetails, CollectorProfile
+    ClientProfile, VendorDetails, CollectorProfile, AdminProfile
 )
 
 
 @admin.register(Account)
 class AccountAdmin(BaseUserAdmin):
     """Custom admin for Account model"""
+    
+    class ClientProfileInline(admin.StackedInline):
+        model = ClientProfile
+        can_delete = False
+        extra = 0
+        fields = ('profile_photo', 'gender', 'date_of_birth', 'address')
+
+    class VendorDetailsInline(admin.StackedInline):
+        model = VendorDetails
+        can_delete = False
+        extra = 0
+        fields = ('profile_photo', 'company_name', 'contact_person', 'is_verified')
+
+    class CollectorProfileInline(admin.StackedInline):
+        model = CollectorProfile
+        can_delete = False
+        extra = 0
+        fields = ('profile_photo', 'vehicle_type', 'vehicle_number')
+
+    class AdminProfileInline(admin.StackedInline):
+        model = AdminProfile
+        can_delete = False
+        extra = 0
+        fields = ('profile_photo',)
+
+    inlines = [ClientProfileInline, VendorDetailsInline, CollectorProfileInline, AdminProfileInline]
     
     list_display = [
         'email', 'username', 'first_name', 'last_name',
@@ -240,3 +266,8 @@ class CollectorProfileAdmin(admin.ModelAdmin):
             'fields': ('driving_license', 'aadhaar_card', 'vehicle_rc')
         }),
     )
+
+@admin.register(AdminProfile)
+class AdminProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'created_at']
+    search_fields = ['user__email', 'user__username']

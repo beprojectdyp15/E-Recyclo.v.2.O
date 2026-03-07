@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
-from .models import Account, EmailVerification, ProfileCompletion, ClientProfile, VendorDetails, CollectorProfile
+from .models import Account, EmailVerification, ProfileCompletion, ClientProfile, VendorDetails, CollectorProfile, AdminProfile
 
 
 @receiver(post_save, sender=Account)
@@ -60,3 +60,5 @@ def create_user_related_objects(sender, instance, created, **kwargs):
         
         if instance.is_collector:
             CollectorProfile.objects.create(user=instance)
+        if instance.is_admin or instance.is_staff or instance.is_superuser:
+            AdminProfile.objects.get_or_create(user=instance)
