@@ -373,10 +373,8 @@
         {% for message in messages %}
         <div class="toast-item pointer-events-auto flex items-center gap-4 p-1.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5)] border border-white/40 dark:border-white/5 min-w-[280px] max-w-sm animate-in slide-in-from-right-10 duration-500">
             <div class="size-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner
-                {% if message.tags == 'success' %}bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20
-                {% elif message.tags == 'error' %}bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/20
-                {% elif message.tags == 'warning' %}bg-amber-500/10 text-amber-500 ring-1 dark:ring-amber-500/20
-                {% else %}bg-blue-500/10 text-blue-500 ring-1 ring-blue-500/20{% endif %}">
+                {% if message.tags == 'error' %}bg-rose-500/10 text-rose-500 ring-1 ring-rose-500/20
+                {% else %}bg-primary/10 text-primary ring-1 ring-primary/20{% endif %}">
                 <span class="material-symbols-outlined text-[20px] font-variation-settings-'FILL'-1">
                     {% if message.tags == 'success' %}verified{% elif message.tags == 'error' %}gpp_maybe{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}
                 </span>
@@ -425,16 +423,16 @@ function showToast(message, type = 'error') {
 
     const toast = document.createElement('div');
     const configs = {
-        success: { icon: 'verified', bg: 'emerald', label: 'Success Dispatch' },
-        error: { icon: 'gpp_maybe', bg: 'rose', label: 'Security Alert' },
-        warning: { icon: 'warning', bg: 'amber', label: 'System Warning' },
-        info: { icon: 'info', bg: 'blue', label: 'Information' }
+        success: { icon: 'verified', cls: 'bg-primary/10 text-primary ring-primary/20', label: 'Success Dispatch' },
+        error: { icon: 'gpp_maybe', cls: 'bg-rose-500/10 text-rose-500 ring-rose-500/20', label: 'Security Alert' },
+        warning: { icon: 'warning', cls: 'bg-primary/10 text-primary ring-primary/20', label: 'System Warning' },
+        info: { icon: 'info', cls: 'bg-primary/10 text-primary ring-primary/20', label: 'Information' }
     };
     const c = configs[type] || configs.info;
 
     toast.className = `toast-item pointer-events-auto flex items-center gap-4 p-1.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5)] border border-white/40 dark:border-white/5 min-w-[280px] max-w-sm animate-in slide-in-from-right-10 duration-500`;
     toast.innerHTML = `
-        <div class="size-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner bg-${c.bg}-500/10 text-${c.bg}-500 ring-1 ring-${c.bg}-500/20">
+        <div class="size-11 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${c.cls} ring-1">
             <span class="material-symbols-outlined text-[20px] font-variation-settings-'FILL'-1">${c.icon}</span>
         </div>
         <div class="flex-1 py-1">

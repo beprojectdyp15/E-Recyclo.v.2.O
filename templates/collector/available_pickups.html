@@ -58,20 +58,29 @@
     .dark .info-gradient {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     }
+
+    @keyframes loc-spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+    .loc-spinning { animation: loc-spin 1s linear infinite; display: inline-block; }
 </style>
 {% endblock %}
 
 {% block page_content %}
+{% csrf_token %}
 <div class="max-w-7xl mx-auto space-y-10 pb-24 px-4 sm:px-6">
 
     <!-- Premium Info Banner -->
     <div class="premium-card p-6 info-gradient border-none overflow-hidden relative group">
         <div class="absolute -right-10 -top-10 size-40 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
+
+        <!-- Top row: icon + operational info -->
         <div class="flex items-start gap-5 relative z-10">
-            <div class="size-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100 dark:border-slate-700">
+            <div class="size-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100 dark:border-slate-700 shrink-0">
                 <span class="material-symbols-outlined text-2xl">info</span>
             </div>
-            <div>
+            <div class="flex-1 min-w-0">
                 <h4 class="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2">Fleet Operational Logic</h4>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="space-y-1">
@@ -99,6 +108,28 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- ── UPDATE LOCATION ROW ── -->
+        <div class="relative z-10 mt-5 pt-5 border-t border-blue-200/60 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+
+            <!-- Status label -->
+            <div class="flex items-center gap-2 ml-3">
+                <span class="material-symbols-outlined text-[20px] text-blue-700" id="locDot">distance</span>
+                <span class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Active Radius Origin:</span>
+                <span id="locStatusText" class="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    Saved profile location
+                </span>
+            </div>
+
+            <!-- Button -->
+            <button type="button"
+                    id="updateLocBtn"
+                    onclick="updateCollectorLocation()"
+                    class="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-600 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white hover:border-blue-600 dark:hover:bg-blue-600 dark:hover:border-blue-600 dark:hover:text-white transition-all shadow-sm group shrink-0 mr-[70px]">
+                <span class="material-symbols-outlined text-[16px]" id="updateLocIcon">my_location</span>
+                <span id="updateLocLabel">Update My Location</span>
+            </button>
         </div>
     </div>
 
@@ -235,7 +266,6 @@
     <!-- PREMIUM PAGINATION CONTROLS -->
     {% if pickups.paginator.num_pages > 1 %}
     <div class="mt-20 flex items-center justify-center gap-4">
-        <!-- Previous Page -->
         {% if pickups.has_previous %}
         <a href="?page={{ pickups.previous_page_number }}" 
            class="size-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 transition-all group shadow-sm">
@@ -247,7 +277,6 @@
         </div>
         {% endif %}
 
-        <!-- Page Numbers -->
         <div class="flex items-center gap-3">
             {% for num in pickups.paginator.page_range %}
                 {% if pickups.number == num %}
@@ -263,7 +292,6 @@
             {% endfor %}
         </div>
 
-        <!-- Next Page -->
         {% if pickups.has_next %}
         <a href="?page={{ pickups.next_page_number }}" 
            class="size-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 transition-all group shadow-sm">
@@ -278,14 +306,134 @@
     {% endif %}
 
     {% else %}
+    <!-- Empty state -->
     <div class="premium-card p-20 flex flex-col items-center justify-center text-center">
         <div class="size-24 rounded-[2rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center mb-8 shadow-inner">
              <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-700">near_me_disabled</span>
         </div>
         <h4 class="text-xl font-black text-slate-800 dark:text-white mb-3">Service Grid is Empty</h4>
-        <p class="text-[13px] text-slate-400 font-bold max-w-sm leading-relaxed mb-10">There are no pending pickups within your operational radius. Stay active on the dashboard to receive new pickup alerts.</p>
+        <p class="text-[13px] text-slate-400 font-bold max-w-sm leading-relaxed mb-6">
+            There are no pending pickups within your 5km operational radius. If you have moved away from your registered base, update your location below.
+        </p>
+        <!-- Empty state update location button -->
+        <button type="button"
+                onclick="updateCollectorLocation()"
+                class="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 group">
+            <span class="material-symbols-outlined text-[16px]" id="emptyLocIcon">my_location</span>
+            <span id="emptyLocLabel">Refresh My Location</span>
+        </button>
     </div>
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var CSRF = document.querySelector('[name=csrfmiddlewaretoken]');
+    var UPDATE_URL = "{% url 'collector:update_location' %}";
+
+    window.updateCollectorLocation = function () {
+        var btn       = document.getElementById('updateLocBtn');
+        var icon      = document.getElementById('updateLocIcon');
+        var label     = document.getElementById('updateLocLabel');
+        var statusTxt = document.getElementById('locStatusText');
+        var locDot    = document.getElementById('locDot');
+
+        // Also wire the empty-state button if it exists
+        var emptyIcon  = document.getElementById('emptyLocIcon');
+        var emptyLabel = document.getElementById('emptyLocLabel');
+
+        if (!navigator.geolocation) {
+            _toast('GPS not supported by your browser.', 'error');
+            return;
+        }
+
+        // ── Loading state ──
+        if (btn)       { btn.disabled = true; }
+        if (icon)      { icon.textContent = 'refresh'; icon.classList.add('loc-spinning'); }
+        if (label)     { label.textContent = 'Fetching…'; }
+        if (emptyIcon) { emptyIcon.textContent = 'refresh'; emptyIcon.classList.add('loc-spinning'); }
+        if (emptyLabel){ emptyLabel.textContent = 'Fetching…'; }
+        if (statusTxt) { statusTxt.textContent = 'Detecting your position…'; statusTxt.style.color = ''; }
+
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                var lat = pos.coords.latitude.toFixed(6);
+                var lng = pos.coords.longitude.toFixed(6);
+
+                fetch(UPDATE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': CSRF ? CSRF.value : '',
+                    },
+                    body: 'latitude=' + lat + '&longitude=' + lng,
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        // ── Success state ──
+                        if (icon)  { icon.textContent = 'check_circle'; icon.classList.remove('loc-spinning'); icon.style.color = '#22c55e'; }
+                        if (label) { label.textContent = 'Updated!'; }
+                        if (locDot){ locDot.style.color = '#22c55e'; }
+                        if (statusTxt) {
+                            statusTxt.textContent = lat + ', ' + lng;
+                            statusTxt.style.color = '#22c55e';
+                        }
+                        if (emptyIcon)  { emptyIcon.textContent = 'check_circle'; emptyIcon.classList.remove('loc-spinning'); }
+                        if (emptyLabel) { emptyLabel.textContent = 'Location Updated!'; }
+
+                        _toast('📍 Location updated! Refreshing nearby pickups…', 'success');
+
+                        // Reload after short delay so collector sees fresh 5km results
+                        setTimeout(function () { window.location.reload(); }, 1600);
+                    } else {
+                        _reset(btn, icon, label, statusTxt, emptyIcon, emptyLabel);
+                        _toast('Error: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                })
+                .catch(function (err) {
+                    console.error(err);
+                    _reset(btn, icon, label, statusTxt, emptyIcon, emptyLabel);
+                    _toast('Network error. Please try again.', 'error');
+                });
+            },
+            function (err) {
+                _reset(btn, icon, label, statusTxt, emptyIcon, emptyLabel);
+                var msgs = {
+                    1: 'Location access denied. Please allow location permission in your browser.',
+                    2: 'Position unavailable. Try moving to an open area.',
+                    3: 'Location request timed out. Please try again.',
+                };
+                _toast(msgs[err.code] || 'Could not detect location.', 'error');
+            },
+            { timeout: 10000, enableHighAccuracy: true }
+        );
+    };
+
+    function _reset(btn, icon, label, statusTxt, emptyIcon, emptyLabel) {
+        if (btn)       { btn.disabled = false; }
+        if (icon)      { icon.textContent = 'my_location'; icon.classList.remove('loc-spinning'); icon.style.color = ''; }
+        if (label)     { label.textContent = 'Update My Location'; }
+        if (statusTxt) { statusTxt.textContent = 'Saved profile location'; statusTxt.style.color = ''; }
+        if (emptyIcon) { emptyIcon.textContent = 'my_location'; emptyIcon.classList.remove('loc-spinning'); }
+        if (emptyLabel){ emptyLabel.textContent = 'Refresh My Location'; }
+    }
+
+    function _toast(msg, type) {
+        if (typeof showToast === 'function') { showToast(msg, type); return; }
+        var t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:13px 20px;border-radius:14px;font-size:12px;font-weight:700;color:#fff;max-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.18);transition:opacity 0.4s;';
+        t.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function () {
+            t.style.opacity = '0';
+            setTimeout(function () { t.remove(); }, 400);
+        }, 3500);
+    }
+})();
+</script>
 {% endblock %}

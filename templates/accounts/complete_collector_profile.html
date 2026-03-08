@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Logistics Profile - eRecyclo{% endblock %}
+{% block page_title %}Collector Profile{% endblock %}
+{% block page_subtitle %}Complete your profile to get verified{% endblock %}
+
 {% block extra_css %}
 <style>
     :root {
@@ -629,11 +631,14 @@
                         <textarea name="address" id="id_address" class="input-premium !py-4 min-h-[100px] resize-none" placeholder="Enter complete home/base address..." required {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>{{ form.address.value|default:'' }}</textarea>
                     </div>
 
-                    <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-6">
+                   
+
+                    <!-- Coordinates sub-block — replaces the existing
+                         <div class="p-6 rounded-2xl bg-slate-50 ..."> block -->
+                    <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-5 mt-6">
                         <div class="flex items-center justify-between">
                             <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Base Coordinates *</h4>
-                            
-                            <!-- Premium Toggle for Location -->
+                            <!-- Auto-Sync toggle (existing) -->
                             <div class="flex items-center gap-3">
                                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Auto-Sync</span>
                                 <label class="switch-premium">
@@ -642,7 +647,8 @@
                                 </label>
                             </div>
                         </div>
-                        
+
+                        <!-- Display fields (readonly) -->
                         <div class="grid grid-cols-2 gap-6">
                             {{ form.latitude }}
                             {{ form.longitude }}
@@ -650,12 +656,48 @@
                                 <p class="text-[9px] font-black text-slate-400 uppercase px-1">Latitude</p>
                                 <input type="text" id="lat_display" readonly class="input-module !h-[53px] !text-xs !bg-white/50" placeholder="Pending...">
                             </div>
-                            <div class="grid grid-cols-1 space-y-1">
+                            <div class="space-y-1">
                                 <p class="text-[9px] font-black text-slate-400 uppercase px-1">Longitude</p>
                                 <input type="text" id="lng_display" readonly class="input-module !h-[53px] !text-xs !bg-white/50" placeholder="Pending...">
                             </div>
                         </div>
+
+                        <!-- ★ NEW: Set Location on Map button ★ -->
+                        <button type="button" id="collectorOpenMapBtn"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 text-primary rounded-xl transition-all group">
+                            <span class="material-symbols-outlined text-base group-hover:scale-110 transition-transform">location_on</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Set Base Location on Map</span>
+                        </button>
+
+                        
                     </div>
+
+            {# ── Include the map modal ONCE near the end of the form ── #}
+            {# (Add this line just before the closing </form> tag if not already included) #}
+            {% include "components/map_picker_modal.html" %}
+
+            {# ── Init script ── #}
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Pre-fill display fields from existing saved values
+                const savedLat = document.getElementById('id_latitude')?.value;
+                const savedLng = document.getElementById('id_longitude')?.value;
+                if (savedLat) document.getElementById('lat_display').value = savedLat;
+                if (savedLng) document.getElementById('lng_display').value = savedLng;
+
+                initMapPicker({
+                    triggerBtn   : '#collectorOpenMapBtn',
+                    latInput     : '#id_latitude',
+                    lngInput     : '#id_longitude',
+                    latDisplay   : '#lat_display',
+                    lngDisplay   : '#lng_display',
+                    addressField : '[name="address"]',
+                    defaultLat   : 20.5937,
+                    defaultLng   : 78.9629,
+                    zoom         : 14,
+                });
+            });
+            </script>
                 </div>
             </div>
 

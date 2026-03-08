@@ -121,12 +121,12 @@
                 </p>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-4 pt-4">
-                <button type="submit" class="flex-2 h-14 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-rose-600/20 transition-all hover:-translate-y-1">
+            <div class="flex flex-col items-center gap-5 pt-6">
+                <button type="submit" class="w-full max-w-md h-14 px-8 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] shadow-lg shadow-rose-600/20 transition-all hover:-translate-y-1 flex items-center justify-center text-center">
                     Confirm & Relinquish Rights
                 </button>
-                <a href="{% url 'vendor:pending_requests' %}" class="flex-1 h-14 border border-slate-200 dark:border-slate-700 text-slate-500 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center hover:bg-slate-50 transition-all">
-                    Cancel
+                <a href="{% url 'vendor:pending_requests' %}" class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-rose-500 transition-colors">
+                    Cancel and go back
                 </a>
             </div>
         </form>

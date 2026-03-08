@@ -110,6 +110,44 @@ def dashboard(request):
     })
 
 
+@login_required
+def update_location(request):
+    """
+    AJAX POST — update collector's live base location.
+    Called when collector taps 'Update My Location' on the available_pickups page.
+    Writes new lat/lng to CollectorProfile and returns JSON.
+    """
+    if not request.user.is_collector:
+        return JsonResponse({'success': False, 'error': 'Access denied.'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required.'}, status=405)
+
+    try:
+        lat = float(request.POST.get('latitude', ''))
+        lng = float(request.POST.get('longitude', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid coordinates.'}, status=400)
+
+    # Basic sanity check — India bounding box
+    if not (6.0 <= lat <= 37.0 and 68.0 <= lng <= 98.0):
+        return JsonResponse({'success': False, 'error': 'Coordinates outside expected range.'}, status=400)
+
+    try:
+        cp = request.user.collector_profile
+        cp.latitude  = lat
+        cp.longitude = lng
+        cp.save(update_fields=['latitude', 'longitude'])
+        return JsonResponse({
+            'success': True,
+            'latitude':  round(lat, 6),
+            'longitude': round(lng, 6),
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+
 # ── AVAILABLE PICKUPS ─────────────────────────────────────────────────────────
 @login_required
 def available_pickups(request):

@@ -327,6 +327,8 @@
             </div>
 
             <!-- LOGISTIC FOOTER -->
+           
+
             <div class="lg:col-span-12">
                 <div class="pro-card px-8 pt-8 pb-14">
                     <div class="flex items-center gap-3 mb-10">
@@ -335,8 +337,8 @@
                     </div>
 
                     <div class="space-y-10">
-                        <!-- GRID SYSTEM FOR ALIGNMENT -->
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
                             <!-- LEFT: ADDRESS COLUMN -->
                             <div class="lg:col-span-7 flex flex-col">
                                 <span class="f-label mb-4 block">Detailed Address</span>
@@ -346,9 +348,11 @@
                                 </div>
                             </div>
 
+                            
+
                             <!-- RIGHT: COORDINATES COLUMN -->
-                            <div class="lg:col-span-5 flex flex-col">
-                                <div class="flex items-center justify-between mb-4">
+                            <div class="lg:col-span-5 flex flex-col gap-4">
+                                <div class="flex items-center justify-between">
                                     <span class="f-label !mb-0">Coordinates</span>
                                     <div class="flex items-center gap-3">
                                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Auto-Detect</span>
@@ -356,27 +360,55 @@
                                     </div>
                                 </div>
 
-                                <div class="flex flex-grow items-center"> <!-- Centered vertically in the remaining space -->
-                                    <div class="flex gap-4 w-full">
-                                        <div class="flex-1 flex flex-col gap-2">
-                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Latitude</span>
-                                            <input id="lat_d" readonly class="f-input w-full !text-left px-4 !text-[11px] !bg-slate-50/50 placeholder:text-[9px]" placeholder="00.000000">
-                                        </div>
-                                        <div class="flex-1 flex flex-col gap-2">
-                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Longitude</span>
-                                            <input id="lng_d" readonly class="f-input w-full !text-left px-4 !text-[11px] !bg-slate-50/50 placeholder:text-[9px]" placeholder="00.000000">
-                                        </div>
+                                <!-- Display fields -->
+                                <div class="flex gap-4 w-full">
+                                    <div class="flex-1 flex flex-col gap-2">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Latitude</span>
+                                        <input id="lat_d" readonly class="f-input w-full !text-left px-4 !text-[11px] !bg-slate-50/50 placeholder:text-[9px]" placeholder="00.000000">
+                                    </div>
+                                    <div class="flex-1 flex flex-col gap-2">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Longitude</span>
+                                        <input id="lng_d" readonly class="f-input w-full !text-left px-4 !text-[11px] !bg-slate-50/50 placeholder:text-[9px]" placeholder="00.000000">
                                     </div>
                                 </div>
+
+                                <!-- ★ NEW: Set Location on Map button ★ -->
+                                <button type="button" id="clientOpenMapBtn"
+                                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 text-primary rounded-xl transition-all group">
+                                    <span class="material-symbols-outlined text-base group-hover:scale-110 transition-transform">location_on</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Set Location on Map</span>
+                                </button>
+
+                                
                             </div>
+
                         </div>
 
+                        <!-- Hidden actual form fields -->
                         <div class="hidden">{{ form.latitude }} {{ form.longitude }}</div>
-
-
                     </div>
                 </div>
             </div>
+
+            {# ── Include the map modal (once, before </form>) ── #}
+            {% include "components/map_picker_modal.html" %}
+
+            {# ── Init script for this page ── #}
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                initMapPicker({
+                    triggerBtn   : '#clientOpenMapBtn',
+                    latInput     : '[name="latitude"]',
+                    lngInput     : '[name="longitude"]',
+                    latDisplay   : '#lat_d',
+                    lngDisplay   : '#lng_d',
+                    addressField : '[name="address"]',
+                    defaultLat   : 20.5937,
+                    defaultLng   : 78.9629,
+                    zoom         : 13,
+                });
+            });
+            </script>
  
              <!-- STANDALONE SUBMIT ACTION -->
              <div class="lg:col-span-12 flex justify-center pt-10 pb-20">
@@ -490,8 +522,13 @@
             const delay = Math.max(0, 7000 - elapsed);
             
             setTimeout(() => {
-                if(res.success) renderScanRes(res);
-                else handleScanFail();
+                if(res.success) {
+                    renderScanRes(res);
+                } else if(res.unsupported_format) {
+                    handleUnsupportedFormat(res.error || 'File format not supported.');
+                } else {
+                    handleScanFail();
+                }
             }, delay);
             
         } catch(e) { 
@@ -534,6 +571,7 @@
         document.getElementById('aiCategory').value = '';
         document.getElementById('aiConfidence').value = '';
     }
+
     function toggleManualSelect() {
         const m = document.getElementById('catModal');
         m.classList.toggle('hidden');
@@ -544,7 +582,47 @@
         toggleManualSelect();
     }
 
-    function handleScanFail() { alert('Neural Match Interrupted.'); toggleManualSelect(); }
+    // ── Soft toast helper ────────────────────────────────────────────────────
+    function _showToast(html, color, duration) {
+        document.getElementById('v_scanning').classList.add('hidden');
+        const t = document.createElement('div');
+        t.style.cssText = [
+            'position:fixed','bottom:24px','right:24px','z-index:99999',
+            'padding:13px 20px','border-radius:14px','font-size:11px',
+            'font-weight:700','color:#fff','background:' + color,
+            'box-shadow:0 6px 24px rgba(0,0,0,0.15)','transition:opacity 0.4s',
+            'max-width:340px','line-height:1.6',
+        ].join(';');
+        t.innerHTML = html;
+        document.body.appendChild(t);
+        setTimeout(function () {
+            t.style.opacity = '0';
+            setTimeout(function () { t.remove(); }, 400);
+        }, duration || 5000);
+    }
+
+    function handleScanFail() {
+        _showToast(
+            '⚠️ AI scan could not detect a category.<br>'
+            + '<span style="font-weight:500;opacity:0.9;">Please select your category manually below.</span>',
+            '#f59e0b', 4500
+        );
+        toggleManualSelect();
+    }
+
+    function handleUnsupportedFormat(msg) {
+        // Reset viewport — don't keep the broken image preview
+        document.getElementById('v_preview_container').classList.add('hidden');
+        document.getElementById('v_placeholder').classList.remove('opacity-0');
+        document.getElementById('v_scanning').classList.add('hidden');
+        document.getElementById('id_photo').value = '';
+        _showToast(
+            '🚫 Unsupported file format.<br>'
+            + '<span style="font-weight:500;opacity:0.9;">' + (msg || 'Please upload a JPG, PNG, WebP, BMP or GIF image.') + '</span>',
+            '#ef4444', 6000
+        );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // --- LOCATION ---
     let loc = false;

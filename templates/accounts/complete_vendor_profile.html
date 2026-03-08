@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block title %}Business Profile - eRecyclo{% endblock %}
+{% block page_title %}Vendor Profile{% endblock %}
+{% block page_subtitle %}Complete your profile to get verified{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -567,23 +569,7 @@
                             <p id="dobError" class="text-[9px] font-bold text-red-500 uppercase px-1 hidden">Must be 18+ years old</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">GSTIN Number *</label>
-                            <input type="text" name="gstin_number" id="id_gstin_number_basic" value="{{ form.gstin_number.value|default:'' }}" class="input-premium" placeholder="22AAAAA0000A1Z5"
-                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">PAN Number *</label>
-                            <input type="text" name="pan_number" id="id_pan_number_basic" value="{{ form.pan_number.value|default:'' }}" class="input-premium" placeholder="ABCDE1234F"
-                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Aadhaar Number *</label>
-                            <input type="text" name="aadhaar_number" id="id_aadhaar_number_basic" value="{{ form.aadhaar_number.value|default:'' }}" class="input-premium" placeholder="4725 4145 4454"
-                                   {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -595,22 +581,22 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Business Address *</h3>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Physical workplace location</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Physical facility location where items will be received</p>
                     </div>
                 </div>
 
                 <div class="space-y-6">
+                    <!-- Full address textarea -->
                     <div class="space-y-2">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Full Address *</label>
-                        <textarea name="business_address" class="input-premium !py-4 min-h-[100px] resize-none" placeholder="Enter complete address..." required
-                                  {% if profile_completion.approval_status == 'approved' or profile_completion.approval_status == 'pending' %}readonly{% endif %}>{{ form.business_address.value|default:'' }}</textarea>
+                        <textarea name="business_address" class="input-premium !py-4 min-h-[100px] resize-none" placeholder="Enter complete address..." required>{{ form.business_address.value|default:'' }}</textarea>
                     </div>
 
-                    <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-6">
+                    <!-- Location coordinates card -->
+                    <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 space-y-5">
                         <div class="flex items-center justify-between">
-                            <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Location Details *</h4>
-                            
-                            <!-- Premium Toggle for Location -->
+                            <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Location Coordinates *</h4>
+                            <!-- Auto-Sync toggle (existing) -->
                             <div class="flex items-center gap-3">
                                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Auto-Sync</span>
                                 <label class="switch-premium">
@@ -619,7 +605,8 @@
                                 </label>
                             </div>
                         </div>
-                        
+
+                        <!-- Display fields (readonly) -->
                         <div class="grid grid-cols-2 gap-6">
                             {{ form.latitude }}
                             {{ form.longitude }}
@@ -627,14 +614,50 @@
                                 <p class="text-[9px] font-black text-slate-400 uppercase px-1">Latitude</p>
                                 <input type="text" id="lat_display" readonly class="input-module !h-[53px] !text-xs !bg-white/50" placeholder="Pending...">
                             </div>
-                            <div class="grid grid-cols-1 space-y-1">
+                            <div class="space-y-1">
                                 <p class="text-[9px] font-black text-slate-400 uppercase px-1">Longitude</p>
                                 <input type="text" id="lng_display" readonly class="input-module !h-[53px] !text-xs !bg-white/50" placeholder="Pending...">
                             </div>
                         </div>
+
+                        <!-- ★ NEW: Set Location on Map button ★ -->
+                        <button type="button" id="vendorOpenMapBtn"
+                                class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary/5 border border-primary/20 hover:bg-primary/10 hover:border-primary/40 text-primary rounded-xl transition-all group">
+                            <span class="material-symbols-outlined text-base group-hover:scale-110 transition-transform">location_on</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Set Location on Map</span>
+                        </button>
+
+                        
                     </div>
                 </div>
             </div>
+
+            {# ── Include the map modal ONCE near the end of the form ── #}
+            {# (Add this line just before the closing </form> tag if not already included) #}
+            {% include "components/map_picker_modal.html" %}
+
+            {# ── Init script ── #}
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Pre-fill display fields from existing saved values
+                const savedLat = document.getElementById('id_latitude')?.value;
+                const savedLng = document.getElementById('id_longitude')?.value;
+                if (savedLat) document.getElementById('lat_display').value = savedLat;
+                if (savedLng) document.getElementById('lng_display').value = savedLng;
+
+                initMapPicker({
+                    triggerBtn   : '#vendorOpenMapBtn',
+                    latInput     : '#id_latitude',
+                    lngInput     : '#id_longitude',
+                    latDisplay   : '#lat_display',
+                    lngDisplay   : '#lng_display',
+                    addressField : '[name="business_address"]',
+                    defaultLat   : 20.5937,
+                    defaultLng   : 78.9629,
+                    zoom         : 14,
+                });
+            });
+            </script>
 
             <!-- FULL WIDTH: COMPLIANCE ASSETS -->
             <div class="lg:col-span-2 premium-card p-8 space-y-8">

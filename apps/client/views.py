@@ -124,22 +124,60 @@ def upload_ewaste(request):
     # AJAX endpoint for AI prediction (when user uploads image)
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         if 'photo' in request.FILES:
+            image_file = request.FILES['photo']
+
+            # ── Supported format check ────────────────────────────────────
+            # PIL cannot open .avif, .heic, .webp (some builds), .tiff variants, etc.
+            # Catch this BEFORE sending to YOLO so we return a clean user message.
+            SUPPORTED_TYPES = {'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+                               'image/bmp', 'image/webp', 'image/tiff'}
+            SUPPORTED_EXTS  = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif'}
+            import os
+            file_ext  = os.path.splitext(image_file.name.lower())[1]
+            file_type = image_file.content_type.lower()
+
+            if file_ext not in SUPPORTED_EXTS and file_type not in SUPPORTED_TYPES:
+                return JsonResponse({
+                    'success': False,
+                    'unsupported_format': True,
+                    'error': f'File format not supported ({file_ext or file_type}). '
+                             f'Please upload a JPG, PNG, WebP, BMP, or GIF image.',
+                    'category': None,
+                }, status=415)
+
+            # Also do a quick PIL open check before handing to YOLO
             try:
-                image_file = request.FILES['photo']
+                from PIL import Image as PILImage
+                image_file.seek(0)
+                PILImage.open(image_file).verify()
+                image_file.seek(0)   # reset after verify()
+            except Exception:
+                return JsonResponse({
+                    'success': False,
+                    'unsupported_format': True,
+                    'error': 'Could not read image file. '
+                             'Please upload a valid JPG, PNG, or WebP image.',
+                    'category': None,
+                }, status=415)
+
+            try:
                 prediction = predictor.predict(image_file)
-                
+
                 if prediction.get('success'):
-                    # Map the raw YOLO class ID to user-friendly category data
-                    class_id = prediction.get('class_id', 5) # Default to 'other' if missing
-                    confidence = prediction.get('confidence', 0.0)
-                    
-                    # Logic: use CategoryMapper to get all metadata (icon, description, display_name)
-                    # predictor.predict returns class_id for high-confidence match
-                    category_data = CategoryMapper.map_prediction(class_id, confidence)
-                    
-                    # Merge mapped data into prediction response
+                    # Pass class NAME string + all_predictions for top-N fallback.
+                    class_name      = prediction.get('category', 'other')
+                    confidence      = prediction.get('confidence', 0.0)
+                    all_predictions = prediction.get('all_predictions', [])
+                    category_data   = CategoryMapper.map_prediction(
+                        class_name, confidence,
+                        all_predictions=all_predictions,
+                    )
                     prediction.update(category_data)
-                    
+                else:
+                    # Model ran but detected nothing — return gracefully as 'other'
+                    prediction.update(CategoryMapper.map_prediction('other', 0.0))
+                    prediction['success'] = True
+
                 return JsonResponse(prediction)
             except Exception as e:
                 return JsonResponse({
@@ -161,27 +199,24 @@ def upload_ewaste(request):
                 post.user = request.user
                 
                 # AI category from form (already detected in frontend or manually selected)
-                # These keys now match CategoryMapper: smartphone, laptop, monitor, battery, appliance, other
-                post.ai_category = request.POST.get('ai_category', 'other')
+                post.ai_category   = request.POST.get('ai_category', 'other')
                 post.ai_confidence = float(request.POST.get('ai_confidence', 0))
-                
-                # Estimate value based on unified CategoryMapper keys
+
+                # Re-run mapper at submit time with the title the user typed —
+                # this catches cases like "Car Battery" or "Microwave" where the image
+                # alone fooled the model but the title makes it unambiguous.
                 title_lower = post.title.lower()
-                
-                if post.ai_category == 'smartphone':
-                    post.ai_estimated_value = Decimal(str(random.randint(200, 500)))
-                elif post.ai_category == 'laptop':
-                    post.ai_estimated_value = Decimal(str(random.randint(500, 1500)))
-                elif post.ai_category == 'monitor':
-                    post.ai_estimated_value = Decimal(str(random.randint(300, 1000)))
-                elif post.ai_category == 'battery':
-                    post.ai_estimated_value = Decimal(str(random.randint(50, 200)))
-                elif post.ai_category == 'appliance':
-                    # Average for large appliances
-                    post.ai_estimated_value = Decimal(str(random.randint(800, 2000)))
-                else:
-                    # 'other' category (accessories, etc.)
-                    post.ai_estimated_value = Decimal(str(random.randint(100, 500)))
+                enriched = CategoryMapper.map_prediction(
+                    post.ai_category,
+                    post.ai_confidence / 100.0,   # stored as 0-100, mapper wants 0-1
+                    title_hint=post.title,
+                )
+                # Only override if keyword match found a more specific category
+                if enriched.get('category') and enriched['category'] != 'other':
+                    post.ai_category = enriched['category']
+
+                min_val, max_val = CategoryMapper.get_estimated_value(post.ai_category)
+                post.ai_estimated_value = Decimal(str(random.randint(min_val, max_val)))
                 
                 # Detect condition from title (your existing logic)
                 if any(word in title_lower for word in ['new', 'excellent', 'perfect']):
