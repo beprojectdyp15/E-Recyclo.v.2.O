@@ -19,6 +19,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     '.railway.app',
+    '.vercel.app',
     'localhost',
     '127.0.0.1',
 ]
@@ -26,18 +27,22 @@ ALLOWED_HOSTS = [
 # Add custom domain if you set one later
 if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
     ALLOWED_HOSTS.append(os.environ.get('RAILWAY_PUBLIC_DOMAIN'))
+if os.environ.get('VERCEL_URL'):
+    ALLOWED_HOSTS.append(os.environ.get('VERCEL_URL'))
 
 # ========================================
 # DATABASE - COMPLETELY OVERRIDE base.py
 # ========================================
 
-if 'DATABASE_URL' in os.environ:
+db_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL')
+
+if db_url:
     DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
+        'default': dj_database_url.parse(
+            db_url,
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require=False,
+            ssl_require=True,  # Vercel postgres requires SSL
         )
     }
 else:
@@ -66,6 +71,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
+    'https://*.vercel.app',
 ]
 
 # ========================================
