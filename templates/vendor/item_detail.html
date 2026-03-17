@@ -246,9 +246,9 @@
     <!-- ── LIVE TRACKING SECTION (auto-renders during active transit) ── -->
     {% with s=post.status %}
     {% if s == 'pickup_scheduled' or s == 'in_transit' or s == 'return_pickup_scheduled' or s == 'return_in_transit' %}
-    <div class="premium-card overflow-hidden mb-8 !rounded-[1.5rem]" id="erecyclo-tracking-card">
+    <div class="js-collapsible premium-card mb-8 border-none" id="erecyclo-tracking-card">
         <!-- Card Header -->
-        <div class="p-5 sm:p-7 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+        <button type="button" class="w-full text-left p-5 sm:p-7 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 focus:outline-none transition-all group" onclick="this.parentElement.classList.toggle('collapsible-active'); setTimeout(() => { if (typeof tMap !== 'undefined' && tMap) { tMap.invalidateSize(); } }, 400);">
             <div class="flex items-center gap-4">
                 <div class="size-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center border border-amber-100 dark:border-amber-900/40 shadow-sm shrink-0">
                     <span class="material-symbols-outlined text-amber-500 text-xl">directions_car</span>
@@ -258,15 +258,19 @@
                     <p class="text-[11px] font-semibold text-slate-400 mt-0.5" id="er-tracking-phase">Connecting to tracker…</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-                <span id="er-live-badge" class="hidden items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800/40">
-                    <span class="size-1.5 rounded-full bg-rose-500 inline-block" style="animation:erPulse 1.4s ease-in-out infinite;"></span> LIVE
-                </span>
-                <span id="er-status-chip" class="text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
-                    {% if s == 'pickup_scheduled' %}Pickup Scheduled{% elif s == 'in_transit' %}In Transit{% elif s == 'return_pickup_scheduled' %}Return Pickup{% elif s == 'return_in_transit' %}Return Transit{% endif %}
-                </span>
+            <div class="flex items-center gap-4 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span id="er-live-badge" class="hidden items-center gap-1.5 text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 border border-rose-100 dark:border-rose-800/40">
+                        <span class="size-1.5 rounded-full bg-rose-500 inline-block" style="animation:erPulse 1.4s ease-in-out infinite;"></span> LIVE
+                    </span>
+                    <span id="er-status-chip" class="text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                        {% if s == 'pickup_scheduled' %}Pickup Scheduled{% elif s == 'in_transit' %}In Transit{% elif s == 'return_pickup_scheduled' %}Return Pickup{% elif s == 'return_in_transit' %}Return Transit{% endif %}
+                    </span>
+                </div>
+                <span class="material-symbols-outlined text-slate-400 arrow-icon text-3xl">expand_more</span>
             </div>
-        </div>
+        </button>
+        <div class="collapsible-content">
         <!-- Collector Info Strip -->
         <div class="px-5 sm:px-7 py-4 bg-slate-50/60 dark:bg-slate-900/20 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-5 sm:gap-8 items-center">
             <div class="flex items-center gap-3">
@@ -314,6 +318,7 @@
             <div class="flex items-center gap-2"><div class="size-2.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm shrink-0"></div><span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Destination</span></div>
             <div class="flex items-center gap-2"><div class="size-2.5 rounded-full bg-blue-500 border-2 border-white shadow-sm shrink-0"></div><span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight" id="er-legend-collector">Collector</span></div>
             <div class="flex items-center gap-2 ml-auto"><span class="material-symbols-outlined text-[12px] text-slate-300">update</span><span class="text-[9px] font-bold text-slate-400" id="er-last-update">—</span></div>
+        </div>
         </div>
     </div>
 
